@@ -1,0 +1,683 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { GarageLayout } from "@/components/layout/GarageLayout";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, Edit, Package, CheckCircle } from "lucide-react";
+import { formatPrice, formatMileage, FUEL_LABELS, TRANSMISSION_LABELS } from "@/lib/constants";
+import type { Database } from "@/integrations/supabase/types";
+
+type FuelType = Database["public"]["Enums"]["fuel_type"];
+type TransmissionType = Database["public"]["Enums"]["transmission_type"];
+
+interface CarFormData {
+  brand_id: string;
+  model: string;
+  year: number;
+  version: string;
+  mileage: number;
+  transmission: TransmissionType;
+  fuel: FuelType;
+  color: string;
+  price: number;
+  description: string;
+  photos: string[];
+}
+
+const initialFormData: CarFormData = {
+  brand_id: "",
+  model: "",
+  year: new Date().getFullYear(),
+  version: "",
+  mileage: 0,
+  transmission: "automatic",
+  fuel: "flex",
+  color: "",
+  price: 0,
+  description: "",
+  photos: [],
+};
+
+export default function GarageCars() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSellDialogOpen, setIsSellDialogOpen] = useState(false);
+  const [editingCar, setEditingCar] = useState<any>(null);
+  const [sellingCar, setSellingCar] = useState<any>(null);
+  const [soldReason, setSoldReason] = useState("");
+  const [formData, setFormData] = useState<CarFormData>(initialFormData);
+  const [photoUrl, setPhotoUrl] = useState("");
+
+  // Fetch garage's cars
+  const { data: cars, isLoading } = useQuery({
+    queryKey: ["garage-cars"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cars")
+        .select("*, brands(name, logo_url)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch brands for select
+  const { data: brands } = useQuery({
+    queryKey: ["brands-select"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("brands")
+        .select("id, name")
+        .eq("is_active", true)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Get garage ID
+  const { data: garage } = useQuery({
+    queryKey: ["my-garage"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("garages")
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Create car mutation
+  const createCarMutation = useMutation({
+    mutationFn: async (data: CarFormData) => {
+      if (!garage?.id) throw new Error("Garagem não encontrada");
+      const { error } = await supabase.from("cars").insert([{
+        garage_id: garage.id,
+        brand_id: data.brand_id,
+        model: data.model,
+        year: data.year,
+        version: data.version || null,
+        mileage: data.mileage,
+        transmission: data.transmission,
+        fuel: data.fuel,
+        color: data.color,
+        price: data.price,
+        description: data.description || null,
+        photos: data.photos.length > 0 ? data.photos : null,
+        code: "TEMP",
+      }]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Veículo cadastrado com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ["garage-cars"] });
+      setIsDialogOpen(false);
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Erro ao cadastrar veículo", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Update car mutation
+  const updateCarMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CarFormData> }) => {
+      const { error } = await supabase
+        .from("cars")
+        .update({
+          brand_id: data.brand_id,
+          model: data.model,
+          year: data.year,
+          version: data.version || null,
+          mileage: data.mileage,
+          transmission: data.transmission,
+          fuel: data.fuel,
+          color: data.color,
+          price: data.price,
+          description: data.description || null,
+          photos: data.photos && data.photos.length > 0 ? data.photos : null,
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Veículo atualizado com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ["garage-cars"] });
+      setIsDialogOpen(false);
+      setEditingCar(null);
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Erro ao atualizar veículo", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Mark as sold mutation
+  const markAsSoldMutation = useMutation({
+    mutationFn: async ({ carId, reason }: { carId: string; reason: string }) => {
+      // Get car details for snapshot
+      const { data: car, error: carError } = await supabase
+        .from("cars")
+        .select("*, brands(name)")
+        .eq("id", carId)
+        .single();
+      if (carError) throw carError;
+
+      // Update car status
+      const { error: updateError } = await supabase
+        .from("cars")
+        .update({
+          status: "sold",
+          sold_at: new Date().toISOString(),
+          sold_reason: reason,
+        })
+        .eq("id", carId);
+      if (updateError) throw updateError;
+
+      // Create sales history record
+      const { error: historyError } = await supabase.from("sales_history").insert({
+        car_id: carId,
+        garage_id: car.garage_id,
+        sold_reason: reason,
+        car_snapshot: {
+          code: car.code,
+          brand: car.brands?.name,
+          model: car.model,
+          year: car.year,
+          version: car.version,
+          price: car.price,
+          mileage: car.mileage,
+          color: car.color,
+        },
+      });
+      if (historyError) throw historyError;
+    },
+    onSuccess: () => {
+      toast({ title: "Veículo marcado como vendido!" });
+      queryClient.invalidateQueries({ queryKey: ["garage-cars"] });
+      setIsSellDialogOpen(false);
+      setSellingCar(null);
+      setSoldReason("");
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Erro ao marcar como vendido", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const resetForm = () => {
+    setFormData(initialFormData);
+    setPhotoUrl("");
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingCar) {
+      updateCarMutation.mutate({ id: editingCar.id, data: formData });
+    } else {
+      createCarMutation.mutate(formData);
+    }
+  };
+
+  const handleEdit = (car: any) => {
+    setEditingCar(car);
+    setFormData({
+      brand_id: car.brand_id,
+      model: car.model,
+      year: car.year,
+      version: car.version || "",
+      mileage: car.mileage,
+      transmission: car.transmission,
+      fuel: car.fuel,
+      color: car.color,
+      price: car.price,
+      description: car.description || "",
+      photos: car.photos || [],
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleSell = (car: any) => {
+    setSellingCar(car);
+    setIsSellDialogOpen(true);
+  };
+
+  const addPhoto = () => {
+    if (photoUrl.trim()) {
+      setFormData({ ...formData, photos: [...formData.photos, photoUrl.trim()] });
+      setPhotoUrl("");
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setFormData({ 
+      ...formData, 
+      photos: formData.photos.filter((_, i) => i !== index) 
+    });
+  };
+
+  const availableCars = cars?.filter((car: any) => car.status === "available");
+  const soldCars = cars?.filter((car: any) => car.status === "sold");
+
+  return (
+    <GarageLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-foreground">Meus Veículos</h1>
+            <p className="text-muted-foreground mt-1">Gerencie seus veículos cadastrados</p>
+          </div>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              setEditingCar(null);
+              resetForm();
+            }
+          }}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Novo Veículo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingCar ? "Editar Veículo" : "Novo Veículo"}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="brand_id">Marca *</Label>
+                    <Select 
+                      value={formData.brand_id} 
+                      onValueChange={(value) => setFormData({ ...formData, brand_id: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a marca" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {brands?.map((brand: any) => (
+                          <SelectItem key={brand.id} value={brand.id}>
+                            {brand.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="model">Modelo *</Label>
+                    <Input
+                      id="model"
+                      value={formData.model}
+                      onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="year">Ano *</Label>
+                    <Input
+                      id="year"
+                      type="number"
+                      value={formData.year}
+                      onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+                      required
+                      min={1900}
+                      max={new Date().getFullYear() + 1}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="version">Versão</Label>
+                    <Input
+                      id="version"
+                      value={formData.version}
+                      onChange={(e) => setFormData({ ...formData, version: e.target.value })}
+                      placeholder="Ex: LTZ, Titanium..."
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="mileage">Quilometragem *</Label>
+                    <Input
+                      id="mileage"
+                      type="number"
+                      value={formData.mileage}
+                      onChange={(e) => setFormData({ ...formData, mileage: parseInt(e.target.value) })}
+                      required
+                      min={0}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="color">Cor *</Label>
+                    <Input
+                      id="color"
+                      value={formData.color}
+                      onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="transmission">Câmbio *</Label>
+                    <Select 
+                      value={formData.transmission} 
+                      onValueChange={(value) => setFormData({ ...formData, transmission: value as TransmissionType })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(TRANSMISSION_LABELS).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fuel">Combustível *</Label>
+                    <Select 
+                      value={formData.fuel} 
+                      onValueChange={(value) => setFormData({ ...formData, fuel: value as FuelType })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(FUEL_LABELS).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="price">Preço *</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                    required
+                    min={0}
+                    step={0.01}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Descrição</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
+                    placeholder="Detalhes do veículo..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Fotos</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="url"
+                      value={photoUrl}
+                      onChange={(e) => setPhotoUrl(e.target.value)}
+                      placeholder="URL da foto..."
+                    />
+                    <Button type="button" variant="outline" onClick={addPhoto}>
+                      Adicionar
+                    </Button>
+                  </div>
+                  {formData.photos.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {formData.photos.map((url, index) => (
+                        <div key={index} className="relative">
+                          <img 
+                            src={url} 
+                            alt={`Foto ${index + 1}`} 
+                            className="h-16 w-20 object-cover rounded"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removePhoto(index)}
+                            className="absolute -top-1 -right-1 h-5 w-5 bg-destructive text-destructive-foreground rounded-full text-xs flex items-center justify-center"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={createCarMutation.isPending || updateCarMutation.isPending}
+                >
+                  {createCarMutation.isPending || updateCarMutation.isPending 
+                    ? "Salvando..." 
+                    : editingCar ? "Salvar Alterações" : "Cadastrar Veículo"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Available Cars */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Veículos Disponíveis ({availableCars?.length || 0})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Carregando...</div>
+            ) : availableCars && availableCars.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Veículo</TableHead>
+                      <TableHead>Ano</TableHead>
+                      <TableHead>KM</TableHead>
+                      <TableHead>Preço</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {availableCars.map((car: any) => (
+                      <TableRow key={car.id}>
+                        <TableCell className="font-mono text-sm">{car.code}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            {car.photos?.[0] && (
+                              <img 
+                                src={car.photos[0]} 
+                                alt={car.model} 
+                                className="h-10 w-14 object-cover rounded"
+                              />
+                            )}
+                            <div>
+                              <p className="font-medium">{car.brands?.name}</p>
+                              <p className="text-sm text-muted-foreground">{car.model}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{car.year}</TableCell>
+                        <TableCell>{formatMileage(car.mileage)}</TableCell>
+                        <TableCell className="font-semibold text-accent">
+                          {formatPrice(car.price)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(car)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-success"
+                              onClick={() => handleSell(car)}
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhum veículo disponível
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Sold Cars */}
+        {soldCars && soldCars.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-success" />
+                Veículos Vendidos ({soldCars.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Veículo</TableHead>
+                      <TableHead>Ano</TableHead>
+                      <TableHead>Preço</TableHead>
+                      <TableHead>Motivo</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {soldCars.map((car: any) => (
+                      <TableRow key={car.id} className="opacity-60">
+                        <TableCell className="font-mono text-sm">{car.code}</TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{car.brands?.name}</p>
+                            <p className="text-sm text-muted-foreground">{car.model}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{car.year}</TableCell>
+                        <TableCell className="font-semibold">
+                          {formatPrice(car.price)}
+                        </TableCell>
+                        <TableCell className="max-w-32 truncate">
+                          {car.sold_reason || "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Sell Dialog */}
+        <Dialog open={isSellDialogOpen} onOpenChange={setIsSellDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Marcar como Vendido</DialogTitle>
+            </DialogHeader>
+            {sellingCar && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Você está marcando o veículo <strong>{sellingCar.brands?.name} {sellingCar.model}</strong> ({sellingCar.code}) como vendido.
+                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="sold_reason">Motivo da Venda *</Label>
+                  <Textarea
+                    id="sold_reason"
+                    value={soldReason}
+                    onChange={(e) => setSoldReason(e.target.value)}
+                    rows={3}
+                    placeholder="Descreva o motivo da venda..."
+                    required
+                  />
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={() => markAsSoldMutation.mutate({ carId: sellingCar.id, reason: soldReason })}
+                  disabled={!soldReason.trim() || markAsSoldMutation.isPending}
+                >
+                  {markAsSoldMutation.isPending ? "Processando..." : "Confirmar Venda"}
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </GarageLayout>
+  );
+}
