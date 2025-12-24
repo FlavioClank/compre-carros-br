@@ -16,9 +16,16 @@ import NotFound from "./pages/NotFound";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/Dashboard";
+import AdminGarages from "./pages/admin/Garages";
+import AdminCars from "./pages/admin/Cars";
+import AdminBrands from "./pages/admin/Brands";
+import AdminHistory from "./pages/admin/History";
+import AdminLogs from "./pages/admin/Logs";
 
 // Garage Pages
 import GarageDashboard from "./pages/garage/Dashboard";
+import GarageCars from "./pages/garage/Cars";
+import GarageHistory from "./pages/garage/History";
 
 const queryClient = new QueryClient();
 
@@ -44,11 +51,51 @@ const App = () => (
                 <AdminDashboard />
               </ProtectedRoute>
             } />
+            <Route path="/admin/garages" element={
+              <ProtectedRoute allowedRoles={["super_admin"]}>
+                <AdminGarages />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/cars" element={
+              <ProtectedRoute allowedRoles={["super_admin"]}>
+                <AdminCars />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/brands" element={
+              <ProtectedRoute allowedRoles={["super_admin"]}>
+                <AdminBrands />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/history" element={
+              <ProtectedRoute allowedRoles={["super_admin"]}>
+                <AdminHistory />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/logs" element={
+              <ProtectedRoute allowedRoles={["super_admin"]}>
+                <AdminLogs />
+              </ProtectedRoute>
+            } />
 
             {/* GARAGE ROUTES - Garage only */}
             <Route path="/garage/dashboard" element={
               <ProtectedRoute allowedRoles={["garage"]}>
                 <GarageDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/garage/cars" element={
+              <ProtectedRoute allowedRoles={["garage"]}>
+                <GarageCars />
+              </ProtectedRoute>
+            } />
+            <Route path="/garage/cars/new" element={
+              <ProtectedRoute allowedRoles={["garage"]}>
+                <GarageCars />
+              </ProtectedRoute>
+            } />
+            <Route path="/garage/history" element={
+              <ProtectedRoute allowedRoles={["garage"]}>
+                <GarageHistory />
               </ProtectedRoute>
             } />
 
