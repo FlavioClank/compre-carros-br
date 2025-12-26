@@ -158,6 +158,7 @@ export type Database = {
       garages: {
         Row: {
           address: string | null
+          can_add_vehicles: boolean
           city: string | null
           created_at: string
           id: string
@@ -170,6 +171,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          can_add_vehicles?: boolean
           city?: string | null
           created_at?: string
           id?: string
@@ -182,6 +184,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          can_add_vehicles?: boolean
           city?: string | null
           created_at?: string
           id?: string

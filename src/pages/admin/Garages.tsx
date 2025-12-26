@@ -23,7 +23,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Eye, EyeOff, Edit, Power, Building2, KeyRound } from "lucide-react";
+import { Plus, Eye, EyeOff, Edit, Power, Building2, KeyRound, Car } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 interface GarageFormData {
   name: string;
@@ -160,6 +161,26 @@ export default function AdminGarages() {
         description: variables.isActive 
           ? "Todos os veículos desta garagem estão ocultos." 
           : "Os veículos desta garagem estão visíveis novamente."
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-garages"] });
+    },
+  });
+
+  // Toggle can_add_vehicles permission
+  const toggleCanAddVehiclesMutation = useMutation({
+    mutationFn: async ({ id, canAdd }: { id: string; canAdd: boolean }) => {
+      const { error } = await supabase
+        .from("garages")
+        .update({ can_add_vehicles: !canAdd })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      toast({ 
+        title: variables.canAdd ? "Cadastro de veículos bloqueado!" : "Cadastro de veículos liberado!",
+        description: variables.canAdd 
+          ? "O garajista não pode mais cadastrar veículos." 
+          : "O garajista pode cadastrar veículos novamente."
       });
       queryClient.invalidateQueries({ queryKey: ["admin-garages"] });
     },
@@ -366,6 +387,7 @@ export default function AdminGarages() {
                       <TableHead>Email</TableHead>
                       <TableHead>Cidade</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Pode Cadastrar</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -379,6 +401,20 @@ export default function AdminGarages() {
                           <Badge variant={garage.is_active ? "default" : "secondary"}>
                             {garage.is_active ? "Ativa" : "Inativa"}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={garage.can_add_vehicles}
+                              onCheckedChange={() => toggleCanAddVehiclesMutation.mutate({
+                                id: garage.id,
+                                canAdd: garage.can_add_vehicles
+                              })}
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              {garage.can_add_vehicles ? "Sim" : "Não"}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { GarageLayout } from "@/components/layout/GarageLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Package, CheckCircle } from "lucide-react";
+import { Plus, Edit, Package, CheckCircle, Upload, X, ImagePlus } from "lucide-react";
 import { formatPrice, formatMileage, FUEL_LABELS, TRANSMISSION_LABELS } from "@/lib/constants";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -75,7 +75,9 @@ export default function GarageCars() {
   const [sellingCar, setSellingCar] = useState<any>(null);
   const [soldReason, setSoldReason] = useState("");
   const [formData, setFormData] = useState<CarFormData>(initialFormData);
-  const [photoUrl, setPhotoUrl] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewPhotos, setPreviewPhotos] = useState<{ file: File; preview: string }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch garage's cars
   const { data: cars, isLoading } = useQuery({
@@ -104,13 +106,13 @@ export default function GarageCars() {
     },
   });
 
-  // Get garage ID
+  // Get garage info including permission
   const { data: garage } = useQuery({
     queryKey: ["my-garage"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("garages")
-        .select("id")
+        .select("id, can_add_vehicles")
         .single();
       if (error) throw error;
       return data;
@@ -248,15 +250,81 @@ export default function GarageCars() {
 
   const resetForm = () => {
     setFormData(initialFormData);
-    setPhotoUrl("");
+    setPreviewPhotos([]);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Handle file selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const newPreviews = files.map(file => ({
+      file,
+      preview: URL.createObjectURL(file)
+    }));
+    
+    setPreviewPhotos(prev => [...prev, ...newPreviews]);
+    
+    // Reset input to allow selecting same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Upload photos to storage
+  const uploadPhotos = async (): Promise<string[]> => {
+    if (previewPhotos.length === 0) return formData.photos;
+    
+    setIsUploading(true);
+    const uploadedUrls: string[] = [...formData.photos];
+    
+    try {
+      for (const { file } of previewPhotos) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `${garage?.id}/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from("car-photos")
+          .upload(filePath, file);
+        
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from("car-photos")
+          .getPublicUrl(filePath);
+        
+        uploadedUrls.push(publicUrl);
+      }
+      
+      return uploadedUrls;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingCar) {
-      updateCarMutation.mutate({ id: editingCar.id, data: formData });
-    } else {
-      createCarMutation.mutate(formData);
+    
+    try {
+      const photos = await uploadPhotos();
+      const dataWithPhotos = { ...formData, photos };
+      
+      if (editingCar) {
+        updateCarMutation.mutate({ id: editingCar.id, data: dataWithPhotos });
+      } else {
+        createCarMutation.mutate(dataWithPhotos);
+      }
+      
+      // Cleanup preview URLs
+      previewPhotos.forEach(p => URL.revokeObjectURL(p.preview));
+      setPreviewPhotos([]);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao enviar fotos",
+        description: error.message,
+        variant: "destructive"
+      });
     }
   };
 
@@ -275,6 +343,7 @@ export default function GarageCars() {
       description: car.description || "",
       photos: car.photos || [],
     });
+    setPreviewPhotos([]);
     setIsDialogOpen(true);
   };
 
@@ -283,18 +352,16 @@ export default function GarageCars() {
     setIsSellDialogOpen(true);
   };
 
-  const addPhoto = () => {
-    if (photoUrl.trim()) {
-      setFormData({ ...formData, photos: [...formData.photos, photoUrl.trim()] });
-      setPhotoUrl("");
-    }
-  };
-
   const removePhoto = (index: number) => {
     setFormData({ 
       ...formData, 
       photos: formData.photos.filter((_, i) => i !== index) 
     });
+  };
+
+  const removePreviewPhoto = (index: number) => {
+    URL.revokeObjectURL(previewPhotos[index].preview);
+    setPreviewPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
   const availableCars = cars?.filter((car: any) => car.status === "available");
@@ -315,12 +382,14 @@ export default function GarageCars() {
               resetForm();
             }
           }}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Novo Veículo
-              </Button>
-            </DialogTrigger>
+            {(garage?.can_add_vehicles || editingCar) && (
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Novo Veículo
+                </Button>
+              </DialogTrigger>
+            )}
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
@@ -470,47 +539,92 @@ export default function GarageCars() {
 
                 <div className="space-y-2">
                   <Label>Fotos</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="url"
-                      value={photoUrl}
-                      onChange={(e) => setPhotoUrl(e.target.value)}
-                      placeholder="URL da foto..."
-                    />
-                    <Button type="button" variant="outline" onClick={addPhoto}>
-                      Adicionar
-                    </Button>
-                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full gap-2"
+                  >
+                    <ImagePlus className="h-4 w-4" />
+                    Selecionar Fotos
+                  </Button>
+                  
+                  {/* Preview of already uploaded photos */}
                   {formData.photos.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {formData.photos.map((url, index) => (
-                        <div key={index} className="relative">
-                          <img 
-                            src={url} 
-                            alt={`Foto ${index + 1}`} 
-                            className="h-16 w-20 object-cover rounded"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removePhoto(index)}
-                            className="absolute -top-1 -right-1 h-5 w-5 bg-destructive text-destructive-foreground rounded-full text-xs flex items-center justify-center"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Fotos salvas:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.photos.map((url, index) => (
+                          <div key={index} className="relative group">
+                            <img 
+                              src={url} 
+                              alt={`Foto ${index + 1}`} 
+                              className="h-16 w-20 object-cover rounded border"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removePhoto(index)}
+                              className="absolute -top-1 -right-1 h-5 w-5 bg-destructive text-destructive-foreground rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Preview of new photos to upload */}
+                  {previewPhotos.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Novas fotos ({previewPhotos.length}):</p>
+                      <div className="flex flex-wrap gap-2">
+                        {previewPhotos.map((photo, index) => (
+                          <div key={index} className="relative group">
+                            <img 
+                              src={photo.preview} 
+                              alt={`Nova foto ${index + 1}`} 
+                              className="h-16 w-20 object-cover rounded border-2 border-primary/50"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removePreviewPhoto(index)}
+                              className="absolute -top-1 -right-1 h-5 w-5 bg-destructive text-destructive-foreground rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
 
                 <Button 
                   type="submit" 
-                  className="w-full"
-                  disabled={createCarMutation.isPending || updateCarMutation.isPending}
+                  className="w-full gap-2"
+                  disabled={createCarMutation.isPending || updateCarMutation.isPending || isUploading}
                 >
-                  {createCarMutation.isPending || updateCarMutation.isPending 
-                    ? "Salvando..." 
-                    : editingCar ? "Salvar Alterações" : "Cadastrar Veículo"}
+                  {isUploading ? (
+                    <>
+                      <Upload className="h-4 w-4 animate-pulse" />
+                      Enviando fotos...
+                    </>
+                  ) : createCarMutation.isPending || updateCarMutation.isPending ? (
+                    "Salvando..."
+                  ) : editingCar ? (
+                    "Salvar Alterações"
+                  ) : (
+                    "Cadastrar Veículo"
+                  )}
                 </Button>
               </form>
             </DialogContent>
