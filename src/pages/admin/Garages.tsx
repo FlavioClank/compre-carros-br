@@ -57,7 +57,7 @@ export default function AdminGarages() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("garages")
-        .select("*, profiles:user_id(email, name)")
+        .select("*, profiles(email, name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
