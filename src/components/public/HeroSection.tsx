@@ -75,13 +75,13 @@ export function HeroSection() {
           {/* Headline */}
           <div className="text-center mb-8">
             <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 animate-slide-up leading-[1.1] tracking-tight">
-              Compra e venda de carros
-              <span className="block text-gradient mt-2">com confiança e rapidez</span>
+              Sua vitrine de veículos
+              <span className="block text-gradient mt-2">seminovos verificados</span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto animate-slide-up stagger-1 leading-relaxed">
-              Encontre os melhores veículos seminovos com total segurança. Atendimento personalizado via WhatsApp em até 24 horas.
+              Anuncie e encontre veículos de garagens verificadas em um só lugar. Atendimento personalizado via WhatsApp em até 24 horas.
             </p>
           </div>
 
@@ -123,8 +123,8 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto animate-fade-in stagger-4">
+          {/* Stats Cards - Hidden on mobile */}
+          <div className="hidden md:grid md:grid-cols-3 gap-4 max-w-3xl mx-auto animate-fade-in stagger-4">
             <div className="feature-card text-center group">
               <p className="font-display text-4xl md:text-5xl font-bold text-gradient mb-2">{totalCars}+</p>
               <p className="text-muted-foreground">Veículos Disponíveis</p>
