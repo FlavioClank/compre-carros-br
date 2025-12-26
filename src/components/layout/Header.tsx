@@ -32,28 +32,24 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full glass border-b border-border/50">
+    <header className="sticky top-0 z-50 w-full glass border-b border-border/30">
       <div className="container flex h-16 items-center justify-between">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+        <Link to="/" className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary glow-primary">
             <Car className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="font-display text-xl font-bold text-primary">
+          <span className="font-display text-xl font-bold text-foreground">
             {SITE_NAME}
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               to={link.href}
-              className={`text-sm font-medium transition-colors hover:text-accent ${
-                isActive(link.href)
-                  ? "text-accent"
-                  : "text-muted-foreground"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive(link.href) ? "text-primary" : "text-muted-foreground"
               }`}
             >
               {link.label}
@@ -61,19 +57,17 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Actions */}
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
             size="sm"
-            className="hidden md:flex items-center gap-2"
+            className="hidden md:flex items-center gap-2 border-border/50 hover:border-primary/50 hover:bg-primary/5"
             onClick={handleLoginClick}
           >
             <User className="h-4 w-4" />
             {user ? "Painel" : "Entrar"}
           </Button>
 
-          {/* Mobile Menu Button */}
           <Button
             variant="ghost"
             size="icon"
@@ -85,18 +79,17 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div className="md:hidden border-t border-border animate-fade-in">
+        <div className="md:hidden border-t border-border/30 animate-fade-in bg-background/95 backdrop-blur-xl">
           <nav className="container py-4 flex flex-col gap-2">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
                   isActive(link.href)
-                    ? "bg-accent/10 text-accent"
-                    : "text-muted-foreground hover:bg-muted"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-card"
                 }`}
                 onClick={() => setIsMenuOpen(false)}
               >

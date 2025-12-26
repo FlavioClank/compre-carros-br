@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, ChevronRight } from "lucide-react";
+import { Search, ChevronRight, Shield, Zap, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -40,77 +40,109 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section className="relative min-h-[60vh] md:min-h-[70vh] flex items-center hero-gradient overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+    <section className="relative min-h-[85vh] md:min-h-[90vh] flex items-center hero-gradient overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Gradient orbs */}
+        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/20 rounded-full blur-[100px] animate-pulse-glow" />
+        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-accent/15 rounded-full blur-[80px] animate-pulse-glow" style={{ animationDelay: "1.5s" }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px]" />
+        
+        {/* Grid pattern */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
+          backgroundSize: '60px 60px',
         }} />
       </div>
 
-      {/* Floating Elements */}
-      <div className="absolute top-1/4 left-10 w-24 h-24 bg-accent/20 rounded-full blur-3xl animate-float" />
-      <div className="absolute bottom-1/4 right-10 w-32 h-32 bg-accent/10 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
-
       <div className="container relative z-10 py-12 md:py-20">
-        <div className="max-w-4xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 mb-6 animate-fade-in">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
-            </span>
-            <span className="text-sm text-white/80">Plataforma líder em veículos seminovos</span>
+        <div className="max-w-5xl mx-auto">
+          {/* Top Badge */}
+          <div className="flex justify-center mb-8 animate-fade-in">
+            <div className="inline-flex items-center gap-3 bg-card/50 backdrop-blur-xl border border-border/50 rounded-full px-5 py-2.5">
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent"></span>
+                </span>
+                <span className="text-sm font-medium text-accent">ONLINE</span>
+              </div>
+              <div className="w-px h-4 bg-border" />
+              <span className="text-sm text-muted-foreground">Plataforma líder em veículos seminovos</span>
+            </div>
           </div>
 
           {/* Headline */}
-          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 animate-slide-up leading-tight">
-            Seu próximo carro
-            <span className="block text-gradient bg-gradient-to-r from-accent to-orange-400">está aqui</span>
-          </h1>
+          <div className="text-center mb-8">
+            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 animate-slide-up leading-[1.1] tracking-tight">
+              Compra e venda de carros
+              <span className="block text-gradient mt-2">com confiança e rapidez</span>
+            </h1>
 
-          {/* Subtitle */}
-          <p className="text-lg md:text-xl text-white/70 mb-8 max-w-2xl mx-auto animate-slide-up stagger-1">
-            Encontre os melhores veículos seminovos com total segurança e transparência. Atendimento personalizado via WhatsApp.
-          </p>
+            {/* Subtitle */}
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto animate-slide-up stagger-1 leading-relaxed">
+              Encontre os melhores veículos seminovos com total segurança. Atendimento personalizado via WhatsApp em até 24 horas.
+            </p>
+          </div>
 
-          {/* CTA Button */}
-          <div className="animate-slide-up stagger-2">
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 animate-slide-up stagger-2">
             <Button
               onClick={() => navigate("/carros")}
               size="lg"
-              className="btn-hero text-lg h-14 px-8 gap-2"
+              className="btn-hero text-lg h-14 px-8 gap-3 w-full sm:w-auto"
             >
               <Search className="h-5 w-5" />
               Ver {totalCars} veículos disponíveis
               <ChevronRight className="h-5 w-5" />
             </Button>
+            <Button
+              onClick={() => navigate("/marcas")}
+              variant="outline"
+              size="lg"
+              className="btn-hero-outline h-14 px-8 gap-2 w-full sm:w-auto"
+            >
+              <Car className="h-5 w-5" />
+              Explorar marcas
+            </Button>
           </div>
 
-          {/* Stats */}
-          <div className="mt-12 grid grid-cols-3 gap-4 max-w-md mx-auto animate-fade-in stagger-3">
-            <div className="text-center">
-              <p className="font-display text-3xl md:text-4xl font-bold text-white">{totalCars}+</p>
-              <p className="text-sm text-white/60">Veículos</p>
+          {/* Feature Pills */}
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-16 animate-fade-in stagger-3">
+            <div className="flex items-center gap-2 bg-card/30 backdrop-blur-sm border border-border/30 rounded-full px-4 py-2">
+              <Shield className="h-4 w-4 text-accent" />
+              <span className="text-sm text-foreground/80">100% Verificados</span>
             </div>
-            <div className="text-center border-x border-white/10">
-              <p className="font-display text-3xl md:text-4xl font-bold text-white">100%</p>
-              <p className="text-sm text-white/60">Verificados</p>
+            <div className="flex items-center gap-2 bg-card/30 backdrop-blur-sm border border-border/30 rounded-full px-4 py-2">
+              <Zap className="h-4 w-4 text-primary" />
+              <span className="text-sm text-foreground/80">Resposta em 24h</span>
             </div>
-            <div className="text-center">
-              <p className="font-display text-3xl md:text-4xl font-bold text-white">24h</p>
-              <p className="text-sm text-white/60">Resposta</p>
+            <div className="flex items-center gap-2 bg-card/30 backdrop-blur-sm border border-border/30 rounded-full px-4 py-2">
+              <Car className="h-4 w-4 text-warning" />
+              <span className="text-sm text-foreground/80">{totalCars}+ Veículos</span>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto animate-fade-in stagger-4">
+            <div className="feature-card text-center group">
+              <p className="font-display text-4xl md:text-5xl font-bold text-gradient mb-2">{totalCars}+</p>
+              <p className="text-muted-foreground">Veículos Disponíveis</p>
+            </div>
+            <div className="feature-card text-center group">
+              <p className="font-display text-4xl md:text-5xl font-bold text-gradient-accent mb-2">100%</p>
+              <p className="text-muted-foreground">Veículos Verificados</p>
+            </div>
+            <div className="feature-card text-center group">
+              <p className="font-display text-4xl md:text-5xl font-bold text-gradient-gold mb-2">24h</p>
+              <p className="text-muted-foreground">Tempo de Resposta</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Wave Divider */}
-      <div className="absolute bottom-0 left-0 right-0">
-        <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-          <path d="M0 120L60 105C120 90 240 60 360 45C480 30 600 30 720 37.5C840 45 960 60 1080 67.5C1200 75 1320 75 1380 75L1440 75V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="hsl(var(--background))"/>
-        </svg>
-      </div>
+      {/* Bottom gradient fade */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
     </section>
   );
 }
