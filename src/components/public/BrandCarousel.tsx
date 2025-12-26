@@ -116,9 +116,6 @@ export function BrandCarousel() {
 
   return (
     <section className="py-12 md:py-16 bg-background relative overflow-hidden">
-      {/* Background accent */}
-      <div className="absolute inset-0 mesh-gradient opacity-50" />
-      
       <div className="container relative">
         {/* Header */}
         <div className="text-center mb-8">
@@ -130,45 +127,41 @@ export function BrandCarousel() {
 
         {/* Carousel Container */}
         <div className="relative">
-          {/* Gradient Masks */}
-          <div className="absolute left-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-          
           {/* Embla Carousel */}
           <div className="overflow-hidden cursor-grab active:cursor-grabbing" ref={emblaRef}>
-            <div className="flex gap-4">
+            <div className="flex gap-4 px-4">
               {displayBrands.map((brand, index) => (
                 <Link
                   key={`${brand.id}-${index}`}
                   to={`/carros?marca=${brand.id}`}
                   onClick={(e) => handleClick(e, brand.id)}
-                  className="flex-shrink-0 w-28 md:w-32 h-20 md:h-24 bg-card/80 rounded-2xl border border-border/50 flex flex-col items-center justify-center p-3 md:p-4 hover:border-primary/50 hover:bg-card transition-all duration-300 group/brand hover:shadow-lg hover:shadow-primary/5 select-none"
+                  className="flex-shrink-0 w-28 md:w-36 h-24 md:h-28 bg-white rounded-2xl border border-gray-200 flex flex-col items-center justify-center p-4 hover:border-primary hover:shadow-lg transition-all duration-300 group/brand select-none"
                   draggable={false}
                 >
                   {brand.logo_url ? (
                     <img
                       src={brand.logo_url}
                       alt={brand.name}
-                      className="max-w-full max-h-10 md:max-h-12 object-contain group-hover/brand:scale-110 transition-transform duration-300 brightness-0 invert opacity-70 group-hover/brand:opacity-100"
+                      className="max-w-full max-h-12 md:max-h-14 object-contain group-hover/brand:scale-105 transition-transform duration-300"
                       draggable={false}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = "none";
                         const parent = target.parentElement;
-                        if (parent && !parent.querySelector("span")) {
+                        if (parent && !parent.querySelector("span.brand-fallback")) {
                           const span = document.createElement("span");
-                          span.className = "text-sm font-semibold text-foreground text-center";
+                          span.className = "brand-fallback text-sm font-bold text-gray-800 text-center";
                           span.textContent = brand.name;
                           parent.appendChild(span);
                         }
                       }}
                     />
                   ) : (
-                    <span className="text-sm font-semibold text-foreground text-center">
+                    <span className="text-sm font-bold text-gray-800 text-center">
                       {brand.name}
                     </span>
                   )}
-                  <span className="text-xs text-muted-foreground mt-1.5 opacity-0 group-hover/brand:opacity-100 transition-opacity truncate max-w-full">
+                  <span className="text-xs font-medium text-gray-600 mt-2 truncate max-w-full">
                     {brand.name}
                   </span>
                 </Link>
