@@ -34,7 +34,6 @@ export function FeaturedCars() {
   useEffect(() => {
     const fetchCars = async () => {
       try {
-        // Fetch featured cars first, then regular cars
         const { data, error } = await supabase
           .from("cars")
           .select(`
@@ -49,7 +48,6 @@ export function FeaturedCars() {
         if (error) throw error;
         setCars(data || []);
 
-        // Get total count
         const { count } = await supabase
           .from("cars")
           .select("*", { count: "exact", head: true })
@@ -67,55 +65,52 @@ export function FeaturedCars() {
   }, []);
 
   return (
-    <section className="py-16 bg-background">
-      <div className="container">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8 gap-4">
+    <section className="py-16 md:py-24 bg-background relative">
+      <div className="absolute inset-0 mesh-gradient opacity-30" />
+      
+      <div className="container relative">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-10 gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="h-5 w-5 text-accent" />
-              <span className="text-sm font-medium text-accent">Veículos em Destaque</span>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+              <span className="text-sm font-semibold text-primary uppercase tracking-wider">Veículos em Destaque</span>
             </div>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-              Encontre seu próximo carro
+              Encontre seu <span className="text-gradient">próximo carro</span>
             </h2>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2 max-w-xl">
               Seleção de veículos verificados com os melhores preços do mercado
             </p>
           </div>
           <Link to="/carros">
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2 border-border/50 hover:border-primary/50">
               Ver todos ({totalCars})
               <ChevronRight className="h-4 w-4" />
             </Button>
           </Link>
         </div>
 
-        {/* Cars List - Single Column */}
         <div className="space-y-4">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-48 w-full rounded-xl" />
+              <Skeleton key={i} className="h-52 w-full rounded-2xl bg-card" />
             ))
           ) : cars.length > 0 ? (
             cars.map((car) => (
               <CarCardSingle key={car.id} car={car} />
             ))
           ) : (
-            <div className="text-center py-16 bg-muted/30 rounded-2xl">
-              <p className="text-muted-foreground text-lg">
-                Nenhum veículo disponível no momento
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Volte em breve para ver novas ofertas
-              </p>
+            <div className="text-center py-20 bg-card/50 rounded-2xl border border-border/50">
+              <p className="text-muted-foreground text-lg">Nenhum veículo disponível no momento</p>
+              <p className="text-sm text-muted-foreground mt-2">Volte em breve para ver novas ofertas</p>
             </div>
           )}
         </div>
 
-        {/* View All Button */}
         {cars.length > 0 && (
-          <div className="text-center mt-8">
+          <div className="text-center mt-10">
             <Link to="/carros">
               <Button size="lg" className="btn-hero gap-2">
                 Ver todos os {totalCars} veículos
