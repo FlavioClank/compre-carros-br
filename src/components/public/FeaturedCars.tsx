@@ -65,56 +65,51 @@ export function FeaturedCars() {
   }, []);
 
   return (
-    <section className="py-16 md:py-24 bg-background relative">
-      <div className="absolute inset-0 mesh-gradient opacity-30" />
-      
-      <div className="container relative">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-10 gap-4">
+    <section className="py-6 md:py-12 bg-background">
+      <div className="container">
+        {/* Header - Compact */}
+        <div className="flex items-center justify-between mb-4 md:mb-6">
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Sparkles className="h-5 w-5 text-primary" />
-              </div>
-              <span className="text-sm font-semibold text-primary uppercase tracking-wider">Veículos em Destaque</span>
+            <div className="flex items-center gap-1.5 mb-1">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-xs font-semibold text-primary uppercase tracking-wider">Destaques</span>
             </div>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-              Encontre seu <span className="text-gradient">próximo carro</span>
+            <h2 className="font-display text-xl md:text-2xl font-bold text-foreground">
+              Veículos <span className="text-gradient">disponíveis</span>
             </h2>
-            <p className="text-muted-foreground mt-2 max-w-xl">
-              Seleção de veículos verificados com os melhores preços do mercado
-            </p>
           </div>
           <Link to="/carros">
-            <Button variant="outline" className="gap-2 border-border/50 hover:border-primary/50">
+            <Button variant="outline" size="sm" className="gap-1 text-xs">
               Ver todos ({totalCars})
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3 w-3" />
             </Button>
           </Link>
         </div>
 
-        <div className="space-y-4">
+        {/* Cards - Compact spacing */}
+        <div className="space-y-2 md:space-y-3">
           {isLoading ? (
-            Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-52 w-full rounded-2xl bg-card" />
+            Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 md:h-32 w-full rounded-xl bg-card" />
             ))
           ) : cars.length > 0 ? (
             cars.map((car) => (
               <CarCardSingle key={car.id} car={car} />
             ))
           ) : (
-            <div className="text-center py-20 bg-card/50 rounded-2xl border border-border/50">
-              <p className="text-muted-foreground text-lg">Nenhum veículo disponível no momento</p>
-              <p className="text-sm text-muted-foreground mt-2">Volte em breve para ver novas ofertas</p>
+            <div className="text-center py-10 bg-card/50 rounded-xl border border-border/50">
+              <p className="text-muted-foreground text-sm">Nenhum veículo disponível</p>
+              <p className="text-xs text-muted-foreground mt-1">Volte em breve</p>
             </div>
           )}
         </div>
 
         {cars.length > 0 && (
-          <div className="text-center mt-10">
+          <div className="text-center mt-6">
             <Link to="/carros">
-              <Button size="lg" className="btn-hero gap-2">
+              <Button size="sm" className="btn-hero gap-1.5">
                 Ver todos os {totalCars} veículos
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
