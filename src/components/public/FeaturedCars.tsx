@@ -65,32 +65,32 @@ export function FeaturedCars() {
   }, []);
 
   return (
-    <section className="py-6 md:py-12 bg-background">
+    <section className="py-4 md:py-12 bg-background">
       <div className="container">
-        {/* Header - Compact */}
-        <div className="flex items-center justify-between mb-4 md:mb-6">
+        {/* Header - Larger on mobile */}
+        <div className="flex items-center justify-between mb-3 md:mb-6">
           <div>
             <div className="flex items-center gap-1.5 mb-1">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-xs font-semibold text-primary uppercase tracking-wider">Destaques</span>
+              <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+              <span className="text-xs md:text-sm font-semibold text-primary uppercase tracking-wider">Destaques</span>
             </div>
             <h2 className="font-display text-xl md:text-2xl font-bold text-foreground">
               Veículos <span className="text-gradient">disponíveis</span>
             </h2>
           </div>
           <Link to="/carros">
-            <Button variant="outline" size="sm" className="gap-1 text-xs">
+            <Button variant="outline" size="sm" className="gap-1 text-xs md:text-sm">
               Ver todos ({totalCars})
-              <ChevronRight className="h-3 w-3" />
+              <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
             </Button>
           </Link>
         </div>
 
-        {/* Cards - Compact spacing */}
-        <div className="space-y-2 md:space-y-3">
+        {/* Cards - Proper spacing */}
+        <div className="space-y-3 md:space-y-4">
           {isLoading ? (
             Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 md:h-32 w-full rounded-xl bg-card" />
+              <Skeleton key={i} className="h-28 md:h-40 w-full rounded-xl bg-card" />
             ))
           ) : cars.length > 0 ? (
             cars.map((car) => (
