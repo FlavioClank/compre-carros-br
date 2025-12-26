@@ -115,32 +115,36 @@ export function BrandCarousel() {
   const displayBrands = [...brands, ...brands, ...brands];
 
   return (
-    <section className="py-4 md:py-8 bg-background overflow-hidden">
+    <section className="py-3 md:py-8 bg-background overflow-hidden relative z-10">
       <div className="container">
-        {/* Header - Compact */}
+        {/* Header - Larger on mobile */}
         <div className="text-center mb-3 md:mb-5">
-          <h2 className="font-display text-lg md:text-2xl font-bold text-foreground mb-1">
+          <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-1">
             Navegue por <span className="text-gradient">Marca</span>
           </h2>
-          <p className="text-xs md:text-sm text-muted-foreground">Encontre veículos das melhores marcas</p>
+          <p className="text-sm md:text-sm text-muted-foreground">Encontre veículos das melhores marcas</p>
         </div>
 
-        {/* Carousel Container - Clean, no overlays */}
-        <div className="overflow-hidden cursor-grab active:cursor-grabbing" ref={emblaRef}>
-          <div className="flex gap-2 md:gap-4">
+        {/* Carousel Container - Stabilized with will-change and backface-visibility */}
+        <div 
+          className="overflow-hidden cursor-grab active:cursor-grabbing" 
+          ref={emblaRef}
+        >
+          <div className="flex gap-3 md:gap-4" style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}>
             {displayBrands.map((brand, index) => (
               <Link
                 key={`${brand.id}-${index}`}
                 to={`/carros?marca=${brand.id}`}
                 onClick={(e) => handleClick(e, brand.id)}
-                className="flex-shrink-0 w-20 h-20 md:w-36 md:h-28 rounded-xl border border-border bg-card flex flex-col items-center justify-center p-2 md:p-3 shadow-sm hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-200 select-none"
+                className="flex-shrink-0 w-[5.5rem] h-[5.5rem] md:w-36 md:h-28 rounded-xl border border-border bg-card flex flex-col items-center justify-center p-2 md:p-3 shadow-sm hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-200 select-none"
                 draggable={false}
+                style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
               >
                 {brand.logo_url ? (
                   <img
                     src={brand.logo_url}
                     alt={brand.name}
-                    className="max-w-full max-h-8 md:max-h-12 object-contain flex-shrink-0"
+                    className="max-w-[80%] max-h-9 md:max-h-12 object-contain flex-shrink-0"
                     draggable={false}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
@@ -155,11 +159,11 @@ export function BrandCarousel() {
                     }}
                   />
                 ) : (
-                  <span className="text-xs md:text-sm font-bold text-foreground text-center">
+                  <span className="text-xs md:text-sm font-bold text-foreground text-center px-1 truncate w-full">
                     {brand.name}
                   </span>
                 )}
-                <span className="text-[10px] md:text-xs font-medium text-muted-foreground mt-1.5 text-center leading-tight px-1 w-full overflow-visible whitespace-nowrap">
+                <span className="text-[9px] md:text-xs font-medium text-muted-foreground mt-1.5 text-center leading-tight px-1 w-full truncate">
                   {brand.name}
                 </span>
               </Link>
