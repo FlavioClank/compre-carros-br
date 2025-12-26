@@ -76,8 +76,10 @@ export type Database = {
           brand_id: string
           code: string
           color: string
+          condition: string | null
           created_at: string
           description: string | null
+          doors: number | null
           fuel: Database["public"]["Enums"]["fuel_type"]
           garage_id: string
           id: string
@@ -98,8 +100,10 @@ export type Database = {
           brand_id: string
           code: string
           color: string
+          condition?: string | null
           created_at?: string
           description?: string | null
+          doors?: number | null
           fuel: Database["public"]["Enums"]["fuel_type"]
           garage_id: string
           id?: string
@@ -120,8 +124,10 @@ export type Database = {
           brand_id?: string
           code?: string
           color?: string
+          condition?: string | null
           created_at?: string
           description?: string | null
+          doors?: number | null
           fuel?: Database["public"]["Enums"]["fuel_type"]
           garage_id?: string
           id?: string

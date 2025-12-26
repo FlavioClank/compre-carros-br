@@ -12,6 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { FUEL_LABELS, TRANSMISSION_LABELS } from "@/lib/constants";
 
@@ -33,6 +40,8 @@ interface Car {
   price: number;
   photos: string[];
   status: string;
+  doors: number | null;
+  condition: string | null;
   brands: {
     name: string;
     logo_url: string | null;
@@ -51,12 +60,38 @@ const priceRanges = [
   { label: "Acima de R$ 200.000", min: 200000, max: 99999999 },
 ];
 
+const COLORS = [
+  "Preto",
+  "Branco",
+  "Prata",
+  "Cinza",
+  "Vermelho",
+  "Azul",
+  "Verde",
+  "Amarelo",
+  "Laranja",
+  "Marrom",
+  "Bege",
+  "Dourado",
+  "Vinho",
+];
+
+const DOORS_OPTIONS = [
+  { value: "2", label: "2 Portas" },
+  { value: "4", label: "4 Portas" },
+];
+
+const CONDITION_OPTIONS = [
+  { value: "new", label: "Novo" },
+  { value: "used", label: "Usado" },
+];
+
 export default function Cars() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [cars, setCars] = useState<Car[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showFilters, setShowFilters] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Filters
   const [search, setSearch] = useState(searchParams.get("busca") || "");
@@ -66,6 +101,9 @@ export default function Cars() {
   const [priceRange, setPriceRange] = useState(searchParams.get("preco") || "");
   const [transmission, setTransmission] = useState(searchParams.get("cambio") || "");
   const [fuel, setFuel] = useState(searchParams.get("combustivel") || "");
+  const [color, setColor] = useState(searchParams.get("cor") || "");
+  const [doors, setDoors] = useState(searchParams.get("portas") || "");
+  const [condition, setCondition] = useState(searchParams.get("condicao") || "");
 
   useEffect(() => {
     const fetchBrands = async () => {
@@ -85,7 +123,7 @@ export default function Cars() {
       let query = supabase
         .from("cars")
         .select(`
-          id, code, model, year, version, mileage, transmission, fuel, color, price, photos, status,
+          id, code, model, year, version, mileage, transmission, fuel, color, price, photos, status, doors, condition,
           brands (name, logo_url)
         `)
         .eq("status", "available")
@@ -119,6 +157,18 @@ export default function Cars() {
         query = query.eq("fuel", fuel as "gasoline" | "ethanol" | "flex" | "diesel" | "electric" | "hybrid");
       }
 
+      if (color) {
+        query = query.eq("color", color);
+      }
+
+      if (doors) {
+        query = query.eq("doors", parseInt(doors));
+      }
+
+      if (condition) {
+        query = query.eq("condition", condition);
+      }
+
       const { data, error } = await query;
 
       if (error) {
@@ -149,7 +199,7 @@ export default function Cars() {
     };
 
     fetchCars();
-  }, [search, brand, yearFrom, yearTo, priceRange, transmission, fuel]);
+  }, [search, brand, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition]);
 
   const clearFilters = () => {
     setSearch("");
@@ -159,17 +209,215 @@ export default function Cars() {
     setPriceRange("");
     setTransmission("");
     setFuel("");
+    setColor("");
+    setDoors("");
+    setCondition("");
     setSearchParams({});
   };
 
-  const hasFilters = search || brand || yearFrom || yearTo || priceRange || transmission || fuel;
+  const hasFilters = search || brand || yearFrom || yearTo || priceRange || transmission || fuel || color || doors || condition;
+
+  const activeFiltersCount = [brand, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition].filter(Boolean).length;
+
+  const FilterContent = () => (
+    <div className="space-y-4">
+      {/* Brand */}
+      <div>
+        <label className="text-sm font-medium text-foreground mb-2 block">
+          Marca
+        </label>
+        <Select value={brand || "all"} onValueChange={(v) => setBrand(v === "all" ? "" : v)}>
+          <SelectTrigger className="bg-background">
+            <SelectValue placeholder="Todas" />
+          </SelectTrigger>
+          <SelectContent className="bg-background border-border">
+            <SelectItem value="all">Todas</SelectItem>
+            {brands.map((b) => (
+              <SelectItem key={b.id} value={b.name}>
+                {b.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Year From */}
+      <div>
+        <label className="text-sm font-medium text-foreground mb-2 block">
+          Ano de
+        </label>
+        <Select value={yearFrom || "all"} onValueChange={(v) => setYearFrom(v === "all" ? "" : v)}>
+          <SelectTrigger className="bg-background">
+            <SelectValue placeholder="Qualquer" />
+          </SelectTrigger>
+          <SelectContent className="bg-background border-border">
+            <SelectItem value="all">Qualquer</SelectItem>
+            {years.map((y) => (
+              <SelectItem key={y} value={y.toString()}>
+                {y}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Year To */}
+      <div>
+        <label className="text-sm font-medium text-foreground mb-2 block">
+          Ano até
+        </label>
+        <Select value={yearTo || "all"} onValueChange={(v) => setYearTo(v === "all" ? "" : v)}>
+          <SelectTrigger className="bg-background">
+            <SelectValue placeholder="Qualquer" />
+          </SelectTrigger>
+          <SelectContent className="bg-background border-border">
+            <SelectItem value="all">Qualquer</SelectItem>
+            {years.map((y) => (
+              <SelectItem key={y} value={y.toString()}>
+                {y}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Price Range */}
+      <div>
+        <label className="text-sm font-medium text-foreground mb-2 block">
+          Faixa de Preço
+        </label>
+        <Select value={priceRange || "all"} onValueChange={(v) => setPriceRange(v === "all" ? "" : v)}>
+          <SelectTrigger className="bg-background">
+            <SelectValue placeholder="Qualquer" />
+          </SelectTrigger>
+          <SelectContent className="bg-background border-border">
+            <SelectItem value="all">Qualquer</SelectItem>
+            {priceRanges.map((r) => (
+              <SelectItem key={r.label} value={r.label}>
+                {r.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Transmission */}
+      <div>
+        <label className="text-sm font-medium text-foreground mb-2 block">
+          Câmbio
+        </label>
+        <Select value={transmission || "all"} onValueChange={(v) => setTransmission(v === "all" ? "" : v)}>
+          <SelectTrigger className="bg-background">
+            <SelectValue placeholder="Qualquer" />
+          </SelectTrigger>
+          <SelectContent className="bg-background border-border">
+            <SelectItem value="all">Qualquer</SelectItem>
+            {Object.entries(TRANSMISSION_LABELS).map(([key, label]) => (
+              <SelectItem key={key} value={key}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Fuel */}
+      <div>
+        <label className="text-sm font-medium text-foreground mb-2 block">
+          Combustível
+        </label>
+        <Select value={fuel || "all"} onValueChange={(v) => setFuel(v === "all" ? "" : v)}>
+          <SelectTrigger className="bg-background">
+            <SelectValue placeholder="Qualquer" />
+          </SelectTrigger>
+          <SelectContent className="bg-background border-border">
+            <SelectItem value="all">Qualquer</SelectItem>
+            {Object.entries(FUEL_LABELS).map(([key, label]) => (
+              <SelectItem key={key} value={key}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Color */}
+      <div>
+        <label className="text-sm font-medium text-foreground mb-2 block">
+          Cor
+        </label>
+        <Select value={color || "all"} onValueChange={(v) => setColor(v === "all" ? "" : v)}>
+          <SelectTrigger className="bg-background">
+            <SelectValue placeholder="Qualquer" />
+          </SelectTrigger>
+          <SelectContent className="bg-background border-border">
+            <SelectItem value="all">Qualquer</SelectItem>
+            {COLORS.map((c) => (
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Doors */}
+      <div>
+        <label className="text-sm font-medium text-foreground mb-2 block">
+          Portas
+        </label>
+        <Select value={doors || "all"} onValueChange={(v) => setDoors(v === "all" ? "" : v)}>
+          <SelectTrigger className="bg-background">
+            <SelectValue placeholder="Qualquer" />
+          </SelectTrigger>
+          <SelectContent className="bg-background border-border">
+            <SelectItem value="all">Qualquer</SelectItem>
+            {DOORS_OPTIONS.map((d) => (
+              <SelectItem key={d.value} value={d.value}>
+                {d.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Condition */}
+      <div>
+        <label className="text-sm font-medium text-foreground mb-2 block">
+          Condição
+        </label>
+        <Select value={condition || "all"} onValueChange={(v) => setCondition(v === "all" ? "" : v)}>
+          <SelectTrigger className="bg-background">
+            <SelectValue placeholder="Qualquer" />
+          </SelectTrigger>
+          <SelectContent className="bg-background border-border">
+            <SelectItem value="all">Qualquer</SelectItem>
+            {CONDITION_OPTIONS.map((c) => (
+              <SelectItem key={c.value} value={c.value}>
+                {c.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {hasFilters && (
+        <div className="pt-4 border-t border-border">
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="w-full gap-2">
+            <X className="h-4 w-4" />
+            Limpar filtros
+          </Button>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <PublicLayout>
-      <section className="py-8 md:py-12 bg-muted/30">
+      <section className="py-8 md:py-12 bg-muted/30 min-h-screen">
         <div className="container">
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-6">
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
               Veículos Disponíveis
             </h1>
@@ -178,173 +426,56 @@ export default function Cars() {
             </p>
           </div>
 
-          {/* Search & Filter Toggle */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Buscar por marca, modelo ou código..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-12 h-12 bg-card border-border"
-              />
+          {/* Sticky Search & Filter Bar */}
+          <div className="sticky top-0 z-40 -mx-4 px-4 py-4 bg-background/80 backdrop-blur-md border-b border-border/50 shadow-sm mb-6">
+            <div className="flex flex-col md:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Buscar por marca, modelo ou código..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-12 h-12 bg-card border-border"
+                />
+              </div>
+              
+              {/* Filter Button with Sheet for Mobile/All */}
+              <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="h-12 gap-2 shrink-0"
+                  >
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Filtros
+                    {activeFiltersCount > 0 && (
+                      <span className="h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center font-medium">
+                        {activeFiltersCount}
+                      </span>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[320px] sm:w-[380px] overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle className="text-left">Filtros</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-6">
+                    <FilterContent />
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
-            <Button
-              variant="outline"
-              className="h-12 gap-2"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              Filtros
-              {hasFilters && (
-                <span className="h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center">
-                  !
+
+            {/* Results Count */}
+            <p className="text-sm text-muted-foreground mt-3">
+              {isLoading ? "Carregando..." : (
+                <span className="font-medium">
+                  Resultados encontrados ({cars.length})
                 </span>
               )}
-            </Button>
+            </p>
           </div>
-
-          {/* Filters Panel */}
-          {showFilters && (
-            <div className="bg-card rounded-xl border border-border p-6 mb-6 animate-fade-in">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-                {/* Brand */}
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Marca
-                  </label>
-                <Select value={brand || "all"} onValueChange={(v) => setBrand(v === "all" ? "" : v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      {brands.map((b) => (
-                        <SelectItem key={b.id} value={b.name}>
-                          {b.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Year From */}
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Ano de
-                  </label>
-                <Select value={yearFrom || "all"} onValueChange={(v) => setYearFrom(v === "all" ? "" : v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Qualquer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Qualquer</SelectItem>
-                      {years.map((y) => (
-                        <SelectItem key={y} value={y.toString()}>
-                          {y}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Year To */}
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Ano até
-                  </label>
-                <Select value={yearTo || "all"} onValueChange={(v) => setYearTo(v === "all" ? "" : v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Qualquer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Qualquer</SelectItem>
-                      {years.map((y) => (
-                        <SelectItem key={y} value={y.toString()}>
-                          {y}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Price Range */}
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Faixa de Preço
-                  </label>
-                <Select value={priceRange || "all"} onValueChange={(v) => setPriceRange(v === "all" ? "" : v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Qualquer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Qualquer</SelectItem>
-                      {priceRanges.map((r) => (
-                        <SelectItem key={r.label} value={r.label}>
-                          {r.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Transmission */}
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Câmbio
-                  </label>
-                <Select value={transmission || "all"} onValueChange={(v) => setTransmission(v === "all" ? "" : v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Qualquer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Qualquer</SelectItem>
-                      {Object.entries(TRANSMISSION_LABELS).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Fuel */}
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Combustível
-                  </label>
-                <Select value={fuel || "all"} onValueChange={(v) => setFuel(v === "all" ? "" : v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Qualquer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Qualquer</SelectItem>
-                      {Object.entries(FUEL_LABELS).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {hasFilters && (
-                <div className="mt-4 pt-4 border-t border-border flex justify-end">
-                  <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2">
-                    <X className="h-4 w-4" />
-                    Limpar filtros
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Results Count */}
-          <p className="text-sm text-muted-foreground mb-6">
-            {isLoading ? "Carregando..." : `${cars.length} veículo(s) encontrado(s)`}
-          </p>
 
           {/* Cars Grid */}
           {isLoading ? (
