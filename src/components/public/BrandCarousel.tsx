@@ -115,10 +115,10 @@ export function BrandCarousel() {
   const displayBrands = [...brands, ...brands, ...brands];
 
   return (
-    <section className="py-6 md:py-10 bg-background overflow-hidden">
+    <section className="py-4 md:py-8 bg-background overflow-hidden">
       <div className="container">
         {/* Header - Compact */}
-        <div className="text-center mb-4 md:mb-6">
+        <div className="text-center mb-3 md:mb-5">
           <h2 className="font-display text-lg md:text-2xl font-bold text-foreground mb-1">
             Navegue por <span className="text-gradient">Marca</span>
           </h2>
@@ -127,20 +127,20 @@ export function BrandCarousel() {
 
         {/* Carousel Container - Clean, no overlays */}
         <div className="overflow-hidden cursor-grab active:cursor-grabbing" ref={emblaRef}>
-          <div className="flex gap-2 md:gap-3">
+          <div className="flex gap-2 md:gap-4">
             {displayBrands.map((brand, index) => (
               <Link
                 key={`${brand.id}-${index}`}
                 to={`/carros?marca=${brand.id}`}
                 onClick={(e) => handleClick(e, brand.id)}
-                className="flex-shrink-0 w-20 h-16 md:w-28 md:h-20 rounded-xl border border-border bg-card flex flex-col items-center justify-center p-2 shadow-sm hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-200 select-none"
+                className="flex-shrink-0 w-20 h-20 md:w-36 md:h-28 rounded-xl border border-border bg-card flex flex-col items-center justify-center p-2 md:p-3 shadow-sm hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-200 select-none"
                 draggable={false}
               >
                 {brand.logo_url ? (
                   <img
                     src={brand.logo_url}
                     alt={brand.name}
-                    className="max-w-full max-h-8 md:max-h-10 object-contain"
+                    className="max-w-full max-h-8 md:max-h-12 object-contain flex-shrink-0"
                     draggable={false}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
@@ -148,18 +148,18 @@ export function BrandCarousel() {
                       const parent = target.parentElement;
                       if (parent && !parent.querySelector("span.brand-fallback")) {
                         const span = document.createElement("span");
-                        span.className = "brand-fallback text-xs font-bold text-foreground text-center";
+                        span.className = "brand-fallback text-xs md:text-sm font-bold text-foreground text-center";
                         span.textContent = brand.name;
                         parent.appendChild(span);
                       }
                     }}
                   />
                 ) : (
-                  <span className="text-xs font-bold text-foreground text-center">
+                  <span className="text-xs md:text-sm font-bold text-foreground text-center">
                     {brand.name}
                   </span>
                 )}
-                <span className="text-[10px] font-medium text-muted-foreground mt-1 truncate max-w-full">
+                <span className="text-[10px] md:text-xs font-medium text-muted-foreground mt-1.5 text-center leading-tight px-1 w-full overflow-visible whitespace-nowrap">
                   {brand.name}
                 </span>
               </Link>
