@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
@@ -143,8 +144,32 @@ export default function CarDetails() {
     { icon: FileText, label: "Código", value: car.code },
   ];
 
+  // SEO: Generate dynamic page title and meta description
+  const pageTitle = `${brandName} ${car.model} ${car.year}${car.version ? ` ${car.version}` : ""} | CompreCarros`;
+  const transmissionLabel = TRANSMISSION_LABELS[car.transmission] || car.transmission;
+  const fuelLabel = FUEL_LABELS[car.fuel] || car.fuel;
+  const metaDescription = car.description 
+    ? car.description.substring(0, 155) + (car.description.length > 155 ? "..." : "")
+    : `${brandName} ${car.model} ${car.year}, ${transmissionLabel}, ${fuelLabel}, ${formatMileage(car.mileage)}. ${formatPrice(car.price)}. Veículo verificado na CompreCarros.`;
+  const mainPhoto = photos[0] || "/placeholder.svg";
+
   return (
     <PublicLayout>
+      {/* SEO Meta Tags */}
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={metaDescription} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:image" content={mainPhoto} />
+        <meta property="og:type" content="product" />
+        <meta property="og:url" content={shareUrl} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={metaDescription} />
+        <meta name="twitter:image" content={mainPhoto} />
+        <link rel="canonical" href={shareUrl} />
+      </Helmet>
       <div className="container py-8 md:py-12">
         {/* Breadcrumb */}
         <div className="mb-6">
