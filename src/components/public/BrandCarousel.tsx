@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import useEmblaCarousel from "embla-carousel-react";
@@ -13,11 +13,69 @@ interface Brand {
 // Dark logos that need forced inversion + premium metallic shadow for contrast
 const DARK_LOGO_BRANDS = ["toyota", "nissan", "audi", "volkswagen"];
 
+// Memoized brand card to prevent unnecessary re-renders during animation
+const BrandCard = memo(function BrandCard({
+  brand,
+  index,
+  onClickHandler,
+}: {
+  brand: Brand;
+  index: number;
+  onClickHandler: (e: React.MouseEvent) => void;
+}) {
+  const isDark = DARK_LOGO_BRANDS.includes(brand.name.toLowerCase());
+
+  return (
+    <Link
+      to={`/carros?marca=${brand.id}`}
+      onClick={onClickHandler}
+      className="flex-shrink-0 w-[5.5rem] h-[5.5rem] md:w-36 md:h-28 rounded-xl border border-border bg-card flex flex-col items-center justify-center p-2 md:p-3 shadow-sm select-none carousel-slide-optimized"
+      draggable={false}
+    >
+      {brand.logo_url ? (
+        <img
+          src={brand.logo_url}
+          alt={brand.name}
+          width={80}
+          height={48}
+          loading="lazy"
+          decoding="async"
+          className={`max-w-[80%] max-h-9 md:max-h-12 object-contain flex-shrink-0 ${
+            isDark ? "brand-logo-premium-invert" : ""
+          }`}
+          draggable={false}
+        />
+      ) : (
+        <span className="text-xs md:text-sm font-bold text-foreground text-center px-1 truncate w-full">
+          {brand.name}
+        </span>
+      )}
+      <span className="text-[9px] md:text-xs font-medium text-muted-foreground mt-1.5 text-center leading-tight px-1 w-full truncate">
+        {brand.name}
+      </span>
+    </Link>
+  );
+});
+
 export function BrandCarousel() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);
   const dragStartTime = useRef<number>(0);
+  const timeoutRef = useRef<number | null>(null);
+
+  // Memoize AutoScroll plugin instance to prevent recreation
+  const autoScrollPlugin = useMemo(
+    () =>
+      AutoScroll({
+        speed: 1,
+        stopOnInteraction: false,
+        stopOnMouseEnter: true,
+        stopOnFocusIn: false,
+        playOnInit: true,
+      }),
+    []
+  );
 
   const [emblaRef, emblaApi] = useEmblaCarousel(
     {
@@ -26,15 +84,9 @@ export function BrandCarousel() {
       dragFree: true,
       containScroll: false,
       watchDrag: true,
+      skipSnaps: true, // Reduces jitter during fast scrolling
     },
-    [
-      AutoScroll({
-        speed: 1,
-        stopOnInteraction: false,
-        stopOnMouseEnter: true,
-        stopOnFocusIn: false,
-      }),
-    ]
+    [autoScrollPlugin]
   );
 
   useEffect(() => {
@@ -45,7 +97,7 @@ export function BrandCarousel() {
           .select("id, name, logo_url")
           .eq("is_active", true)
           .order("name");
-        
+
         if (error) throw error;
         setBrands(data || []);
       } catch (error) {
@@ -58,21 +110,29 @@ export function BrandCarousel() {
     fetchBrands();
   }, []);
 
-  // Track drag state to prevent click on drag
+  // Track drag state using ref (no re-renders)
   useEffect(() => {
     if (!emblaApi) return;
 
     const onPointerDown = () => {
       dragStartTime.current = Date.now();
-      setIsDragging(false);
+      isDraggingRef.current = false;
     };
 
     const onPointerUp = () => {
+      // Clear any pending timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
       // If dragged for more than 150ms, consider it a drag
       if (Date.now() - dragStartTime.current > 150) {
-        setIsDragging(true);
+        isDraggingRef.current = true;
         // Reset after a short delay
-        setTimeout(() => setIsDragging(false), 100);
+        timeoutRef.current = window.setTimeout(() => {
+          isDraggingRef.current = false;
+          timeoutRef.current = null;
+        }, 100);
       }
     };
 
@@ -82,17 +142,23 @@ export function BrandCarousel() {
     return () => {
       emblaApi.off("pointerDown", onPointerDown);
       emblaApi.off("pointerUp", onPointerUp);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, [emblaApi]);
 
-  const handleClick = useCallback(
-    (e: React.MouseEvent, brandId: string) => {
-      if (isDragging) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    },
-    [isDragging]
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    if (isDraggingRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, []);
+
+  // Memoize the display brands array
+  const displayBrands = useMemo(
+    () => [...brands, ...brands, ...brands],
+    [brands]
   );
 
   if (isLoading) {
@@ -104,7 +170,10 @@ export function BrandCarousel() {
           </div>
           <div className="flex gap-4 overflow-hidden">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-32 h-24 bg-card border border-border animate-pulse rounded-2xl" />
+              <div
+                key={i}
+                className="flex-shrink-0 w-32 h-24 bg-card border border-border animate-pulse rounded-2xl"
+              />
             ))}
           </div>
         </div>
@@ -114,66 +183,32 @@ export function BrandCarousel() {
 
   if (brands.length === 0) return null;
 
-  // Duplicate brands multiple times for seamless infinite loop
-  const displayBrands = [...brands, ...brands, ...brands];
-
   return (
     <section className="py-3 md:py-8 bg-background overflow-hidden relative z-10">
       <div className="container">
-        {/* Header - Larger on mobile */}
+        {/* Header */}
         <div className="text-center mb-3 md:mb-5">
           <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-1">
             Navegue por <span className="text-gradient">Marca</span>
           </h2>
-          <p className="text-sm md:text-sm text-muted-foreground">Encontre veículos das melhores marcas</p>
+          <p className="text-sm md:text-sm text-muted-foreground">
+            Encontre veículos das melhores marcas
+          </p>
         </div>
 
-        {/* Carousel Container - Stabilized with will-change and backface-visibility */}
-        <div 
-          className="overflow-hidden cursor-grab active:cursor-grabbing" 
+        {/* Carousel Container - GPU-optimized */}
+        <div
+          className="overflow-hidden cursor-grab active:cursor-grabbing carousel-container-optimized"
           ref={emblaRef}
         >
-          <div className="flex gap-3 md:gap-4" style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}>
+          <div className="flex gap-3 md:gap-4 carousel-track-optimized">
             {displayBrands.map((brand, index) => (
-              <Link
+              <BrandCard
                 key={`${brand.id}-${index}`}
-                to={`/carros?marca=${brand.id}`}
-                onClick={(e) => handleClick(e, brand.id)}
-                className="flex-shrink-0 w-[5.5rem] h-[5.5rem] md:w-36 md:h-28 rounded-xl border border-border bg-card flex flex-col items-center justify-center p-2 md:p-3 shadow-sm hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-200 select-none"
-                draggable={false}
-                style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
-              >
-                {brand.logo_url ? (
-                  <img
-                    src={brand.logo_url}
-                    alt={brand.name}
-                    className={`max-w-[80%] max-h-9 md:max-h-12 object-contain flex-shrink-0 ${
-                      DARK_LOGO_BRANDS.includes(brand.name.toLowerCase())
-                        ? "brand-logo-premium-invert"
-                        : ""
-                    }`}
-                    draggable={false}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = "none";
-                      const parent = target.parentElement;
-                      if (parent && !parent.querySelector("span.brand-fallback")) {
-                        const span = document.createElement("span");
-                        span.className = "brand-fallback text-xs md:text-sm font-bold text-foreground text-center";
-                        span.textContent = brand.name;
-                        parent.appendChild(span);
-                      }
-                    }}
-                  />
-                ) : (
-                  <span className="text-xs md:text-sm font-bold text-foreground text-center px-1 truncate w-full">
-                    {brand.name}
-                  </span>
-                )}
-                <span className="text-[9px] md:text-xs font-medium text-muted-foreground mt-1.5 text-center leading-tight px-1 w-full truncate">
-                  {brand.name}
-                </span>
-              </Link>
+                brand={brand}
+                index={index}
+                onClickHandler={handleClick}
+              />
             ))}
           </div>
         </div>
