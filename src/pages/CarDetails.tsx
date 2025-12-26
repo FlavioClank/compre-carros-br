@@ -114,6 +114,7 @@ export default function CarDetails() {
   }
 
   const brandName = car.brands?.name || "";
+  const invertBrandLogo = ["toyota", "nissan", "audi", "volkswagen"].includes(brandName.toLowerCase());
   const photos = car.photos?.length > 0 ? car.photos : ["/placeholder.svg"];
 
   const whatsappUrl = generateWhatsAppUrl({
@@ -235,7 +236,7 @@ export default function CarDetails() {
                   <img
                     src={car.brands.logo_url}
                     alt={brandName}
-                    className="w-full h-full object-contain"
+                    className={`w-full h-full object-contain ${invertBrandLogo ? "brand-logo-premium-invert" : ""}`}
                   />
                 </div>
               )}

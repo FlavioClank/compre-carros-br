@@ -9,6 +9,8 @@ interface Brand {
   logo_url: string | null;
 }
 
+const INVERT_LOGO_BRANDS = ["toyota", "nissan", "audi", "volkswagen"];
+
 export default function Brands() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,7 +79,9 @@ export default function Brands() {
                       <img
                         src={brand.logo_url}
                         alt={brand.name}
-                        className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                        className={`max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300 ${
+                          INVERT_LOGO_BRANDS.includes(brand.name.toLowerCase()) ? "brand-logo-premium-invert" : ""
+                        }`}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.style.display = "none";

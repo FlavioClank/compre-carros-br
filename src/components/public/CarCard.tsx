@@ -28,6 +28,7 @@ interface CarCardProps {
 export function CarCard({ car }: CarCardProps) {
   const brandName = car.brands?.name || "";
   const mainPhoto = car.photos?.[0] || "/placeholder.svg";
+  const invertBrandLogo = ["toyota", "nissan", "audi", "volkswagen"].includes(brandName.toLowerCase());
   
   const whatsappUrl = generateWhatsAppUrl({
     code: car.code,
@@ -65,7 +66,7 @@ export function CarCard({ car }: CarCardProps) {
             <img
               src={car.brands.logo_url}
               alt={brandName}
-              className="w-full h-full object-contain"
+              className={`w-full h-full object-contain ${invertBrandLogo ? "brand-logo-premium-invert" : ""}`}
             />
           </div>
         )}

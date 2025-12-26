@@ -10,8 +10,8 @@ interface Brand {
   logo_url: string | null;
 }
 
-// Dark logos that need silver/metallic treatment for better contrast
-const DARK_LOGO_BRANDS = ['toyota', 'nissan', 'audi'];
+// Dark logos that need forced inversion + premium metallic shadow for contrast
+const DARK_LOGO_BRANDS = ["toyota", "nissan", "audi", "volkswagen"];
 
 export function BrandCarousel() {
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -148,9 +148,9 @@ export function BrandCarousel() {
                     src={brand.logo_url}
                     alt={brand.name}
                     className={`max-w-[80%] max-h-9 md:max-h-12 object-contain flex-shrink-0 ${
-                      DARK_LOGO_BRANDS.includes(brand.name.toLowerCase()) 
-                        ? 'brightness-[1.4] contrast-[0.9] saturate-[0.3]' 
-                        : ''
+                      DARK_LOGO_BRANDS.includes(brand.name.toLowerCase())
+                        ? "brand-logo-premium-invert"
+                        : ""
                     }`}
                     draggable={false}
                     onError={(e) => {
