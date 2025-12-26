@@ -115,59 +115,55 @@ export function BrandCarousel() {
   const displayBrands = [...brands, ...brands, ...brands];
 
   return (
-    <section className="py-12 md:py-16 bg-background relative overflow-hidden">
-      <div className="container relative">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-2">
+    <section className="py-6 md:py-10 bg-background overflow-hidden">
+      <div className="container">
+        {/* Header - Compact */}
+        <div className="text-center mb-4 md:mb-6">
+          <h2 className="font-display text-lg md:text-2xl font-bold text-foreground mb-1">
             Navegue por <span className="text-gradient">Marca</span>
           </h2>
-          <p className="text-muted-foreground">Encontre veículos das melhores marcas do mercado</p>
+          <p className="text-xs md:text-sm text-muted-foreground">Encontre veículos das melhores marcas</p>
         </div>
 
-        {/* Carousel Container */}
-        <div className="relative">
-          {/* Embla Carousel */}
-          <div className="overflow-hidden cursor-grab active:cursor-grabbing" ref={emblaRef}>
-            <div className="flex gap-4 px-4">
-              {displayBrands.map((brand, index) => (
-                <Link
-                  key={`${brand.id}-${index}`}
-                  to={`/carros?marca=${brand.id}`}
-                  onClick={(e) => handleClick(e, brand.id)}
-                  className="flex-shrink-0 w-28 md:w-36 h-24 md:h-28 rounded-2xl border border-gray-200/80 flex flex-col items-center justify-center p-4 shadow-sm hover:shadow-md hover:border-primary/60 hover:-translate-y-0.5 transition-all duration-300 group/brand select-none"
-                  style={{ backgroundColor: '#F5F7FA' }}
-                  draggable={false}
-                >
-                  {brand.logo_url ? (
-                    <img
-                      src={brand.logo_url}
-                      alt={brand.name}
-                      className="max-w-full max-h-12 md:max-h-14 object-contain group-hover/brand:scale-105 transition-transform duration-300"
-                      draggable={false}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = "none";
-                        const parent = target.parentElement;
-                        if (parent && !parent.querySelector("span.brand-fallback")) {
-                          const span = document.createElement("span");
-                          span.className = "brand-fallback text-sm font-bold text-gray-800 text-center";
-                          span.textContent = brand.name;
-                          parent.appendChild(span);
-                        }
-                      }}
-                    />
-                  ) : (
-                    <span className="text-sm font-bold text-gray-800 text-center">
-                      {brand.name}
-                    </span>
-                  )}
-                  <span className="text-xs font-medium text-gray-500 mt-2 truncate max-w-full group-hover/brand:text-gray-700 transition-colors">
+        {/* Carousel Container - Clean, no overlays */}
+        <div className="overflow-hidden cursor-grab active:cursor-grabbing" ref={emblaRef}>
+          <div className="flex gap-2 md:gap-3">
+            {displayBrands.map((brand, index) => (
+              <Link
+                key={`${brand.id}-${index}`}
+                to={`/carros?marca=${brand.id}`}
+                onClick={(e) => handleClick(e, brand.id)}
+                className="flex-shrink-0 w-20 h-16 md:w-28 md:h-20 rounded-xl border border-border bg-card flex flex-col items-center justify-center p-2 shadow-sm hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-200 select-none"
+                draggable={false}
+              >
+                {brand.logo_url ? (
+                  <img
+                    src={brand.logo_url}
+                    alt={brand.name}
+                    className="max-w-full max-h-8 md:max-h-10 object-contain"
+                    draggable={false}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = "none";
+                      const parent = target.parentElement;
+                      if (parent && !parent.querySelector("span.brand-fallback")) {
+                        const span = document.createElement("span");
+                        span.className = "brand-fallback text-xs font-bold text-foreground text-center";
+                        span.textContent = brand.name;
+                        parent.appendChild(span);
+                      }
+                    }}
+                  />
+                ) : (
+                  <span className="text-xs font-bold text-foreground text-center">
                     {brand.name}
                   </span>
-                </Link>
-              ))}
-            </div>
+                )}
+                <span className="text-[10px] font-medium text-muted-foreground mt-1 truncate max-w-full">
+                  {brand.name}
+                </span>
+              </Link>
+            ))}
           </div>
         </div>
       </div>
