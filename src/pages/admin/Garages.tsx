@@ -64,47 +64,37 @@ export default function AdminGarages() {
     },
   });
 
-  // Create garage mutation
+  // Create garage mutation using edge function for atomic operation
   const createGarageMutation = useMutation({
     mutationFn: async (data: GarageFormData) => {
-      // 1. Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: { name: data.name },
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      
+      if (!token) {
+        throw new Error("Sessão expirada. Faça login novamente.");
+      }
+
+      const { data: result, error } = await supabase.functions.invoke("create-garage", {
+        body: {
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          phone: data.phone || null,
+          address: data.address || null,
+          city: data.city || null,
+          state: data.state || null,
         },
       });
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Falha ao criar usuário");
 
-      // 2. Create profile
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: authData.user.id,
-        email: data.email,
-        name: data.name,
-      });
-      if (profileError) throw profileError;
+      if (error) {
+        throw new Error(error.message || "Erro ao criar garagem");
+      }
 
-      // 3. Add garage role
-      const { error: roleError } = await supabase.from("user_roles").insert({
-        user_id: authData.user.id,
-        role: "garage",
-      });
-      if (roleError) throw roleError;
+      if (result?.error) {
+        throw new Error(result.error);
+      }
 
-      // 4. Create garage
-      const { error: garageError } = await supabase.from("garages").insert({
-        user_id: authData.user.id,
-        name: data.name,
-        phone: data.phone || null,
-        address: data.address || null,
-        city: data.city || null,
-        state: data.state || null,
-      });
-      if (garageError) throw garageError;
-
-      return authData.user;
+      return result;
     },
     onSuccess: () => {
       toast({ title: "Garagem criada com sucesso!" });

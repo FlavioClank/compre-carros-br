@@ -2,3 +2,6 @@ project_id = "kgtscjvgipowuvuindxt"
 
 [functions.setup-admin]
 verify_jwt = false
+
+[functions.create-garage]
+verify_jwt = false
