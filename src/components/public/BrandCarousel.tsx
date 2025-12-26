@@ -10,6 +10,9 @@ interface Brand {
   logo_url: string | null;
 }
 
+// Dark logos that need silver/metallic treatment for better contrast
+const DARK_LOGO_BRANDS = ['toyota', 'nissan', 'audi'];
+
 export function BrandCarousel() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -144,7 +147,11 @@ export function BrandCarousel() {
                   <img
                     src={brand.logo_url}
                     alt={brand.name}
-                    className="max-w-[80%] max-h-9 md:max-h-12 object-contain flex-shrink-0"
+                    className={`max-w-[80%] max-h-9 md:max-h-12 object-contain flex-shrink-0 ${
+                      DARK_LOGO_BRANDS.includes(brand.name.toLowerCase()) 
+                        ? 'brightness-[1.4] contrast-[0.9] saturate-[0.3]' 
+                        : ''
+                    }`}
                     draggable={false}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
