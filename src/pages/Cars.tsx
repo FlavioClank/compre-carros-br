@@ -214,12 +214,12 @@ export default function Cars() {
                   <label className="text-sm font-medium text-foreground mb-2 block">
                     Marca
                   </label>
-                  <Select value={brand} onValueChange={setBrand}>
+                <Select value={brand || "all"} onValueChange={(v) => setBrand(v === "all" ? "" : v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Todas" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todas</SelectItem>
+                      <SelectItem value="all">Todas</SelectItem>
                       {brands.map((b) => (
                         <SelectItem key={b.id} value={b.name}>
                           {b.name}
@@ -234,12 +234,12 @@ export default function Cars() {
                   <label className="text-sm font-medium text-foreground mb-2 block">
                     Ano de
                   </label>
-                  <Select value={yearFrom} onValueChange={setYearFrom}>
+                <Select value={yearFrom || "all"} onValueChange={(v) => setYearFrom(v === "all" ? "" : v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Qualquer" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Qualquer</SelectItem>
+                      <SelectItem value="all">Qualquer</SelectItem>
                       {years.map((y) => (
                         <SelectItem key={y} value={y.toString()}>
                           {y}
@@ -254,12 +254,12 @@ export default function Cars() {
                   <label className="text-sm font-medium text-foreground mb-2 block">
                     Ano até
                   </label>
-                  <Select value={yearTo} onValueChange={setYearTo}>
+                <Select value={yearTo || "all"} onValueChange={(v) => setYearTo(v === "all" ? "" : v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Qualquer" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Qualquer</SelectItem>
+                      <SelectItem value="all">Qualquer</SelectItem>
                       {years.map((y) => (
                         <SelectItem key={y} value={y.toString()}>
                           {y}
@@ -274,12 +274,12 @@ export default function Cars() {
                   <label className="text-sm font-medium text-foreground mb-2 block">
                     Faixa de Preço
                   </label>
-                  <Select value={priceRange} onValueChange={setPriceRange}>
+                <Select value={priceRange || "all"} onValueChange={(v) => setPriceRange(v === "all" ? "" : v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Qualquer" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Qualquer</SelectItem>
+                      <SelectItem value="all">Qualquer</SelectItem>
                       {priceRanges.map((r) => (
                         <SelectItem key={r.label} value={r.label}>
                           {r.label}
@@ -294,12 +294,12 @@ export default function Cars() {
                   <label className="text-sm font-medium text-foreground mb-2 block">
                     Câmbio
                   </label>
-                  <Select value={transmission} onValueChange={setTransmission}>
+                <Select value={transmission || "all"} onValueChange={(v) => setTransmission(v === "all" ? "" : v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Qualquer" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Qualquer</SelectItem>
+                      <SelectItem value="all">Qualquer</SelectItem>
                       {Object.entries(TRANSMISSION_LABELS).map(([key, label]) => (
                         <SelectItem key={key} value={key}>
                           {label}
@@ -314,12 +314,12 @@ export default function Cars() {
                   <label className="text-sm font-medium text-foreground mb-2 block">
                     Combustível
                   </label>
-                  <Select value={fuel} onValueChange={setFuel}>
+                <Select value={fuel || "all"} onValueChange={(v) => setFuel(v === "all" ? "" : v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Qualquer" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Qualquer</SelectItem>
+                      <SelectItem value="all">Qualquer</SelectItem>
                       {Object.entries(FUEL_LABELS).map(([key, label]) => (
                         <SelectItem key={key} value={key}>
                           {label}
