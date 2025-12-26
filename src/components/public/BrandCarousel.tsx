@@ -135,7 +135,8 @@ export function BrandCarousel() {
                   key={`${brand.id}-${index}`}
                   to={`/carros?marca=${brand.id}`}
                   onClick={(e) => handleClick(e, brand.id)}
-                  className="flex-shrink-0 w-28 md:w-36 h-24 md:h-28 bg-white rounded-2xl border border-gray-200 flex flex-col items-center justify-center p-4 hover:border-primary hover:shadow-lg transition-all duration-300 group/brand select-none"
+                  className="flex-shrink-0 w-28 md:w-36 h-24 md:h-28 rounded-2xl border border-gray-200/80 flex flex-col items-center justify-center p-4 shadow-sm hover:shadow-md hover:border-primary/60 hover:-translate-y-0.5 transition-all duration-300 group/brand select-none"
+                  style={{ backgroundColor: '#F5F7FA' }}
                   draggable={false}
                 >
                   {brand.logo_url ? (
@@ -161,7 +162,7 @@ export function BrandCarousel() {
                       {brand.name}
                     </span>
                   )}
-                  <span className="text-xs font-medium text-gray-600 mt-2 truncate max-w-full">
+                  <span className="text-xs font-medium text-gray-500 mt-2 truncate max-w-full group-hover/brand:text-gray-700 transition-colors">
                     {brand.name}
                   </span>
                 </Link>
