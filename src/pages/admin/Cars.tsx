@@ -30,6 +30,8 @@ import {
   MessageCircle,
   Instagram,
   Facebook,
+  Sparkles,
+  Star,
 } from "lucide-react";
 import { formatPrice, formatMileage, generateWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/constants";
 import {
@@ -41,6 +43,7 @@ import {
 
 export default function AdminCars() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [garageFilter, setGarageFilter] = useState<string>("all");
@@ -51,7 +54,8 @@ export default function AdminCars() {
     queryFn: async () => {
       let query = supabase
         .from("cars")
-        .select("*, brands(name, logo_url), garages(name)")
+        .select("*, brands(name, logo_url), garages(name, is_active)")
+        .order("is_featured", { ascending: false })
         .order("created_at", { ascending: false });
 
       if (statusFilter === "available" || statusFilter === "sold") {
@@ -73,10 +77,37 @@ export default function AdminCars() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("garages")
-        .select("id, name")
+        .select("id, name, is_active")
         .order("name");
       if (error) throw error;
       return data;
+    },
+  });
+
+  // Toggle featured mutation
+  const toggleFeaturedMutation = useMutation({
+    mutationFn: async ({ id, isFeatured }: { id: string; isFeatured: boolean }) => {
+      const { error } = await supabase
+        .from("cars")
+        .update({ is_featured: !isFeatured })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      toast({ 
+        title: variables.isFeatured ? "Destaque removido!" : "Veículo em destaque!",
+        description: variables.isFeatured 
+          ? "O veículo não aparecerá mais em destaque." 
+          : "O veículo aparecerá em destaque na home."
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-cars"] });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Erro ao atualizar destaque", 
+        description: error.message,
+        variant: "destructive" 
+      });
     },
   });
 
@@ -150,7 +181,7 @@ export default function AdminCars() {
                   <SelectItem value="all">Todas as Garagens</SelectItem>
                   {garages?.map((garage: any) => (
                     <SelectItem key={garage.id} value={garage.id}>
-                      {garage.name}
+                      {garage.name} {!garage.is_active && "(Inativa)"}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -186,8 +217,15 @@ export default function AdminCars() {
                   </TableHeader>
                   <TableBody>
                     {filteredCars.map((car: any) => (
-                      <TableRow key={car.id}>
-                        <TableCell className="font-mono text-sm">{car.code}</TableCell>
+                      <TableRow key={car.id} className={!car.garages?.is_active ? "opacity-50" : ""}>
+                        <TableCell className="font-mono text-sm">
+                          <div className="flex items-center gap-2">
+                            {car.is_featured && (
+                              <Sparkles className="h-4 w-4 text-accent" />
+                            )}
+                            {car.code}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             {car.photos?.[0] && (
@@ -207,14 +245,32 @@ export default function AdminCars() {
                         <TableCell className="font-semibold text-accent">
                           {formatPrice(car.price)}
                         </TableCell>
-                        <TableCell>{car.garages?.name || "-"}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            {car.garages?.name || "-"}
+                            {car.garages && !car.garages.is_active && (
+                              <Badge variant="secondary" className="text-xs">Inativa</Badge>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <Badge variant={car.status === "available" ? "default" : "secondary"}>
                             {car.status === "available" ? "Disponível" : "Vendido"}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => toggleFeaturedMutation.mutate({ 
+                                id: car.id, 
+                                isFeatured: car.is_featured 
+                              })}
+                              title={car.is_featured ? "Remover destaque" : "Marcar como destaque"}
+                            >
+                              <Star className={`h-4 w-4 ${car.is_featured ? "text-accent fill-accent" : ""}`} />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"

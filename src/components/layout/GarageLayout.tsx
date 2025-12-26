@@ -11,7 +11,6 @@ import {
   LogOut,
   Menu,
   X,
-  PlusCircle,
 } from "lucide-react";
 
 interface GarageLayoutProps {
@@ -21,7 +20,6 @@ interface GarageLayoutProps {
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/garage/dashboard" },
   { icon: Package, label: "Meus Veículos", href: "/garage/cars" },
-  { icon: PlusCircle, label: "Novo Veículo", href: "/garage/cars/new" },
   { icon: History, label: "Histórico", href: "/garage/history" },
 ];
 

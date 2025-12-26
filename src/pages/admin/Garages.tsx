@@ -23,7 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Eye, EyeOff, Edit, Power, Building2 } from "lucide-react";
+import { Plus, Eye, EyeOff, Edit, Power, Building2, KeyRound } from "lucide-react";
 
 interface GarageFormData {
   name: string;
@@ -39,7 +39,10 @@ export default function AdminGarages() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [editingGarage, setEditingGarage] = useState<any>(null);
+  const [resetPasswordGarage, setResetPasswordGarage] = useState<any>(null);
+  const [newPassword, setNewPassword] = useState("");
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
   const [formData, setFormData] = useState<GarageFormData>({
     name: "",
@@ -151,9 +154,40 @@ export default function AdminGarages() {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      toast({ title: "Status atualizado!" });
+    onSuccess: (_, variables) => {
+      toast({ 
+        title: variables.isActive ? "Garagem desativada!" : "Garagem ativada!",
+        description: variables.isActive 
+          ? "Todos os veículos desta garagem estão ocultos." 
+          : "Os veículos desta garagem estão visíveis novamente."
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-garages"] });
+    },
+  });
+
+  // Reset password mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, password }: { userId: string; password: string }) => {
+      const { data: result, error } = await supabase.functions.invoke("reset-garage-password", {
+        body: { userId, password },
+      });
+
+      if (error) throw new Error(error.message);
+      if (result?.error) throw new Error(result.error);
+      return result;
+    },
+    onSuccess: () => {
+      toast({ title: "Senha redefinida com sucesso!" });
+      setIsResetPasswordDialogOpen(false);
+      setResetPasswordGarage(null);
+      setNewPassword("");
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Erro ao redefinir senha", 
+        description: error.message,
+        variant: "destructive" 
+      });
     },
   });
 
@@ -190,6 +224,12 @@ export default function AdminGarages() {
       state: garage.state || "",
     });
     setIsDialogOpen(true);
+  };
+
+  const handleResetPassword = (garage: any) => {
+    setResetPasswordGarage(garage);
+    setNewPassword("");
+    setIsResetPasswordDialogOpen(true);
   };
 
   const togglePasswordVisibility = (id: string) => {
@@ -324,7 +364,6 @@ export default function AdminGarages() {
                     <TableRow>
                       <TableHead>Nome</TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead>Senha</TableHead>
                       <TableHead>Cidade</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
@@ -332,30 +371,9 @@ export default function AdminGarages() {
                   </TableHeader>
                   <TableBody>
                     {garages.map((garage: any) => (
-                      <TableRow key={garage.id}>
+                      <TableRow key={garage.id} className={!garage.is_active ? "opacity-60" : ""}>
                         <TableCell className="font-medium">{garage.name}</TableCell>
                         <TableCell>{garage.profiles?.email || "-"}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-sm">
-                              {visiblePasswords[garage.id] ? "••••••••" : "••••••••"}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onMouseDown={() => togglePasswordVisibility(garage.id)}
-                              onMouseUp={() => togglePasswordVisibility(garage.id)}
-                              onMouseLeave={() => setVisiblePasswords(prev => ({ ...prev, [garage.id]: false }))}
-                            >
-                              {visiblePasswords[garage.id] ? (
-                                <EyeOff className="h-4 w-4" />
-                              ) : (
-                                <Eye className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-                        </TableCell>
                         <TableCell>{garage.city || "-"}</TableCell>
                         <TableCell>
                           <Badge variant={garage.is_active ? "default" : "secondary"}>
@@ -368,8 +386,17 @@ export default function AdminGarages() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEdit(garage)}
+                              title="Editar"
                             >
                               <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleResetPassword(garage)}
+                              title="Redefinir Senha"
+                            >
+                              <KeyRound className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
@@ -378,6 +405,7 @@ export default function AdminGarages() {
                                 id: garage.id, 
                                 isActive: garage.is_active 
                               })}
+                              title={garage.is_active ? "Desativar" : "Ativar"}
                             >
                               <Power className={`h-4 w-4 ${garage.is_active ? "text-success" : "text-muted-foreground"}`} />
                             </Button>
@@ -395,6 +423,45 @@ export default function AdminGarages() {
             )}
           </CardContent>
         </Card>
+
+        {/* Reset Password Dialog */}
+        <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Redefinir Senha</DialogTitle>
+            </DialogHeader>
+            {resetPasswordGarage && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Redefinindo senha para: <strong>{resetPasswordGarage.name}</strong>
+                  <br />
+                  Email: {resetPasswordGarage.profiles?.email}
+                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="new_password">Nova Senha *</Label>
+                  <Input
+                    id="new_password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    minLength={6}
+                    required
+                  />
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={() => resetPasswordMutation.mutate({ 
+                    userId: resetPasswordGarage.user_id, 
+                    password: newPassword 
+                  })}
+                  disabled={newPassword.length < 6 || resetPasswordMutation.isPending}
+                >
+                  {resetPasswordMutation.isPending ? "Processando..." : "Redefinir Senha"}
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

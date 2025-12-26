@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Brand {
   id: string;
@@ -12,41 +12,75 @@ export function BrandCarousel() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchBrands = async () => {
-      const { data, error } = await supabase
-        .from("brands")
-        .select("id, name, logo_url")
-        .eq("is_active", true)
-        .order("name");
-
-      if (error) {
-        console.error("Error fetching brands:", error);
-      } else {
+      try {
+        const { data, error } = await supabase
+          .from("brands")
+          .select("id, name, logo_url")
+          .eq("is_active", true)
+          .order("name");
+        
+        if (error) throw error;
         setBrands(data || []);
+      } catch (error) {
+        console.error("Error fetching brands:", error);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchBrands();
   }, []);
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!containerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - containerRef.current.offsetLeft);
+    setScrollLeft(containerRef.current.scrollLeft);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - containerRef.current.offsetLeft;
+    const walk = (x - startX) * 2;
+    containerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!containerRef.current) return;
+    setStartX(e.touches[0].pageX - containerRef.current.offsetLeft);
+    setScrollLeft(containerRef.current.scrollLeft);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!containerRef.current) return;
+    const x = e.touches[0].pageX - containerRef.current.offsetLeft;
+    const walk = (x - startX) * 2;
+    containerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
   if (isLoading) {
     return (
-      <div className="py-8">
+      <section className="py-8 bg-muted/50">
         <div className="container">
-          <div className="flex gap-8 overflow-hidden">
+          <div className="flex gap-6 overflow-hidden">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex-shrink-0 w-24 h-16 bg-muted rounded-lg animate-pulse"
-              />
+              <div key={i} className="flex-shrink-0 w-24 h-16 bg-muted animate-pulse rounded-xl" />
             ))}
           </div>
         </div>
-      </div>
+      </section>
     );
   }
 
@@ -56,59 +90,66 @@ export function BrandCarousel() {
   const duplicatedBrands = [...brands, ...brands];
 
   return (
-    <section className="py-12 bg-card border-y border-border overflow-hidden">
-      <div className="container mb-8">
-        <h2 className="text-2xl md:text-3xl font-display font-bold text-center text-foreground">
-          Marcas Oficiais
+    <section className="py-8 bg-muted/50 overflow-hidden">
+      <div className="container mb-4">
+        <h2 className="text-center font-display text-lg font-semibold text-foreground">
+          Navegue por Marca
         </h2>
-        <p className="text-muted-foreground text-center mt-2">
-          Encontre veículos das melhores marcas do mercado
-        </p>
       </div>
-
+      
       <div
-        ref={scrollRef}
-        className="relative"
+        ref={containerRef}
+        className={`flex gap-6 overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing ${
+          isPaused || isDragging ? "" : "brand-carousel"
+        }`}
         onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
+        onMouseLeave={() => {
+          setIsPaused(false);
+          setIsDragging(false);
+        }}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={() => setIsDragging(false)}
+        style={{ paddingLeft: "1rem", paddingRight: "1rem" }}
       >
-        <div
-          className={`flex gap-8 items-center ${
-            isPaused ? "" : "brand-carousel"
-          }`}
-          style={{
-            width: `${duplicatedBrands.length * 160}px`,
-            animationPlayState: isPaused ? "paused" : "running",
-          }}
-        >
-          {duplicatedBrands.map((brand, index) => (
-            <Link
-              key={`${brand.id}-${index}`}
-              to={`/carros?marca=${brand.name}`}
-              className="flex-shrink-0 w-36 h-20 bg-background rounded-xl border border-border p-4 flex items-center justify-center hover:shadow-lg hover:border-accent/30 transition-all duration-300 group"
-            >
-              {brand.logo_url ? (
-                <img
-                  src={brand.logo_url}
-                  alt={brand.name}
-                  className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = "none";
-                    const parent = target.parentElement;
-                    if (parent) {
-                      parent.innerHTML = `<span class="font-display font-bold text-muted-foreground text-sm">${brand.name}</span>`;
-                    }
-                  }}
-                />
-              ) : (
-                <span className="font-display font-bold text-muted-foreground text-sm text-center">
-                  {brand.name}
-                </span>
-              )}
-            </Link>
-          ))}
-        </div>
+        {duplicatedBrands.map((brand, index) => (
+          <Link
+            key={`${brand.id}-${index}`}
+            to={`/carros?marca=${brand.id}`}
+            className="flex-shrink-0 w-28 h-20 bg-background rounded-xl border border-border shadow-sm flex items-center justify-center p-3 hover:border-accent hover:shadow-md transition-all duration-300 group"
+            onClick={(e) => {
+              if (isDragging) {
+                e.preventDefault();
+              }
+            }}
+          >
+            {brand.logo_url ? (
+              <img
+                src={brand.logo_url}
+                alt={brand.name}
+                className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = "none";
+                  const parent = target.parentElement;
+                  if (parent) {
+                    const span = document.createElement("span");
+                    span.className = "text-xs font-semibold text-foreground text-center";
+                    span.textContent = brand.name;
+                    parent.appendChild(span);
+                  }
+                }}
+              />
+            ) : (
+              <span className="text-xs font-semibold text-foreground text-center">
+                {brand.name}
+              </span>
+            )}
+          </Link>
+        ))}
       </div>
     </section>
   );

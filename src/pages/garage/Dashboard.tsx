@@ -4,7 +4,7 @@ import { GarageLayout } from "@/components/layout/GarageLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, CheckCircle, Clock, Plus } from "lucide-react";
+import { Package, CheckCircle, Clock } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 
 export default function GarageDashboard() {
@@ -52,12 +52,6 @@ export default function GarageDashboard() {
             <h1 className="font-display text-3xl font-bold text-foreground">Dashboard</h1>
             <p className="text-muted-foreground mt-1">Visão geral dos seus veículos</p>
           </div>
-          <Link to="/garage/cars">
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Novo Veículo
-            </Button>
-          </Link>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
