@@ -82,6 +82,7 @@ export type Database = {
           doors: number | null
           fuel: Database["public"]["Enums"]["fuel_type"]
           garage_id: string
+          garage_is_active: boolean
           id: string
           is_featured: boolean
           mileage: number
@@ -106,6 +107,7 @@ export type Database = {
           doors?: number | null
           fuel: Database["public"]["Enums"]["fuel_type"]
           garage_id: string
+          garage_is_active?: boolean
           id?: string
           is_featured?: boolean
           mileage?: number
@@ -130,6 +132,7 @@ export type Database = {
           doors?: number | null
           fuel?: Database["public"]["Enums"]["fuel_type"]
           garage_id?: string
+          garage_is_active?: boolean
           id?: string
           is_featured?: boolean
           mileage?: number
