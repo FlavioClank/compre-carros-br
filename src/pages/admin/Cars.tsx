@@ -21,6 +21,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Package, 
@@ -32,6 +42,7 @@ import {
   Facebook,
   Sparkles,
   Star,
+  Trash2,
 } from "lucide-react";
 import { formatPrice, formatMileage, generateWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/constants";
 import {
@@ -47,6 +58,8 @@ export default function AdminCars() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [garageFilter, setGarageFilter] = useState<string>("all");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingCar, setDeletingCar] = useState<any>(null);
 
   // Fetch all cars with brand and garage
   const { data: cars, isLoading } = useQuery({
@@ -105,6 +118,30 @@ export default function AdminCars() {
     onError: (error: any) => {
       toast({ 
         title: "Erro ao atualizar destaque", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Delete car mutation
+  const deleteCarMutation = useMutation({
+    mutationFn: async (carId: string) => {
+      const { error } = await supabase
+        .from("cars")
+        .delete()
+        .eq("id", carId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Veículo excluído com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ["admin-cars"] });
+      setIsDeleteDialogOpen(false);
+      setDeletingCar(null);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Erro ao excluir veículo", 
         description: error.message,
         variant: "destructive" 
       });
@@ -303,6 +340,18 @@ export default function AdminCars() {
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setDeletingCar(car);
+                                setIsDeleteDialogOpen(true);
+                              }}
+                              title="Excluir Veículo"
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -317,6 +366,37 @@ export default function AdminCars() {
             )}
           </CardContent>
         </Card>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Veículo</AlertDialogTitle>
+              <AlertDialogDescription className="space-y-2">
+                <p>
+                  Tem certeza que deseja excluir o veículo{" "}
+                  <strong>
+                    {deletingCar?.brands?.name} {deletingCar?.model} ({deletingCar?.code})
+                  </strong>
+                  ?
+                </p>
+                <p className="text-destructive font-semibold">
+                  ⚠️ Essa ação é irreversível.
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deletingCar && deleteCarMutation.mutate(deletingCar.id)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={deleteCarMutation.isPending}
+              >
+                {deleteCarMutation.isPending ? "Excluindo..." : "Excluir Definitivamente"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AdminLayout>
   );
