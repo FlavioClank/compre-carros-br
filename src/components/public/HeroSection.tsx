@@ -10,10 +10,10 @@ export function HeroSection() {
 
   useEffect(() => {
     const fetchTotalCars = async () => {
+      // Use the secure public VIEW for counting
       const { count, error } = await supabase
-        .from("cars")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "available");
+        .from("public_active_cars")
+        .select("*", { count: "exact", head: true });
       
       if (!error && count !== null) {
         setTotalCars(count);
@@ -22,7 +22,7 @@ export function HeroSection() {
 
     fetchTotalCars();
 
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates on cars table
     const channel = supabase
       .channel("cars-count")
       .on(

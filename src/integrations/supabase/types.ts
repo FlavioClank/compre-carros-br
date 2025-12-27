@@ -153,6 +153,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "cars_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "public_active_cars"
+            referencedColumns: ["brand_id"]
+          },
+          {
             foreignKeyName: "cars_garage_id_fkey"
             columns: ["garage_id"]
             isOneToOne: false
@@ -284,6 +291,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "sales_history_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "public_active_cars"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "sales_history_garage_id_fkey"
             columns: ["garage_id"]
             isOneToOne: false
@@ -315,7 +329,28 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_active_cars: {
+        Row: {
+          brand_id: string | null
+          brand_logo_url: string | null
+          brand_name: string | null
+          code: string | null
+          color: string | null
+          created_at: string | null
+          description: string | null
+          fuel: Database["public"]["Enums"]["fuel_type"] | null
+          id: string | null
+          is_featured: boolean | null
+          mileage: number | null
+          model: string | null
+          photos: string[] | null
+          price: number | null
+          transmission: Database["public"]["Enums"]["transmission_type"] | null
+          version: string | null
+          year: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_garage_id: { Args: never; Returns: string }

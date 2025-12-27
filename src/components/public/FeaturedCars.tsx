@@ -6,6 +6,27 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Interface matching the public_active_cars VIEW
+interface PublicCar {
+  id: string;
+  code: string;
+  model: string;
+  year: number;
+  version: string | null;
+  mileage: number;
+  transmission: string;
+  fuel: string;
+  color: string;
+  price: number;
+  photos: string[] | null;
+  is_featured: boolean;
+  created_at: string;
+  brand_id: string;
+  brand_name: string;
+  brand_logo_url: string | null;
+}
+
+// Transform VIEW data to match CarCardSingle expected format
 interface Car {
   id: string;
   code: string;
@@ -34,24 +55,43 @@ export function FeaturedCars() {
   useEffect(() => {
     const fetchCars = async () => {
       try {
+        // Fetch from the secure public VIEW
         const { data, error } = await supabase
-          .from("cars")
-          .select(`
-            id, code, model, year, version, mileage, transmission, fuel, color, price, photos, status, is_featured,
-            brands(name, logo_url)
-          `)
-          .eq("status", "available")
+          .from("public_active_cars")
+          .select("*")
           .order("is_featured", { ascending: false })
           .order("created_at", { ascending: false })
           .limit(12);
 
         if (error) throw error;
-        setCars(data || []);
+        
+        // Transform VIEW data to match component expected format
+        const transformedCars: Car[] = (data as PublicCar[] || []).map((car) => ({
+          id: car.id,
+          code: car.code,
+          model: car.model,
+          year: car.year,
+          version: car.version,
+          mileage: car.mileage,
+          transmission: car.transmission,
+          fuel: car.fuel,
+          color: car.color,
+          price: car.price,
+          photos: car.photos,
+          status: "available", // VIEW only returns available cars
+          is_featured: car.is_featured,
+          brands: {
+            name: car.brand_name,
+            logo_url: car.brand_logo_url,
+          },
+        }));
+        
+        setCars(transformedCars);
 
+        // Count from VIEW
         const { count } = await supabase
-          .from("cars")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "available");
+          .from("public_active_cars")
+          .select("*", { count: "exact", head: true });
 
         setTotalCars(count || 0);
       } catch (error) {

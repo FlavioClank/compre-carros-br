@@ -25,6 +25,27 @@ import {
   Share2,
 } from "lucide-react";
 
+// Interface matching the public_active_cars VIEW
+interface PublicCar {
+  id: string;
+  code: string;
+  model: string;
+  year: number;
+  version: string | null;
+  mileage: number;
+  transmission: string;
+  fuel: string;
+  color: string;
+  price: number;
+  photos: string[];
+  description: string | null;
+  is_featured: boolean;
+  created_at: string;
+  brand_id: string;
+  brand_name: string;
+  brand_logo_url: string | null;
+}
+
 interface CarDetail {
   id: string;
   code: string;
@@ -56,19 +77,39 @@ export default function CarDetails() {
     const fetchCar = async () => {
       if (!id) return;
 
+      // Use the secure public VIEW
       const { data, error } = await supabase
-        .from("cars")
-        .select(`
-          id, code, model, year, version, mileage, transmission, fuel, color, price, description, photos, status, created_at,
-          brands (name, logo_url)
-        `)
+        .from("public_active_cars")
+        .select("*")
         .eq("id", id)
         .single();
 
       if (error) {
         console.error("Error fetching car:", error);
-      } else {
-        setCar(data);
+        setCar(null);
+      } else if (data) {
+        // Transform VIEW data to match component expected format
+        const publicCar = data as PublicCar;
+        setCar({
+          id: publicCar.id,
+          code: publicCar.code,
+          model: publicCar.model,
+          year: publicCar.year,
+          version: publicCar.version,
+          mileage: publicCar.mileage,
+          transmission: publicCar.transmission,
+          fuel: publicCar.fuel,
+          color: publicCar.color,
+          price: publicCar.price,
+          description: publicCar.description,
+          photos: publicCar.photos || [],
+          status: "available",
+          created_at: publicCar.created_at,
+          brands: {
+            name: publicCar.brand_name,
+            logo_url: publicCar.brand_logo_url,
+          },
+        });
       }
       setIsLoading(false);
     };
