@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ScrollToTop } from "@/components/ScrollToTop";
 
 // Public Pages
 import Index from "./pages/Index";
@@ -36,6 +37,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             {/* PUBLIC ROUTES - No auth required */}
             <Route path="/" element={<Index />} />
