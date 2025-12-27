@@ -208,6 +208,7 @@ export default function Cars() {
         // Transform data to match component expected format
         const transformedCars: Car[] = filteredData.map((car) => ({
           id: car.id,
+          slug: car.slug,
           code: car.code,
           model: car.model,
           year: car.year,
