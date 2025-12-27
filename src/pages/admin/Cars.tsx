@@ -157,9 +157,14 @@ export default function AdminCars() {
     );
   });
 
-  const shareOnWhatsApp = (car: any) => {
+  const getWhatsAppShareUrl = (car: any) => {
     const message = `🚗 *${car.brands?.name} ${car.model}*\n\n📅 Ano: ${car.year}\n⚙️ Versão: ${car.version || "-"}\n💰 Preço: ${formatPrice(car.price)}\n📍 Código: ${car.code}\n\n🔗 Veja mais detalhes: ${window.location.origin}/carro/${car.id}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    return `https://wa.me/?text=${encodeURIComponent(message)}`;
+  };
+
+  const getFacebookShareUrl = (car: any) => {
+    const url = `${window.location.origin}/carro/${car.id}`;
+    return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
   };
 
   const shareOnInstagram = (car: any) => {
@@ -168,12 +173,13 @@ export default function AdminCars() {
     toast({ title: "Texto copiado!", description: "Cole no Instagram para publicar." });
   };
 
-  const shareOnFacebook = (car: any) => {
-    const url = `${window.location.origin}/carro/${car.id}`;
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank");
+  const copyInstagramText = (car: any) => {
+    const text = `🚗 ${car.brands?.name} ${car.model} ${car.year}\n💰 ${formatPrice(car.price)}\n📍 ${car.code}\n\n📲 Entre em contato via WhatsApp!`;
+    navigator.clipboard.writeText(text);
+    toast({ title: "Texto copiado!", description: "Cole no Instagram para publicar." });
   };
 
-  const shareOnTikTok = (car: any) => {
+  const copyTikTokText = (car: any) => {
     const text = `🚗 ${car.brands?.name} ${car.model} ${car.year} - ${formatPrice(car.price)} - Código: ${car.code}`;
     navigator.clipboard.writeText(text);
     toast({ title: "Texto copiado!", description: "Cole no TikTok para publicar." });
@@ -322,19 +328,33 @@ export default function AdminCars() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => shareOnWhatsApp(car)}>
-                                  <MessageCircle className="h-4 w-4 mr-2" />
-                                  WhatsApp
+                                <DropdownMenuItem asChild>
+                                  <a
+                                    href={getWhatsAppShareUrl(car)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center"
+                                  >
+                                    <MessageCircle className="h-4 w-4 mr-2" />
+                                    WhatsApp
+                                  </a>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => shareOnInstagram(car)}>
+                                <DropdownMenuItem onClick={() => copyInstagramText(car)}>
                                   <Instagram className="h-4 w-4 mr-2" />
                                   Instagram
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => shareOnFacebook(car)}>
-                                  <Facebook className="h-4 w-4 mr-2" />
-                                  Facebook
+                                <DropdownMenuItem asChild>
+                                  <a
+                                    href={getFacebookShareUrl(car)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center"
+                                  >
+                                    <Facebook className="h-4 w-4 mr-2" />
+                                    Facebook
+                                  </a>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => shareOnTikTok(car)}>
+                                <DropdownMenuItem onClick={() => copyTikTokText(car)}>
                                   <Share2 className="h-4 w-4 mr-2" />
                                   TikTok
                                 </DropdownMenuItem>
