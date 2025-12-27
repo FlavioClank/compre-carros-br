@@ -15,6 +15,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -23,7 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Eye, EyeOff, Edit, Power, Building2, KeyRound, Car } from "lucide-react";
+import { Plus, Eye, EyeOff, Edit, Power, Building2, KeyRound, Car, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 interface GarageFormData {
@@ -41,6 +51,8 @@ export default function AdminGarages() {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingGarage, setDeletingGarage] = useState<any>(null);
   const [editingGarage, setEditingGarage] = useState<any>(null);
   const [resetPasswordGarage, setResetPasswordGarage] = useState<any>(null);
   const [newPassword, setNewPassword] = useState("");
@@ -212,6 +224,33 @@ export default function AdminGarages() {
     },
   });
 
+  // Delete garage mutation (CASCADE deletes all cars)
+  const deleteGarageMutation = useMutation({
+    mutationFn: async (garageId: string) => {
+      const { error } = await supabase
+        .from("garages")
+        .delete()
+        .eq("id", garageId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ 
+        title: "Garagem excluída!", 
+        description: "A garagem e todos os veículos vinculados foram removidos."
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-garages"] });
+      setIsDeleteDialogOpen(false);
+      setDeletingGarage(null);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Erro ao excluir garagem", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       name: "",
@@ -251,6 +290,11 @@ export default function AdminGarages() {
     setResetPasswordGarage(garage);
     setNewPassword("");
     setIsResetPasswordDialogOpen(true);
+  };
+
+  const handleDelete = (garage: any) => {
+    setDeletingGarage(garage);
+    setIsDeleteDialogOpen(true);
   };
 
   const togglePasswordVisibility = (id: string) => {
@@ -445,6 +489,15 @@ export default function AdminGarages() {
                             >
                               <Power className={`h-4 w-4 ${garage.is_active ? "text-success" : "text-muted-foreground"}`} />
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(garage)}
+                              title="Excluir Garagem"
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -498,6 +551,33 @@ export default function AdminGarages() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Garagem</AlertDialogTitle>
+              <AlertDialogDescription className="space-y-2">
+                <p>
+                  Tem certeza que deseja excluir a garagem <strong>{deletingGarage?.name}</strong>?
+                </p>
+                <p className="text-destructive font-semibold">
+                  ⚠️ Essa ação é irreversível. Todos os veículos vinculados a esta garagem serão excluídos permanentemente.
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deletingGarage && deleteGarageMutation.mutate(deletingGarage.id)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={deleteGarageMutation.isPending}
+              >
+                {deleteGarageMutation.isPending ? "Excluindo..." : "Excluir Definitivamente"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AdminLayout>
   );
