@@ -41,6 +41,9 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/home" element={<Index />} />
             <Route path="/carros" element={<Cars />} />
+            {/* SEO-friendly vehicle URL: /veiculo/fiat-palio-2020-abc12345 */}
+            <Route path="/veiculo/:slug" element={<CarDetails />} />
+            {/* Legacy route redirect */}
             <Route path="/carro/:id" element={<CarDetails />} />
             <Route path="/marcas" element={<Brands />} />
             <Route path="/login" element={<Login />} />
