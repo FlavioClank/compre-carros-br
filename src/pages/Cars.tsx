@@ -96,7 +96,7 @@ export default function Cars() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const { ads, hasAds, getAdAtPosition } = useAdsRotation();
+  const { hasAds, getNextAd } = useAdsRotation();
 
   // Filters
   const [search, setSearch] = useState(searchParams.get("busca") || "");
@@ -520,21 +520,39 @@ export default function Cars() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {(() => {
                 const items: React.ReactNode[] = [];
-                let adIndex = 0;
-                
+
                 cars.forEach((car, index) => {
                   items.push(<CarCard key={car.id} car={car} />);
-                  
-                  // Insert ad after every 10 cars (positions 9, 19, 29, etc.)
-                  if (hasAds && (index + 1) % 10 === 0) {
-                    const ad = getAdAtPosition(adIndex);
+
+                  // Insert ad after every 5 cars, but never as the first item
+                  if (
+                    hasAds &&
+                    cars.length >= 5 &&
+                    (index + 1) % 5 === 0 &&
+                    index + 1 < cars.length
+                  ) {
+                    const ad = getNextAd();
                     if (ad) {
-                      items.push(<AdCard key={`ad-${ad.id}-${adIndex}`} ad={ad} />);
-                      adIndex++;
+                      items.push(
+                        <AdCard key={`cars-ad-${ad.id}-${index}`} ad={ad} />
+                      );
                     }
                   }
                 });
-                
+
+                // Always ensure a final ad at the end of the list
+                if (hasAds) {
+                  const finalAd = getNextAd();
+                  if (finalAd) {
+                    items.push(
+                      <AdCard
+                        key={`cars-ad-final-${finalAd.id}`}
+                        ad={finalAd}
+                      />
+                    );
+                  }
+                }
+
                 return items;
               })()}
             </div>

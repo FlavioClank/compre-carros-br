@@ -40,39 +40,37 @@ export function AdCard({ ad }: AdCardProps) {
     : {};
 
   return (
-    <CardWrapper {...wrapperProps} className="block group">
-      <Card className="overflow-hidden h-full border-2 border-dashed border-primary/30 bg-primary/5 hover:border-primary/50 transition-colors">
-        <div className="relative">
-          <div className="aspect-[4/3] overflow-hidden">
-            <img
-              src={ad.image_url}
-              alt={ad.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-          </div>
+    <CardWrapper {...wrapperProps} className="block group h-full">
+      <Card className="h-full flex flex-col overflow-hidden border bg-card shadow-sm hover:shadow-md transition-shadow">
+        <div className="relative aspect-[16/10] bg-muted flex items-center justify-center overflow-hidden">
+          <img
+            src={ad.image_url}
+            alt={ad.title}
+            className="w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-300"
+          />
           <Badge
             variant="secondary"
-            className="absolute top-2 left-2 bg-amber-500 text-white hover:bg-amber-500"
+            className="absolute top-2 left-2 rounded-full px-2 py-0.5 text-[11px] font-semibold"
           >
             Publicidade
           </Badge>
           {ad.link && (
-            <div className="absolute top-2 right-2 p-1.5 bg-background/80 rounded-full">
-              <ExternalLink className="h-4 w-4 text-foreground" />
+            <div className="absolute top-2 right-2 p-1.5 bg-background/90 rounded-full shadow-sm">
+              <ExternalLink className="h-4 w-4 text-muted-foreground" />
             </div>
           )}
         </div>
-        <CardContent className="p-4 space-y-2">
+        <CardContent className="p-3 flex-1 flex flex-col gap-1.5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-foreground truncate">
+              <h3 className="font-semibold text-sm text-foreground truncate">
                 {ad.title}
               </h3>
-              <p className="text-sm text-muted-foreground">{categoryLabel}</p>
+              <p className="text-xs text-muted-foreground truncate">{categoryLabel}</p>
             </div>
           </div>
           {ad.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
               {ad.description}
             </p>
           )}
