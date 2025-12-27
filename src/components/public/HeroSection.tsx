@@ -87,7 +87,7 @@ export function HeroSection() {
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 animate-slide-up stagger-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6 animate-slide-up stagger-2">
             <Button
               onClick={() => navigate("/carros")}
               size="lg"
@@ -107,43 +107,8 @@ export function HeroSection() {
               Explorar marcas
             </Button>
           </div>
-
-          {/* Feature Pills */}
-          <div className="flex flex-wrap items-center justify-center gap-4 mb-16 animate-fade-in stagger-3">
-            <div className="flex items-center gap-2 bg-card/30 backdrop-blur-sm border border-border/30 rounded-full px-4 py-2">
-              <Shield className="h-4 w-4 text-accent" />
-              <span className="text-sm text-foreground/80">100% Verificados</span>
-            </div>
-            <div className="flex items-center gap-2 bg-card/30 backdrop-blur-sm border border-border/30 rounded-full px-4 py-2">
-              <Zap className="h-4 w-4 text-primary" />
-              <span className="text-sm text-foreground/80">Resposta em 24h</span>
-            </div>
-            <div className="flex items-center gap-2 bg-card/30 backdrop-blur-sm border border-border/30 rounded-full px-4 py-2">
-              <Car className="h-4 w-4 text-warning" />
-              <span className="text-sm text-foreground/80">{totalCars}+ Veículos</span>
-            </div>
-          </div>
-
-          {/* Stats Cards - Hidden on mobile */}
-          <div className="hidden md:grid md:grid-cols-3 gap-4 max-w-3xl mx-auto animate-fade-in stagger-4">
-            <div className="feature-card text-center group">
-              <p className="font-display text-4xl md:text-5xl font-bold text-gradient mb-2">{totalCars}+</p>
-              <p className="text-muted-foreground">Veículos Disponíveis</p>
-            </div>
-            <div className="feature-card text-center group">
-              <p className="font-display text-4xl md:text-5xl font-bold text-gradient-accent mb-2">100%</p>
-              <p className="text-muted-foreground">Veículos Verificados</p>
-            </div>
-            <div className="feature-card text-center group">
-              <p className="font-display text-4xl md:text-5xl font-bold text-gradient-gold mb-2">24h</p>
-              <p className="text-muted-foreground">Tempo de Resposta</p>
-            </div>
-          </div>
         </div>
       </div>
-
-      {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
     </section>
   );
 }

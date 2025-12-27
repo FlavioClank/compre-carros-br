@@ -13,7 +13,19 @@ interface Ad {
 export function useAdsRotation() {
   const [ads, setAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [order, setOrder] = useState<number[]>([]);
   const currentIndexRef = useRef(0);
+  const shuffleSeedRef = useRef<number>(Date.now());
+
+  // Helper to create a non-repeating permutation of ad indices
+  const createShuffledOrder = (length: number): number[] => {
+    const indices = Array.from({ length }, (_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return indices;
+  };
 
   useEffect(() => {
     async function fetchAds() {
@@ -26,8 +38,12 @@ export function useAdsRotation() {
       if (error) {
         console.error("Error fetching ads:", error);
         setAds([]);
+        setOrder([]);
       } else {
-        setAds(data || []);
+        const safeData = data || [];
+        setAds(safeData);
+        setOrder(safeData.length > 0 ? createShuffledOrder(safeData.length) : []);
+        currentIndexRef.current = 0;
       }
       setIsLoading(false);
     }
@@ -35,25 +51,40 @@ export function useAdsRotation() {
     fetchAds();
   }, []);
 
-  // Get next ad in round-robin fashion
+  // Re-shuffle ads order every 30 minutes to avoid fixed positions
+  useEffect(() => {
+    if (ads.length === 0) return;
+
+    const interval = setInterval(() => {
+      shuffleSeedRef.current = Date.now();
+      setOrder(createShuffledOrder(ads.length));
+      currentIndexRef.current = 0;
+    }, 30 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [ads.length]);
+
+  // Get next ad in round-robin fashion, without repetition inside a cycle
   const getNextAd = useCallback((): Ad | null => {
-    if (ads.length === 0) return null;
+    if (ads.length === 0 || order.length === 0) return null;
 
-    const ad = ads[currentIndexRef.current];
-    currentIndexRef.current = (currentIndexRef.current + 1) % ads.length;
+    const index = order[currentIndexRef.current];
+    const ad = ads[index];
+
+    currentIndexRef.current = (currentIndexRef.current + 1) % order.length;
     return ad;
-  }, [ads]);
+  }, [ads, order]);
 
-  // Get ad for a specific position (useful for deterministic rendering)
+  // Get ad for a specific position (kept for backward compatibility)
   const getAdAtPosition = useCallback(
     (position: number): Ad | null => {
-      if (ads.length === 0) return null;
-      return ads[position % ads.length];
+      if (ads.length === 0 || order.length === 0) return null;
+      const safeIndex = order[position % order.length];
+      return ads[safeIndex];
     },
-    [ads]
+    [ads, order]
   );
 
-  // Reset rotation index
   const resetRotation = useCallback(() => {
     currentIndexRef.current = 0;
   }, []);

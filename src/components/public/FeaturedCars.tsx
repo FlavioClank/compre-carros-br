@@ -34,13 +34,11 @@ export function FeaturedCars() {
   const [cars, setCars] = useState<Car[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalCars, setTotalCars] = useState(0);
-  const { ads, hasAds, getAdAtPosition } = useAdsRotation();
+  const { hasAds, getNextAd } = useAdsRotation();
 
   useEffect(() => {
     const fetchCars = async () => {
       try {
-        // Fetch directly from cars table with brand join
-        // RLS policy filters to only available cars from active garages
         const { data, error } = await supabase
           .from("cars")
           .select(`
@@ -69,8 +67,7 @@ export function FeaturedCars() {
           .limit(12);
 
         if (error) throw error;
-        
-        // Transform data to match component expected format
+
         const transformedCars: Car[] = (data || []).map((car) => ({
           id: car.id,
           slug: car.slug,
@@ -84,14 +81,13 @@ export function FeaturedCars() {
           color: car.color,
           price: car.price,
           photos: car.photos,
-          status: "available", // RLS only returns available cars
+          status: "available",
           is_featured: car.is_featured,
           brands: car.brands,
         }));
-        
+
         setCars(transformedCars);
 
-        // Count total available cars
         const { count } = await supabase
           .from("cars")
           .select("*", { count: "exact", head: true });
@@ -129,7 +125,7 @@ export function FeaturedCars() {
           </Link>
         </div>
 
-        {/* Cards - Proper spacing */}
+        {/* Cards - with intercalated ads */}
         <div className="space-y-3 md:space-y-4">
           {isLoading ? (
             Array.from({ length: 6 }).map((_, i) => (
@@ -138,21 +134,39 @@ export function FeaturedCars() {
           ) : cars.length > 0 ? (
             (() => {
               const items: React.ReactNode[] = [];
-              let adIndex = 0;
-              
+
               cars.forEach((car, index) => {
                 items.push(<CarCardSingle key={car.id} car={car} />);
-                
-                // Insert ad after every 10 cars
-                if (hasAds && (index + 1) % 10 === 0) {
-                  const ad = getAdAtPosition(adIndex);
+
+                // Insert ad after every 5 cars, but never as the first item
+                if (
+                  hasAds &&
+                  cars.length >= 5 &&
+                  (index + 1) % 5 === 0 &&
+                  index + 1 < cars.length
+                ) {
+                  const ad = getNextAd();
                   if (ad) {
-                    items.push(<AdCard key={`ad-${ad.id}-${adIndex}`} ad={ad} />);
-                    adIndex++;
+                    items.push(
+                      <AdCard key={`featured-ad-${ad.id}-${index}`} ad={ad} />
+                    );
                   }
                 }
               });
-              
+
+              // Always ensure a final ad at the end of the list
+              if (hasAds) {
+                const finalAd = getNextAd();
+                if (finalAd) {
+                  items.push(
+                    <AdCard
+                      key={`featured-ad-final-${finalAd.id}`}
+                      ad={finalAd}
+                    />
+                  );
+                }
+              }
+
               return items;
             })()
           ) : (

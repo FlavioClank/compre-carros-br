@@ -29,6 +29,7 @@ const menuItems = [
   { icon: Package, label: "Veículos", href: "/admin/cars" },
   { icon: Tags, label: "Marcas", href: "/admin/brands" },
   { icon: Megaphone, label: "Anúncios", href: "/admin/ads" },
+  { icon: Megaphone, label: "Banners", href: "/admin/banners" },
   { icon: History, label: "Histórico", href: "/admin/history" },
   { icon: FileText, label: "Logs", href: "/admin/logs" },
 ];
