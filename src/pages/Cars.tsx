@@ -27,6 +27,26 @@ interface Brand {
   name: string;
 }
 
+// Interface matching the public_active_cars VIEW
+interface PublicCar {
+  id: string;
+  code: string;
+  model: string;
+  year: number;
+  version: string | null;
+  mileage: number;
+  transmission: string;
+  fuel: string;
+  color: string;
+  price: number;
+  photos: string[];
+  is_featured: boolean;
+  created_at: string;
+  brand_id: string;
+  brand_name: string;
+  brand_logo_url: string | null;
+}
+
 interface Car {
   id: string;
   code: string;
@@ -120,18 +140,16 @@ export default function Cars() {
   useEffect(() => {
     const fetchCars = async () => {
       setIsLoading(true);
+      
+      // Use the secure public VIEW
       let query = supabase
-        .from("cars")
-        .select(`
-          id, code, model, year, version, mileage, transmission, fuel, color, price, photos, status, doors, condition,
-          brands (name, logo_url)
-        `)
-        .eq("status", "available")
+        .from("public_active_cars")
+        .select("*")
         .order("created_at", { ascending: false });
 
-      // Apply filters
+      // Apply filters on VIEW columns
       if (search) {
-        query = query.or(`model.ilike.%${search}%,code.ilike.%${search}%`);
+        query = query.or(`model.ilike.%${search}%,code.ilike.%${search}%,brand_name.ilike.%${search}%`);
       }
 
       if (yearFrom) {
@@ -149,57 +167,57 @@ export default function Cars() {
         }
       }
 
-      if (transmission && ["manual", "automatic", "cvt", "semi_automatic"].includes(transmission)) {
-        query = query.eq("transmission", transmission as "manual" | "automatic" | "cvt" | "semi_automatic");
+      if (transmission) {
+        query = query.eq("transmission", transmission as any);
       }
 
-      if (fuel && ["gasoline", "ethanol", "flex", "diesel", "electric", "hybrid"].includes(fuel)) {
-        query = query.eq("fuel", fuel as "gasoline" | "ethanol" | "flex" | "diesel" | "electric" | "hybrid");
+      if (fuel) {
+        query = query.eq("fuel", fuel as any);
       }
 
       if (color) {
         query = query.eq("color", color);
       }
 
-      if (doors) {
-        query = query.eq("doors", parseInt(doors));
-      }
-
-      if (condition) {
-        query = query.eq("condition", condition);
+      if (brand) {
+        query = query.eq("brand_name", brand);
       }
 
       const { data, error } = await query;
 
       if (error) {
         console.error("Error fetching cars:", error);
+        setCars([]);
       } else {
-        let filteredCars = data || [];
+        // Transform VIEW data to match component expected format
+        const transformedCars: Car[] = (data as PublicCar[] || []).map((car) => ({
+          id: car.id,
+          code: car.code,
+          model: car.model,
+          year: car.year,
+          version: car.version,
+          mileage: car.mileage,
+          transmission: car.transmission,
+          fuel: car.fuel,
+          color: car.color,
+          price: car.price,
+          photos: car.photos || [],
+          status: "available",
+          doors: null, // VIEW doesn't include doors
+          condition: null, // VIEW doesn't include condition
+          brands: {
+            name: car.brand_name,
+            logo_url: car.brand_logo_url,
+          },
+        }));
         
-        // Filter by brand name (since it's a relation)
-        if (brand) {
-          filteredCars = filteredCars.filter(
-            (car) => car.brands?.name === brand
-          );
-        }
-
-        // Filter by search in brand name
-        if (search) {
-          filteredCars = filteredCars.filter(
-            (car) =>
-              car.model.toLowerCase().includes(search.toLowerCase()) ||
-              car.code.toLowerCase().includes(search.toLowerCase()) ||
-              car.brands?.name.toLowerCase().includes(search.toLowerCase())
-          );
-        }
-
-        setCars(filteredCars);
+        setCars(transformedCars);
       }
       setIsLoading(false);
     };
 
     fetchCars();
-  }, [search, brand, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition]);
+  }, [search, brand, yearFrom, yearTo, priceRange, transmission, fuel, color]);
 
   const clearFilters = () => {
     setSearch("");
