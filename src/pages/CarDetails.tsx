@@ -6,6 +6,8 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  WHATSAPP_NUMBER,
+  buildCarWhatsAppMessage,
   formatPrice,
   formatMileage,
   FUEL_LABELS,
@@ -156,14 +158,18 @@ export default function CarDetails() {
   const invertBrandLogo = ["toyota", "nissan", "audi", "volkswagen"].includes(brandName.toLowerCase());
   const photos = car.photos?.length > 0 ? car.photos : ["/placeholder.svg"];
 
-  const whatsappUrl = generateWhatsAppUrl({
-    code: car.code,
-    model: car.model,
-    year: car.year,
-    version: car.version,
-    price: car.price,
-    brand_name: brandName,
-  });
+  const whatsappUrl = generateWhatsAppUrl(
+    WHATSAPP_NUMBER,
+    buildCarWhatsAppMessage({
+      id: car.id,
+      code: car.code,
+      model: car.model,
+      year: car.year,
+      version: car.version,
+      price: car.price,
+      brand_name: brandName,
+    })
+  );
 
   const nextPhoto = () => {
     setCurrentPhotoIndex((prev) => (prev + 1) % photos.length);

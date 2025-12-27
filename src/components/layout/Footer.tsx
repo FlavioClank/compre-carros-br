@@ -1,6 +1,6 @@
 import { Car, Phone, Mail, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
-import { SITE_NAME, WHATSAPP_FORMATTED, WHATSAPP_NUMBER } from "@/lib/constants";
+import { SITE_NAME, WHATSAPP_FORMATTED, WHATSAPP_NUMBER, generateWhatsAppUrl } from "@/lib/constants";
 
 export function Footer() {
   return (
@@ -52,7 +52,7 @@ export function Footer() {
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-accent" />
                 <a
-                  href={`https://wa.me/${WHATSAPP_NUMBER}`}
+                  href={generateWhatsAppUrl(WHATSAPP_NUMBER, "Olá! Gostaria de mais informações.")}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-accent transition-colors"
@@ -79,7 +79,7 @@ export function Footer() {
               personalizado.
             </p>
             <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}`}
+              href={generateWhatsAppUrl(WHATSAPP_NUMBER, "Olá! Gostaria de saber mais sobre os veículos disponíveis.")}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-4 py-2 rounded-lg font-medium text-sm hover:bg-accent/90 transition-colors"

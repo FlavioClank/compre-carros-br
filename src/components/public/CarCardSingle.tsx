@@ -1,6 +1,14 @@
 import { Link } from "react-router-dom";
 import { Calendar, Gauge, Car, Fuel, Sparkles } from "lucide-react";
-import { formatPrice, formatMileage, FUEL_LABELS, TRANSMISSION_LABELS, generateWhatsAppUrl } from "@/lib/constants";
+import {
+  WHATSAPP_NUMBER,
+  buildCarWhatsAppMessage,
+  formatMileage,
+  formatPrice,
+  FUEL_LABELS,
+  generateWhatsAppUrl,
+  TRANSMISSION_LABELS,
+} from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { generateCarUrl } from "@/lib/utils";
@@ -33,14 +41,18 @@ export function CarCardSingle({ car }: CarCardSingleProps) {
   const invertBrandLogo = ["toyota", "nissan", "audi", "volkswagen"].includes(brandName.toLowerCase());
   const carUrl = generateCarUrl({ id: car.id, model: car.model, version: car.version, brands: car.brands });
   
-  const whatsappUrl = generateWhatsAppUrl({
-    code: car.code,
-    model: car.model,
-    year: car.year,
-    version: car.version,
-    price: car.price,
-    brand_name: brandName,
-  });
+  const whatsappUrl = generateWhatsAppUrl(
+    WHATSAPP_NUMBER,
+    buildCarWhatsAppMessage({
+      id: car.id,
+      code: car.code,
+      model: car.model,
+      year: car.year,
+      version: car.version,
+      price: car.price,
+      brand_name: brandName,
+    })
+  );
 
   return (
     <div className={`group bg-card rounded-xl overflow-hidden border shadow-sm ${

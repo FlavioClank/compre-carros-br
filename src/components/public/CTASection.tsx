@@ -1,4 +1,4 @@
-import { WHATSAPP_NUMBER } from "@/lib/constants";
+import { WHATSAPP_NUMBER, generateWhatsAppUrl } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Phone } from "lucide-react";
 
@@ -27,7 +27,7 @@ export function CTASection() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}`}
+              href={generateWhatsAppUrl(WHATSAPP_NUMBER, "Olá! Vi o site CompreCarros e gostaria de saber mais sobre os veículos disponíveis.")}
               target="_blank"
               rel="noopener noreferrer"
             >
