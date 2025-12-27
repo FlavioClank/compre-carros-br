@@ -158,8 +158,8 @@ export default function AdminCars() {
   });
 
   const getWhatsAppShareUrl = (car: any) => {
-    const message = `🚗 *${car.brands?.name} ${car.model}*\n\n📅 Ano: ${car.year}\n⚙️ Versão: ${car.version || "-"}\n💰 Preço: ${formatPrice(car.price)}\n📍 Código: ${car.code}\n\n🔗 Veja mais detalhes: ${window.location.origin}/carro/${car.id}`;
-    return `https://wa.me/?text=${encodeURIComponent(message)}`;
+    const message = `🚗 *${car.brands?.name} ${car.model}*\n\n📅 Ano: ${car.year}\n⚙️ Versão: ${car.version || "-"}\n💰 Preço: ${formatPrice(car.price)}\n📍 Código: ${car.code}\n\n🔗 Veja mais detalhes: /carro/${car.id}`;
+    return generateWhatsAppUrl(WHATSAPP_NUMBER, message);
   };
 
   const getFacebookShareUrl = (car: any) => {
@@ -314,13 +314,15 @@ export default function AdminCars() {
                             >
                               <Star className={`h-4 w-4 ${car.is_featured ? "text-accent fill-accent" : ""}`} />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => window.open(`/carro/${car.id}`, "_blank")}
+                            <a 
+                              href={`/carro/${car.id}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
                             >
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
+                              <Button variant="ghost" size="icon">
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            </a>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">

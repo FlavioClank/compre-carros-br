@@ -44,8 +44,14 @@ export const formatMileage = (mileage: number): string => {
   return new Intl.NumberFormat("pt-BR").format(mileage) + " km";
 };
 
-// Generate WhatsApp URL
-export const generateWhatsAppUrl = (car: {
+// Generate WhatsApp URL - SINGLE SOURCE OF TRUTH (wa.me only)
+export const generateWhatsAppUrl = (phone: string, message: string): string => {
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+};
+
+// Build WhatsApp message for a car inquiry (URL generation must use generateWhatsAppUrl)
+export const buildCarWhatsAppMessage = (car: {
+  id: string;
   code: string;
   model: string;
   year: number;
@@ -53,15 +59,5 @@ export const generateWhatsAppUrl = (car: {
   price: number;
   brand_name?: string;
 }): string => {
-  const message = `Olá! Tenho interesse no veículo:
-
-🚗 *${car.brand_name || ""} ${car.model}*
-📅 Ano: ${car.year}
-${car.version ? `📋 Versão: ${car.version}` : ""}
-💰 Preço: ${formatPrice(car.price)}
-🔖 Código: ${car.code}
-
-Poderia me passar mais informações?`;
-
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  return `Olá! Tenho interesse no veículo:\n\n🚗 *${car.brand_name || ""} ${car.model}*\n📅 Ano: ${car.year}\n${car.version ? `⚙️ Versão: ${car.version}\n` : ""}💰 Preço: ${formatPrice(car.price)}\n🔖 Código: ${car.code}\n🔗 Link: /carro/${car.id}\n\nPoderia me passar mais informações?`;
 };
