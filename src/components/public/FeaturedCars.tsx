@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { CarCardSingle } from "@/components/public/CarCardSingle";
+import { AdCard } from "@/components/public/AdCard";
+import { useAdsRotation } from "@/hooks/useAdsRotation";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,6 +33,7 @@ export function FeaturedCars() {
   const [cars, setCars] = useState<Car[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalCars, setTotalCars] = useState(0);
+  const { ads, hasAds, getAdAtPosition } = useAdsRotation();
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -130,9 +133,25 @@ export function FeaturedCars() {
               <Skeleton key={i} className="h-28 md:h-40 w-full rounded-xl bg-card" />
             ))
           ) : cars.length > 0 ? (
-            cars.map((car) => (
-              <CarCardSingle key={car.id} car={car} />
-            ))
+            (() => {
+              const items: React.ReactNode[] = [];
+              let adIndex = 0;
+              
+              cars.forEach((car, index) => {
+                items.push(<CarCardSingle key={car.id} car={car} />);
+                
+                // Insert ad after every 10 cars
+                if (hasAds && (index + 1) % 10 === 0) {
+                  const ad = getAdAtPosition(adIndex);
+                  if (ad) {
+                    items.push(<AdCard key={`ad-${ad.id}-${adIndex}`} ad={ad} />);
+                    adIndex++;
+                  }
+                }
+              });
+              
+              return items;
+            })()
           ) : (
             <div className="text-center py-10 bg-card/50 rounded-xl border border-border/50">
               <p className="text-muted-foreground text-sm">Nenhum veículo disponível</p>

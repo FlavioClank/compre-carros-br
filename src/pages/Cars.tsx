@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { CarCard } from "@/components/public/CarCard";
+import { AdCard } from "@/components/public/AdCard";
+import { useAdsRotation } from "@/hooks/useAdsRotation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -93,6 +95,7 @@ export default function Cars() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const { ads, hasAds, getAdAtPosition } = useAdsRotation();
 
   // Filters
   const [search, setSearch] = useState(searchParams.get("busca") || "");
@@ -503,7 +506,7 @@ export default function Cars() {
             </p>
           </div>
 
-          {/* Cars Grid */}
+          {/* Cars Grid with Ads Intercalation */}
           {isLoading ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -512,9 +515,25 @@ export default function Cars() {
             </div>
           ) : cars.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {cars.map((car) => (
-                <CarCard key={car.id} car={car} />
-              ))}
+              {(() => {
+                const items: React.ReactNode[] = [];
+                let adIndex = 0;
+                
+                cars.forEach((car, index) => {
+                  items.push(<CarCard key={car.id} car={car} />);
+                  
+                  // Insert ad after every 10 cars (positions 9, 19, 29, etc.)
+                  if (hasAds && (index + 1) % 10 === 0) {
+                    const ad = getAdAtPosition(adIndex);
+                    if (ad) {
+                      items.push(<AdCard key={`ad-${ad.id}-${adIndex}`} ad={ad} />);
+                      adIndex++;
+                    }
+                  }
+                });
+                
+                return items;
+              })()}
             </div>
           ) : (
             <div className="text-center py-16 bg-card/50 rounded-xl border border-border/50">
