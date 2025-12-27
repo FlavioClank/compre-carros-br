@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { generateCarSlug } from "@/lib/utils";
 import {
   formatPrice,
   formatMileage,
@@ -68,20 +69,33 @@ interface CarDetail {
 }
 
 export default function CarDetails() {
-  const { id } = useParams<{ id: string }>();
+  const { slug, id: legacyId } = useParams<{ slug?: string; id?: string }>();
+  const navigate = useNavigate();
   const [car, setCar] = useState<CarDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
   useEffect(() => {
     const fetchCar = async () => {
-      if (!id) return;
+      // Extract car ID from slug (last 8 characters) or use legacy id
+      let carId: string | undefined;
+      
+      if (slug) {
+        // New SEO URL format: /veiculo/fiat-palio-2020-abc12345
+        carId = slug.slice(-8);
+      } else if (legacyId) {
+        // Legacy URL format: /carro/:id - redirect to new URL
+        carId = legacyId;
+      }
+      
+      if (!carId) return;
 
       // Use the secure public VIEW
       const { data, error } = await supabase
         .from("public_active_cars")
         .select("*")
-        .eq("id", id)
+        .or(`id.eq.${carId},id.ilike.${carId}%`)
+        .limit(1)
         .single();
 
       if (error) {
@@ -90,7 +104,7 @@ export default function CarDetails() {
       } else if (data) {
         // Transform VIEW data to match component expected format
         const publicCar = data as PublicCar;
-        setCar({
+        const carData: CarDetail = {
           id: publicCar.id,
           code: publicCar.code,
           model: publicCar.model,
@@ -109,13 +123,20 @@ export default function CarDetails() {
             name: publicCar.brand_name,
             logo_url: publicCar.brand_logo_url,
           },
-        });
+        };
+        setCar(carData);
+        
+        // Redirect legacy URLs to new SEO-friendly URLs
+        if (legacyId && !slug) {
+          const newSlug = generateCarSlug(publicCar.brand_name, publicCar.model, publicCar.version);
+          navigate(`/veiculo/${newSlug}-${publicCar.id.slice(0, 8)}`, { replace: true });
+        }
       }
       setIsLoading(false);
     };
 
     fetchCar();
-  }, [id]);
+  }, [slug, legacyId, navigate]);
 
   if (isLoading) {
     return (
@@ -175,7 +196,10 @@ export default function CarDetails() {
     setCurrentPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
   };
 
-  const shareUrl = window.location.href;
+  // Generate canonical SEO URL
+  const carSlug = generateCarSlug(brandName, car.model, car.version);
+  const canonicalUrl = `${window.location.origin}/veiculo/${carSlug}-${car.id.slice(0, 8)}`;
+  const shareUrl = canonicalUrl;
 
   const specs = [
     { icon: Calendar, label: "Ano", value: car.year },
@@ -205,12 +229,12 @@ export default function CarDetails() {
         <meta property="og:description" content={metaDescription} />
         <meta property="og:image" content={mainPhoto} />
         <meta property="og:type" content="product" />
-        <meta property="og:url" content={shareUrl} />
+        <meta property="og:url" content={canonicalUrl} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={metaDescription} />
         <meta name="twitter:image" content={mainPhoto} />
-        <link rel="canonical" href={shareUrl} />
+        <link rel="canonical" href={canonicalUrl} />
       </Helmet>
       <div className="container py-8 md:py-12">
         {/* Breadcrumb */}

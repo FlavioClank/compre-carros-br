@@ -29,28 +29,28 @@ const BrandCard = memo(function BrandCard({
     <Link
       to={`/carros?marca=${brand.id}`}
       onClick={onClickHandler}
-      className="flex-shrink-0 w-[5.5rem] h-[5.5rem] md:w-36 md:h-28 rounded-xl border border-border bg-card flex flex-col items-center justify-center p-2 md:p-3 shadow-sm select-none carousel-slide-optimized"
+      className="flex-shrink-0 w-[6.5rem] h-[6.5rem] md:w-44 md:h-[8.5rem] rounded-xl border border-border bg-card flex flex-col items-center justify-center p-2.5 md:p-4 shadow-sm select-none carousel-slide-optimized"
       draggable={false}
     >
       {brand.logo_url ? (
         <img
           src={brand.logo_url}
           alt={brand.name}
-          width={80}
-          height={48}
+          width={96}
+          height={58}
           loading="lazy"
           decoding="async"
-          className={`max-w-[80%] max-h-9 md:max-h-12 object-contain flex-shrink-0 ${
+          className={`max-w-[85%] max-h-11 md:max-h-14 object-contain flex-shrink-0 ${
             isDark ? "brand-logo-premium-invert" : ""
           }`}
           draggable={false}
         />
       ) : (
-        <span className="text-xs md:text-sm font-bold text-foreground text-center px-1 truncate w-full">
+        <span className="text-sm md:text-base font-bold text-foreground text-center px-1 truncate w-full">
           {brand.name}
         </span>
       )}
-      <span className="text-[9px] md:text-xs font-medium text-muted-foreground mt-1.5 text-center leading-tight px-1 w-full truncate">
+      <span className="text-[10px] md:text-sm font-medium text-muted-foreground mt-2 text-center leading-tight px-1 w-full truncate">
         {brand.name}
       </span>
     </Link>
