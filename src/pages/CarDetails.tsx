@@ -29,6 +29,7 @@ import {
 
 interface CarDetail {
   id: string;
+  slug: string | null;
   code: string;
   model: string;
   year: number;
@@ -49,24 +50,28 @@ interface CarDetail {
 }
 
 export default function CarDetails() {
-  const { id } = useParams<{ id?: string }>();
+  const { slug } = useParams<{ slug?: string }>();
   const [car, setCar] = useState<CarDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
   useEffect(() => {
     const fetchCar = async () => {
-      if (!id) {
+      if (!slug) {
         setIsLoading(false);
         return;
       }
 
+      // Determine if slug is a UUID (fallback) or an actual slug
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+      
       // Fetch directly from cars table with brand join
       // RLS policy filters to only available cars from active garages
-      const { data, error } = await supabase
+      let query = supabase
         .from("cars")
         .select(`
           id,
+          slug,
           code,
           model,
           year,
@@ -84,9 +89,16 @@ export default function CarDetails() {
             name,
             logo_url
           )
-        `)
-        .eq("id", id)
-        .maybeSingle();
+        `);
+      
+      // Search by slug or ID depending on format
+      if (isUuid) {
+        query = query.eq("id", slug);
+      } else {
+        query = query.eq("slug", slug);
+      }
+      
+      const { data, error } = await query.maybeSingle();
 
       if (error) {
         console.error("Error fetching car:", error);
@@ -94,6 +106,7 @@ export default function CarDetails() {
       } else if (data) {
         const carData: CarDetail = {
           id: data.id,
+          slug: data.slug,
           code: data.code,
           model: data.model,
           year: data.year,
@@ -115,7 +128,7 @@ export default function CarDetails() {
     };
 
     fetchCar();
-  }, [id]);
+  }, [slug]);
 
   if (isLoading) {
     return (
@@ -179,8 +192,8 @@ export default function CarDetails() {
     setCurrentPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
   };
 
-  // Canonical URL using car ID
-  const canonicalUrl = `${window.location.origin}/carro/${car.id}`;
+  // Canonical URL using slug for SEO (fallback to ID if no slug)
+  const canonicalUrl = `${window.location.origin}/carro/${car.slug || car.id}`;
   const shareUrl = canonicalUrl;
 
   const specs = [

@@ -32,6 +32,7 @@ interface Brand {
 
 interface Car {
   id: string;
+  slug?: string | null;
   code: string;
   model: string;
   year: number;
@@ -131,6 +132,7 @@ export default function Cars() {
         .from("cars")
         .select(`
           id,
+          slug,
           code,
           model,
           year,
