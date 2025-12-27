@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { generateCarSlug } from "@/lib/utils";
 import {
   formatPrice,
   formatMileage,
@@ -48,26 +47,17 @@ interface CarDetail {
 }
 
 export default function CarDetails() {
-  const { slug, id: legacyId } = useParams<{ slug?: string; id?: string }>();
-  const navigate = useNavigate();
+  const { id } = useParams<{ id?: string }>();
   const [car, setCar] = useState<CarDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
   useEffect(() => {
     const fetchCar = async () => {
-      // Extract car ID from slug (last 8 characters) or use legacy id
-      let carId: string | undefined;
-      
-      if (slug) {
-        // New SEO URL format: /veiculo/fiat-palio-2020-abc12345
-        carId = slug.slice(-8);
-      } else if (legacyId) {
-        // Legacy URL format: /carro/:id - redirect to new URL
-        carId = legacyId;
+      if (!id) {
+        setIsLoading(false);
+        return;
       }
-      
-      if (!carId) return;
 
       // Fetch directly from cars table with brand join
       // RLS policy filters to only available cars from active garages
@@ -93,8 +83,7 @@ export default function CarDetails() {
             logo_url
           )
         `)
-        .or(`id.eq.${carId},id.ilike.${carId}%`)
-        .limit(1)
+        .eq("id", id)
         .maybeSingle();
 
       if (error) {
@@ -119,18 +108,12 @@ export default function CarDetails() {
           brands: data.brands,
         };
         setCar(carData);
-        
-        // Redirect legacy URLs to new SEO-friendly URLs
-        if (legacyId && !slug && data.brands) {
-          const newSlug = generateCarSlug(data.brands.name, data.model, data.version);
-          navigate(`/veiculo/${newSlug}-${data.id.slice(0, 8)}`, { replace: true });
-        }
       }
       setIsLoading(false);
     };
 
     fetchCar();
-  }, [slug, legacyId, navigate]);
+  }, [id]);
 
   if (isLoading) {
     return (
@@ -190,9 +173,8 @@ export default function CarDetails() {
     setCurrentPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
   };
 
-  // Generate canonical SEO URL
-  const carSlug = generateCarSlug(brandName, car.model, car.version);
-  const canonicalUrl = `${window.location.origin}/veiculo/${carSlug}-${car.id.slice(0, 8)}`;
+  // Canonical URL using car ID
+  const canonicalUrl = `${window.location.origin}/carro/${car.id}`;
   const shareUrl = canonicalUrl;
 
   const specs = [
