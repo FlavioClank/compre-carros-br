@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Car interface for component
 interface Car {
   id: string;
+  slug?: string | null;
   code: string;
   model: string;
   year: number;
@@ -44,6 +45,7 @@ export function FeaturedCars() {
           .from("cars")
           .select(`
             id,
+            slug,
             code,
             model,
             year,
@@ -71,6 +73,7 @@ export function FeaturedCars() {
         // Transform data to match component expected format
         const transformedCars: Car[] = (data || []).map((car) => ({
           id: car.id,
+          slug: car.slug,
           code: car.code,
           model: car.model,
           year: car.year,

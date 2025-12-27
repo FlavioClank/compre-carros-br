@@ -44,8 +44,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/home" element={<Index />} />
             <Route path="/carros" element={<Cars />} />
-            {/* Vehicle detail page by UUID */}
-            <Route path="/carro/:id" element={<CarDetails />} />
+            {/* Vehicle detail page by slug (SEO-friendly) or UUID (fallback) */}
+            <Route path="/carro/:slug" element={<CarDetails />} />
             <Route path="/marcas" element={<Brands />} />
             <Route path="/login" element={<Login />} />
 

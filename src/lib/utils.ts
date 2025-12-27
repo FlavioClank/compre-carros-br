@@ -27,8 +27,12 @@ export function generateCarSlug(brandName: string, model: string, version?: stri
 }
 
 /**
- * Generate car URL using full UUID
+ * Generate car URL using slug for SEO-friendly URLs
  */
-export function generateCarUrl(car: { id: string; model?: string; version?: string | null; brand_name?: string; brands?: { name: string } | null }): string {
+export function generateCarUrl(car: { id: string; slug?: string | null; model?: string; version?: string | null; brand_name?: string; brands?: { name: string } | null }): string {
+  // Prefer slug if available, fallback to ID
+  if (car.slug) {
+    return `/carro/${car.slug}`;
+  }
   return `/carro/${car.id}`;
 }

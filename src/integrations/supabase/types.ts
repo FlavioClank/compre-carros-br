@@ -125,6 +125,7 @@ export type Database = {
           model: string
           photos: string[] | null
           price: number
+          slug: string | null
           sold_at: string | null
           sold_reason: string | null
           status: Database["public"]["Enums"]["car_status"]
@@ -150,6 +151,7 @@ export type Database = {
           model: string
           photos?: string[] | null
           price: number
+          slug?: string | null
           sold_at?: string | null
           sold_reason?: string | null
           status?: Database["public"]["Enums"]["car_status"]
@@ -175,6 +177,7 @@ export type Database = {
           model?: string
           photos?: string[] | null
           price?: number
+          slug?: string | null
           sold_at?: string | null
           sold_reason?: string | null
           status?: Database["public"]["Enums"]["car_status"]
@@ -357,6 +360,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_car_slug: {
+        Args: {
+          p_brand_name: string
+          p_model: string
+          p_version: string
+          p_year: number
+        }
+        Returns: string
+      }
       get_user_garage_id: { Args: never; Returns: string }
       has_role: {
         Args: {

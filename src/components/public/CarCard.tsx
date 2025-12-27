@@ -16,6 +16,7 @@ import { generateCarUrl } from "@/lib/utils";
 interface CarCardProps {
   car: {
     id: string;
+    slug?: string | null;
     code: string;
     model: string;
     year: number;
@@ -38,7 +39,7 @@ export function CarCard({ car }: CarCardProps) {
   const brandName = car.brands?.name || "";
   const mainPhoto = car.photos?.[0] || "/placeholder.svg";
   const invertBrandLogo = ["toyota", "nissan", "audi", "volkswagen"].includes(brandName.toLowerCase());
-  const carUrl = generateCarUrl({ id: car.id, model: car.model, version: car.version, brands: car.brands });
+  const carUrl = generateCarUrl({ id: car.id, slug: car.slug, model: car.model, version: car.version, brands: car.brands });
   
   const whatsappUrl = generateWhatsAppUrl(
     WHATSAPP_NUMBER,
