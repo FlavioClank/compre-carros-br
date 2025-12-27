@@ -16,6 +16,7 @@ import {
   X,
   ChevronDown,
   Tags,
+  Megaphone,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -27,6 +28,7 @@ const menuItems = [
   { icon: Building2, label: "Garagens", href: "/admin/garages" },
   { icon: Package, label: "Veículos", href: "/admin/cars" },
   { icon: Tags, label: "Marcas", href: "/admin/brands" },
+  { icon: Megaphone, label: "Anúncios", href: "/admin/ads" },
   { icon: History, label: "Histórico", href: "/admin/history" },
   { icon: FileText, label: "Logs", href: "/admin/logs" },
 ];
