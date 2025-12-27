@@ -10,9 +10,10 @@ export function HeroSection() {
 
   useEffect(() => {
     const fetchTotalCars = async () => {
-      // Use the secure public VIEW for counting
+      // Count available cars directly from cars table
+      // RLS policy filters to only available cars from active garages
       const { count, error } = await supabase
-        .from("public_active_cars")
+        .from("cars")
         .select("*", { count: "exact", head: true });
       
       if (!error && count !== null) {
