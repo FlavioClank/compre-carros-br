@@ -26,27 +26,6 @@ import {
   Share2,
 } from "lucide-react";
 
-// Interface matching the public_active_cars VIEW
-interface PublicCar {
-  id: string;
-  code: string;
-  model: string;
-  year: number;
-  version: string | null;
-  mileage: number;
-  transmission: string;
-  fuel: string;
-  color: string;
-  price: number;
-  photos: string[];
-  description: string | null;
-  is_featured: boolean;
-  created_at: string;
-  brand_id: string;
-  brand_name: string;
-  brand_logo_url: string | null;
-}
-
 interface CarDetail {
   id: string;
   code: string;
@@ -90,46 +69,61 @@ export default function CarDetails() {
       
       if (!carId) return;
 
-      // Use the secure public VIEW
+      // Fetch directly from cars table with brand join
+      // RLS policy filters to only available cars from active garages
       const { data, error } = await supabase
-        .from("public_active_cars")
-        .select("*")
+        .from("cars")
+        .select(`
+          id,
+          code,
+          model,
+          year,
+          version,
+          mileage,
+          transmission,
+          fuel,
+          color,
+          price,
+          photos,
+          description,
+          status,
+          created_at,
+          brands:brand_id (
+            name,
+            logo_url
+          )
+        `)
         .or(`id.eq.${carId},id.ilike.${carId}%`)
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching car:", error);
         setCar(null);
       } else if (data) {
-        // Transform VIEW data to match component expected format
-        const publicCar = data as PublicCar;
         const carData: CarDetail = {
-          id: publicCar.id,
-          code: publicCar.code,
-          model: publicCar.model,
-          year: publicCar.year,
-          version: publicCar.version,
-          mileage: publicCar.mileage,
-          transmission: publicCar.transmission,
-          fuel: publicCar.fuel,
-          color: publicCar.color,
-          price: publicCar.price,
-          description: publicCar.description,
-          photos: publicCar.photos || [],
-          status: "available",
-          created_at: publicCar.created_at,
-          brands: {
-            name: publicCar.brand_name,
-            logo_url: publicCar.brand_logo_url,
-          },
+          id: data.id,
+          code: data.code,
+          model: data.model,
+          year: data.year,
+          version: data.version,
+          mileage: data.mileage,
+          transmission: data.transmission,
+          fuel: data.fuel,
+          color: data.color,
+          price: data.price,
+          description: data.description,
+          photos: data.photos || [],
+          status: data.status,
+          created_at: data.created_at,
+          brands: data.brands,
         };
         setCar(carData);
         
         // Redirect legacy URLs to new SEO-friendly URLs
-        if (legacyId && !slug) {
-          const newSlug = generateCarSlug(publicCar.brand_name, publicCar.model, publicCar.version);
-          navigate(`/veiculo/${newSlug}-${publicCar.id.slice(0, 8)}`, { replace: true });
+        if (legacyId && !slug && data.brands) {
+          const newSlug = generateCarSlug(data.brands.name, data.model, data.version);
+          navigate(`/veiculo/${newSlug}-${data.id.slice(0, 8)}`, { replace: true });
         }
       }
       setIsLoading(false);

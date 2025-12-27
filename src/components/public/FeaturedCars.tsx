@@ -6,27 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Interface matching the public_active_cars VIEW
-interface PublicCar {
-  id: string;
-  code: string;
-  model: string;
-  year: number;
-  version: string | null;
-  mileage: number;
-  transmission: string;
-  fuel: string;
-  color: string;
-  price: number;
-  photos: string[] | null;
-  is_featured: boolean;
-  created_at: string;
-  brand_id: string;
-  brand_name: string;
-  brand_logo_url: string | null;
-}
-
-// Transform VIEW data to match CarCardSingle expected format
+// Car interface for component
 interface Car {
   id: string;
   code: string;
@@ -55,18 +35,38 @@ export function FeaturedCars() {
   useEffect(() => {
     const fetchCars = async () => {
       try {
-        // Fetch from the secure public VIEW
+        // Fetch directly from cars table with brand join
+        // RLS policy filters to only available cars from active garages
         const { data, error } = await supabase
-          .from("public_active_cars")
-          .select("*")
+          .from("cars")
+          .select(`
+            id,
+            code,
+            model,
+            year,
+            version,
+            mileage,
+            transmission,
+            fuel,
+            color,
+            price,
+            photos,
+            is_featured,
+            created_at,
+            description,
+            brands:brand_id (
+              name,
+              logo_url
+            )
+          `)
           .order("is_featured", { ascending: false })
           .order("created_at", { ascending: false })
           .limit(12);
 
         if (error) throw error;
         
-        // Transform VIEW data to match component expected format
-        const transformedCars: Car[] = (data as PublicCar[] || []).map((car) => ({
+        // Transform data to match component expected format
+        const transformedCars: Car[] = (data || []).map((car) => ({
           id: car.id,
           code: car.code,
           model: car.model,
@@ -78,19 +78,16 @@ export function FeaturedCars() {
           color: car.color,
           price: car.price,
           photos: car.photos,
-          status: "available", // VIEW only returns available cars
+          status: "available", // RLS only returns available cars
           is_featured: car.is_featured,
-          brands: {
-            name: car.brand_name,
-            logo_url: car.brand_logo_url,
-          },
+          brands: car.brands,
         }));
         
         setCars(transformedCars);
 
-        // Count from VIEW
+        // Count total available cars
         const { count } = await supabase
-          .from("public_active_cars")
+          .from("cars")
           .select("*", { count: "exact", head: true });
 
         setTotalCars(count || 0);

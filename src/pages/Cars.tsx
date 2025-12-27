@@ -21,30 +21,11 @@ import {
 } from "@/components/ui/sheet";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { FUEL_LABELS, TRANSMISSION_LABELS } from "@/lib/constants";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Brand {
   id: string;
   name: string;
-}
-
-// Interface matching the public_active_cars VIEW
-interface PublicCar {
-  id: string;
-  code: string;
-  model: string;
-  year: number;
-  version: string | null;
-  mileage: number;
-  transmission: string;
-  fuel: string;
-  color: string;
-  price: number;
-  photos: string[];
-  is_featured: boolean;
-  created_at: string;
-  brand_id: string;
-  brand_name: string;
-  brand_logo_url: string | null;
 }
 
 interface Car {
@@ -141,15 +122,35 @@ export default function Cars() {
     const fetchCars = async () => {
       setIsLoading(true);
       
-      // Use the secure public VIEW
+      // Fetch directly from cars table with brand join
+      // RLS policy filters to only available cars from active garages
       let query = supabase
-        .from("public_active_cars")
-        .select("*")
+        .from("cars")
+        .select(`
+          id,
+          code,
+          model,
+          year,
+          version,
+          mileage,
+          transmission,
+          fuel,
+          color,
+          price,
+          photos,
+          doors,
+          condition,
+          created_at,
+          brands:brand_id (
+            name,
+            logo_url
+          )
+        `)
         .order("created_at", { ascending: false });
 
-      // Apply filters on VIEW columns
+      // Apply filters
       if (search) {
-        query = query.or(`model.ilike.%${search}%,code.ilike.%${search}%,brand_name.ilike.%${search}%`);
+        query = query.or(`model.ilike.%${search}%,code.ilike.%${search}%`);
       }
 
       if (yearFrom) {
@@ -168,19 +169,23 @@ export default function Cars() {
       }
 
       if (transmission) {
-        query = query.eq("transmission", transmission as any);
+        query = query.eq("transmission", transmission as "manual" | "automatic" | "cvt" | "semi_automatic");
       }
 
       if (fuel) {
-        query = query.eq("fuel", fuel as any);
+        query = query.eq("fuel", fuel as "gasoline" | "ethanol" | "flex" | "diesel" | "electric" | "hybrid");
       }
 
       if (color) {
         query = query.eq("color", color);
       }
 
-      if (brand) {
-        query = query.eq("brand_name", brand);
+      if (doors) {
+        query = query.eq("doors", parseInt(doors));
+      }
+
+      if (condition) {
+        query = query.eq("condition", condition);
       }
 
       const { data, error } = await query;
@@ -189,8 +194,14 @@ export default function Cars() {
         console.error("Error fetching cars:", error);
         setCars([]);
       } else {
-        // Transform VIEW data to match component expected format
-        const transformedCars: Car[] = (data as PublicCar[] || []).map((car) => ({
+        // Filter by brand name if selected (since brand is a joined table)
+        let filteredData = data || [];
+        if (brand) {
+          filteredData = filteredData.filter((car) => car.brands?.name === brand);
+        }
+
+        // Transform data to match component expected format
+        const transformedCars: Car[] = filteredData.map((car) => ({
           id: car.id,
           code: car.code,
           model: car.model,
@@ -202,13 +213,10 @@ export default function Cars() {
           color: car.color,
           price: car.price,
           photos: car.photos || [],
-          status: "available",
-          doors: null, // VIEW doesn't include doors
-          condition: null, // VIEW doesn't include condition
-          brands: {
-            name: car.brand_name,
-            logo_url: car.brand_logo_url,
-          },
+          status: "available", // RLS only returns available cars
+          doors: car.doors,
+          condition: car.condition,
+          brands: car.brands,
         }));
         
         setCars(transformedCars);
@@ -217,7 +225,7 @@ export default function Cars() {
     };
 
     fetchCars();
-  }, [search, brand, yearFrom, yearTo, priceRange, transmission, fuel, color]);
+  }, [search, brand, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition]);
 
   const clearFilters = () => {
     setSearch("");
@@ -451,7 +459,7 @@ export default function Cars() {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Buscar por marca, modelo ou código..."
+                  placeholder="Buscar por modelo ou código..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-12 h-12 bg-card border-border"
@@ -499,13 +507,7 @@ export default function Cars() {
           {isLoading ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="bg-card rounded-2xl overflow-hidden border border-border">
-                  <div className="aspect-[4/3] bg-muted animate-pulse" />
-                  <div className="p-5 space-y-3">
-                    <div className="h-6 bg-muted rounded animate-pulse" />
-                    <div className="h-4 bg-muted rounded w-2/3 animate-pulse" />
-                  </div>
-                </div>
+                <Skeleton key={i} className="aspect-[4/5] rounded-xl bg-card" />
               ))}
             </div>
           ) : cars.length > 0 ? (
@@ -515,18 +517,14 @@ export default function Cars() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 bg-card rounded-2xl border border-border">
-              <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="font-display text-xl font-semibold text-foreground mb-2">
-                Nenhum veículo encontrado
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Tente ajustar os filtros ou faça uma nova busca
+            <div className="text-center py-16 bg-card/50 rounded-xl border border-border/50">
+              <p className="text-muted-foreground text-lg">Nenhum veículo encontrado</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Tente ajustar os filtros de busca
               </p>
               {hasFilters && (
-                <Button variant="outline" onClick={clearFilters}>
+                <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4 gap-2">
+                  <X className="h-4 w-4" />
                   Limpar filtros
                 </Button>
               )}
