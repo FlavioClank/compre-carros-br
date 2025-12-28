@@ -96,6 +96,7 @@ export function BrandCarousel() {
           .from("brands")
           .select("id, name, logo_url")
           .eq("is_active", true)
+          .eq("category", "car")
           .order("name");
 
         if (error) throw error;
