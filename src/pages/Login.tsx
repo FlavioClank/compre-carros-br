@@ -188,7 +188,7 @@ export default function Login() {
       </div>
 
       {/* Right Panel - Visual */}
-      <div className="hidden lg:flex flex-1 hero-gradient items-center justify-center p-12 relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 bg-primary items-center justify-center p-12 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div
             className="absolute inset-0"
@@ -198,14 +198,14 @@ export default function Login() {
           />
         </div>
 
-        <div className="relative text-center text-primary-foreground max-w-md">
-          <div className="h-24 w-24 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-8">
-            <Car className="h-12 w-12 text-accent-foreground" />
+        <div className="relative text-center max-w-md">
+          <div className="h-24 w-24 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-8">
+            <Car className="h-12 w-12 text-white" />
           </div>
-          <h2 className="font-display text-3xl font-bold mb-4">
+          <h2 className="font-display text-3xl font-bold mb-4 text-white">
             Painel de Gestão
           </h2>
-          <p className="text-primary-foreground/80">
+          <p className="text-white/90">
             Gerencie veículos, acompanhe vendas e tenha controle total sobre sua
             operação de forma simples e segura.
           </p>
