@@ -53,21 +53,23 @@ export function HomeBannerCarousel() {
   // Single banner - no carousel needed
   if (banners.length === 1) {
     return (
-      <section className="w-full">
-        <img
-          src={banners[0].image_url}
-          alt="Banner promocional"
-          className="w-full h-auto"
-          style={{ display: "block" }}
-        />
+      <section className="w-full flex justify-center">
+        <div className="w-full md:w-[70%]">
+          <img
+            src={banners[0].image_url}
+            alt="Banner promocional"
+            className="w-full h-auto"
+            style={{ display: "block" }}
+          />
+        </div>
       </section>
     );
   }
 
   // Multiple banners - use carousel
   return (
-    <section className="w-full overflow-hidden">
-      <div className="overflow-hidden" ref={emblaRef}>
+    <section className="w-full overflow-hidden flex justify-center">
+      <div className="w-full md:w-[70%] overflow-hidden" ref={emblaRef}>
         <div className="flex">
           {banners.map((banner) => (
             <div key={banner.id} className="flex-[0_0_100%] min-w-0">

@@ -65,7 +65,7 @@ export function HeroSection() {
           {/* Category buttons */}
           <div className="flex items-center justify-center gap-3">
             <Button
-              onClick={() => navigate("/carros?tipo=carro")}
+              onClick={() => navigate("/carros?categoria=car")}
               size="lg"
               className="h-10 px-5 gap-2"
             >
@@ -73,7 +73,7 @@ export function HeroSection() {
               Carros
             </Button>
             <Button
-              onClick={() => navigate("/carros?tipo=moto")}
+              onClick={() => navigate("/carros?categoria=motorcycle")}
               size="lg"
               className="h-10 px-5 gap-2"
             >
