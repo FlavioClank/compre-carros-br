@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 
 interface Ad {
   id: string;
@@ -44,10 +44,9 @@ export function AdCard({ ad }: AdCardProps) {
     : {};
 
   return (
-    <CardWrapper {...wrapperProps} className="block group">
-      {/* Same structure and sizing as CarCard */}
-      <div className="bg-card rounded-xl overflow-hidden border border-border shadow-card card-hover">
-        {/* Image - Same aspect ratio as CarCard */}
+    <CardWrapper {...wrapperProps} className="block">
+      <VehicleCardShell>
+        {/* Image area reuses the same aspect-ratio and layout as vehicle cards */}
         <div className="relative block aspect-[16/10] overflow-hidden bg-muted">
           <img
             src={ad.image_url}
@@ -74,10 +73,7 @@ export function AdCard({ ad }: AdCardProps) {
             </div>
           )}
         </div>
-
-        {/* Conteúdo removido: anúncio é apenas imagem + link */}
-
-      </div>
+      </VehicleCardShell>
     </CardWrapper>
   );
 }
