@@ -35,6 +35,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface Brand {
   id: string;
   name: string;
+  category?: string;
+}
+
+interface BrandDisplay {
+  id: string;
+  name: string;
+  displayName: string;
 }
 
 interface CarData {
@@ -126,18 +133,45 @@ export default function Cars() {
   const [motorcycleCategory, setMotorcycleCategory] = useState(searchParams.get("categoria_moto") || "");
 
   // Get brands based on selected category - COMPLETE SEPARATION
-  const filteredBrands = useMemo(() => {
+  // Returns BrandDisplay with displayName to distinguish duplicates
+  const filteredBrands = useMemo((): BrandDisplay[] => {
     if (category === 'motorcycle') {
-      return motorcycleBrands;
+      return motorcycleBrands.map(b => ({ id: b.id, name: b.name, displayName: b.name }));
     }
     if (category === 'car') {
-      return carBrands;
+      return carBrands.map(b => ({ id: b.id, name: b.name, displayName: b.name }));
     }
-    // "Todos" - combine both arrays, dedupe by id
-    const allBrandsMap = new Map<string, Brand>();
-    carBrands.forEach(b => allBrandsMap.set(b.id, b));
-    motorcycleBrands.forEach(b => allBrandsMap.set(b.id, b));
-    return Array.from(allBrandsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+    // "Todos" - combine both arrays with displayName to distinguish duplicates
+    // Find brand names that exist in both categories
+    const carBrandNames = new Set(carBrands.map(b => b.name.toLowerCase()));
+    const motorcycleBrandNames = new Set(motorcycleBrands.map(b => b.name.toLowerCase()));
+    const duplicateNames = new Set(
+      [...carBrandNames].filter(name => motorcycleBrandNames.has(name))
+    );
+    
+    // Build combined list with displayName
+    const allBrands: BrandDisplay[] = [];
+    
+    // Add car brands
+    carBrands.forEach(b => {
+      allBrands.push({
+        id: b.id,
+        name: b.name,
+        displayName: b.name // Car brands keep original name
+      });
+    });
+    
+    // Add motorcycle brands with suffix if name is duplicated
+    motorcycleBrands.forEach(b => {
+      const isDuplicate = duplicateNames.has(b.name.toLowerCase());
+      allBrands.push({
+        id: b.id,
+        name: b.name,
+        displayName: isDuplicate ? `${b.name} Motos` : b.name
+      });
+    });
+    
+    return allBrands.sort((a, b) => a.displayName.localeCompare(b.displayName));
   }, [category, carBrands, motorcycleBrands]);
 
   // Sync category and brandId from URL on mount and URL changes
@@ -170,7 +204,7 @@ export default function Cars() {
       // Fetch car brands (category = 'car') - SEPARATE ARRAY
       const { data: carBrandsData } = await supabase
         .from("brands")
-        .select("id, name")
+        .select("id, name, category")
         .eq("is_active", true)
         .eq("category", "car")
         .order("name");
@@ -178,7 +212,7 @@ export default function Cars() {
       // Fetch motorcycle brands (category = 'motorcycle') - SEPARATE ARRAY
       const { data: motorcycleBrandsData } = await supabase
         .from("brands")
-        .select("id, name")
+        .select("id, name, category")
         .eq("is_active", true)
         .eq("category", "motorcycle")
         .order("name");
@@ -437,7 +471,7 @@ export default function Cars() {
             <SelectItem value="all">Todas</SelectItem>
             {filteredBrands.map((b) => (
               <SelectItem key={b.id} value={b.id}>
-                {b.name}
+                {b.displayName}
               </SelectItem>
             ))}
           </SelectContent>
