@@ -48,7 +48,7 @@ export function AdCard({ ad }: AdCardProps) {
       {/* Same structure and sizing as CarCard */}
       <div className="bg-card rounded-xl overflow-hidden border border-border shadow-card card-hover">
         {/* Image - Same aspect ratio as CarCard */}
-        <div className="relative block w-full h-full overflow-hidden bg-muted">
+        <div className="relative block aspect-[16/10] overflow-hidden bg-muted">
           <img
             src={ad.image_url}
             alt={ad.title}
