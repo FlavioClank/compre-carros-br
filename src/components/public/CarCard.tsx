@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Car, Fuel, Gauge, Calendar } from "lucide-react";
+import { Car, Fuel, Gauge, Calendar, Bike } from "lucide-react";
 import {
   WHATSAPP_NUMBER,
   buildCarWhatsAppMessage,
@@ -8,6 +8,9 @@ import {
   FUEL_LABELS,
   generateWhatsAppUrl,
   TRANSMISSION_LABELS,
+  COOLING_TYPE_LABELS,
+  MOTORCYCLE_CATEGORY_LABELS,
+  formatEngineCC,
 } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +31,10 @@ interface CarCardProps {
     price: number;
     photos: string[];
     status: string;
+    category?: string;
+    engine_cc?: number | null;
+    cooling_type?: string | null;
+    motorcycle_category?: string | null;
     brands?: {
       name: string;
       logo_url: string | null;
@@ -40,6 +47,7 @@ export function CarCard({ car }: CarCardProps) {
   const mainPhoto = car.photos?.[0] || "/placeholder.svg";
   const invertBrandLogo = ["toyota", "nissan", "audi", "volkswagen"].includes(brandName.toLowerCase());
   const carUrl = generateCarUrl({ id: car.id, slug: car.slug, model: car.model, version: car.version, brands: car.brands });
+  const isMotorcycle = car.category === 'motorcycle';
   
   const whatsappUrl = generateWhatsAppUrl(
     WHATSAPP_NUMBER,
@@ -51,6 +59,7 @@ export function CarCard({ car }: CarCardProps) {
       version: car.version,
       price: car.price,
       brand_name: brandName,
+      category: car.category,
     })
   );
 
@@ -86,8 +95,13 @@ export function CarCard({ car }: CarCardProps) {
           </div>
         )}
 
-        {/* Code Badge */}
-        <div className="absolute top-2 right-2">
+        {/* Category & Code Badges */}
+        <div className="absolute top-2 right-2 flex gap-1">
+          {isMotorcycle && (
+            <Badge variant="secondary" className="bg-primary/90 text-primary-foreground backdrop-blur-sm text-[10px] px-1.5 py-0.5">
+              <Bike className="h-3 w-3" />
+            </Badge>
+          )}
           <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm text-[10px] font-mono px-1.5 py-0.5">
             {car.code}
           </Badge>
@@ -118,10 +132,23 @@ export function CarCard({ car }: CarCardProps) {
             <Gauge className="h-3 w-3 text-accent" />
             <span>{formatMileage(car.mileage)}</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Car className="h-3 w-3 text-accent" />
-            <span>{TRANSMISSION_LABELS[car.transmission] || car.transmission}</span>
-          </div>
+          
+          {/* Car-specific: Transmission */}
+          {!isMotorcycle && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Car className="h-3 w-3 text-accent" />
+              <span>{TRANSMISSION_LABELS[car.transmission] || car.transmission}</span>
+            </div>
+          )}
+          
+          {/* Motorcycle-specific: Engine CC */}
+          {isMotorcycle && car.engine_cc && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Bike className="h-3 w-3 text-accent" />
+              <span>{formatEngineCC(car.engine_cc)}</span>
+            </div>
+          )}
+          
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Fuel className="h-3 w-3 text-accent" />
             <span>{FUEL_LABELS[car.fuel] || car.fuel}</span>
