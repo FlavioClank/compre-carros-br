@@ -110,9 +110,9 @@ export default function Cars() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { hasAds, getNextAd } = useAdsRotation();
 
-  // Filters
+  // Filters - brandId is the brand UUID, not the name
   const [search, setSearch] = useState(searchParams.get("busca") || "");
-  const [brand, setBrand] = useState(searchParams.get("marca") || "");
+  const [brandId, setBrandId] = useState(searchParams.get("brandId") || "");
   const [yearFrom, setYearFrom] = useState(searchParams.get("ano_de") || "");
   const [yearTo, setYearTo] = useState(searchParams.get("ano_ate") || "");
   const [priceRange, setPriceRange] = useState(searchParams.get("preco") || "");
@@ -121,7 +121,7 @@ export default function Cars() {
   const [color, setColor] = useState(searchParams.get("cor") || "");
   const [doors, setDoors] = useState(searchParams.get("portas") || "");
   const [condition, setCondition] = useState(searchParams.get("condicao") || "");
-  const [category, setCategory] = useState(searchParams.get("categoria") || "");
+  const [category, setCategory] = useState(searchParams.get("type") || searchParams.get("categoria") || "");
   const [coolingType, setCoolingType] = useState(searchParams.get("refrigeracao") || "");
   const [motorcycleCategory, setMotorcycleCategory] = useState(searchParams.get("categoria_moto") || "");
 
@@ -140,18 +140,28 @@ export default function Cars() {
     return Array.from(allBrandsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [category, carBrands, motorcycleBrands]);
 
-  // Sync category from URL on mount and URL changes
+  // Sync category and brandId from URL on mount and URL changes
   useEffect(() => {
-    const urlCategory = searchParams.get("categoria") || "";
-    if (urlCategory !== category) {
-      setCategory(urlCategory);
-      // Clear category-specific filters when changing category
-      setBrand("");
-      setTransmission("");
-      setFuel("");
-      setDoors("");
-      setCoolingType("");
-      setMotorcycleCategory("");
+    const urlType = searchParams.get("type") || searchParams.get("categoria") || "";
+    const urlBrandId = searchParams.get("brandId") || "";
+    
+    // Update category if different
+    if (urlType !== category) {
+      setCategory(urlType);
+      // Only clear filters if changing category without brandId (manual category change)
+      if (!urlBrandId) {
+        setBrandId("");
+        setTransmission("");
+        setFuel("");
+        setDoors("");
+        setCoolingType("");
+        setMotorcycleCategory("");
+      }
+    }
+    
+    // Update brandId if different
+    if (urlBrandId !== brandId) {
+      setBrandId(urlBrandId);
     }
   }, [searchParams]);
 
@@ -189,6 +199,7 @@ export default function Cars() {
           id,
           slug,
           code,
+          brand_id,
           model,
           year,
           version,
@@ -277,10 +288,15 @@ export default function Cars() {
         console.error("Error fetching cars:", error);
         setCars([]);
       } else {
-        // Filter by brand name if selected (since brand is a joined table)
+        // Filter by brand_id if selected
         let filteredData = data || [];
-        if (brand) {
-          filteredData = filteredData.filter((car) => car.brands?.name === brand);
+        if (brandId) {
+          // brandId is the UUID, match against the brand relationship
+          filteredData = filteredData.filter((car) => {
+            // Get brand_id from the car (it's in the query as brand_id)
+            const carBrandId = (car as any).brand_id;
+            return carBrandId === brandId;
+          });
         }
 
         // Transform data to match component expected format
@@ -321,11 +337,11 @@ export default function Cars() {
     };
 
     fetchCars();
-  }, [search, brand, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category, coolingType, motorcycleCategory]);
+  }, [search, brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category, coolingType, motorcycleCategory]);
 
   const handleCategoryChange = (newCategory: string) => {
     // Clear category-specific filters when changing
-    setBrand("");
+    setBrandId("");
     setTransmission("");
     setFuel("");
     setDoors("");
@@ -333,9 +349,9 @@ export default function Cars() {
     setMotorcycleCategory("");
     setCategory(newCategory);
     
-    // Update URL
+    // Update URL with type param
     if (newCategory) {
-      setSearchParams({ categoria: newCategory });
+      setSearchParams({ type: newCategory });
     } else {
       setSearchParams({});
     }
@@ -343,7 +359,7 @@ export default function Cars() {
 
   const clearFilters = () => {
     setSearch("");
-    setBrand("");
+    setBrandId("");
     setYearFrom("");
     setYearTo("");
     setPriceRange("");
@@ -358,9 +374,9 @@ export default function Cars() {
     setSearchParams({});
   };
 
-  const hasFilters = search || brand || yearFrom || yearTo || priceRange || transmission || fuel || color || doors || condition || category || coolingType || motorcycleCategory;
+  const hasFilters = search || brandId || yearFrom || yearTo || priceRange || transmission || fuel || color || doors || condition || category || coolingType || motorcycleCategory;
 
-  const activeFiltersCount = [brand, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, coolingType, motorcycleCategory].filter(Boolean).length;
+  const activeFiltersCount = [brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, coolingType, motorcycleCategory].filter(Boolean).length;
 
   const FilterContent = () => (
     <div className="space-y-4">
@@ -408,19 +424,19 @@ export default function Cars() {
         </div>
       </div>
 
-      {/* Brand - Filtered by category */}
+      {/* Brand - Filtered by category, using brandId */}
       <div>
         <label className="text-sm font-medium text-foreground mb-2 block">
           Marca
         </label>
-        <Select value={brand || "all"} onValueChange={(v) => setBrand(v === "all" ? "" : v)}>
+        <Select value={brandId || "all"} onValueChange={(v) => setBrandId(v === "all" ? "" : v)}>
           <SelectTrigger className="bg-background">
             <SelectValue placeholder="Todas" />
           </SelectTrigger>
           <SelectContent className="bg-background border-border">
             <SelectItem value="all">Todas</SelectItem>
             {filteredBrands.map((b) => (
-              <SelectItem key={b.id} value={b.name}>
+              <SelectItem key={b.id} value={b.id}>
                 {b.name}
               </SelectItem>
             ))}

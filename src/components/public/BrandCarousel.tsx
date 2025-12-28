@@ -27,7 +27,7 @@ const BrandCard = memo(function BrandCard({
 
   return (
     <Link
-      to={`/carros?marca=${brand.id}`}
+      to={`/carros?type=car&brandId=${brand.id}`}
       onClick={onClickHandler}
       className="flex-shrink-0 w-[6.5rem] h-[6.5rem] md:w-44 md:h-[8.5rem] rounded-xl border border-border bg-card flex flex-col items-center justify-center p-2.5 md:p-4 shadow-sm select-none carousel-slide-optimized"
       draggable={false}
