@@ -23,14 +23,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Power, Tags } from "lucide-react";
+import { Plus, Edit, Power, Tags, Car, Bike } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type BrandCategory = 'car' | 'motorcycle';
 
 export default function AdminBrands() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState<any>(null);
-  const [formData, setFormData] = useState({ name: "", logo_url: "" });
+  const [formData, setFormData] = useState({ name: "", logo_url: "", category: "car" as BrandCategory });
 
   // Fetch brands
   const { data: brands, isLoading } = useQuery({
@@ -47,10 +56,11 @@ export default function AdminBrands() {
 
   // Create brand mutation
   const createBrandMutation = useMutation({
-    mutationFn: async (data: { name: string; logo_url: string }) => {
+    mutationFn: async (data: { name: string; logo_url: string; category: BrandCategory }) => {
       const { error } = await supabase.from("brands").insert({
         name: data.name,
         logo_url: data.logo_url || null,
+        category: data.category,
       });
       if (error) throw error;
     },
@@ -71,12 +81,13 @@ export default function AdminBrands() {
 
   // Update brand mutation
   const updateBrandMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: { name: string; logo_url: string } }) => {
+    mutationFn: async ({ id, data }: { id: string; data: { name: string; logo_url: string; category: BrandCategory } }) => {
       const { error } = await supabase
         .from("brands")
         .update({
           name: data.name,
           logo_url: data.logo_url || null,
+          category: data.category,
         })
         .eq("id", id);
       if (error) throw error;
@@ -113,7 +124,7 @@ export default function AdminBrands() {
   });
 
   const resetForm = () => {
-    setFormData({ name: "", logo_url: "" });
+    setFormData({ name: "", logo_url: "", category: "car" });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -130,6 +141,7 @@ export default function AdminBrands() {
     setFormData({
       name: brand.name,
       logo_url: brand.logo_url || "",
+      category: brand.category || "car",
     });
     setIsDialogOpen(true);
   };
@@ -162,6 +174,36 @@ export default function AdminBrands() {
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Category Selector */}
+                <div className="space-y-2">
+                  <Label>Tipo de Veículo *</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, category: 'car' })}
+                      className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                        formData.category === 'car'
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <Car className="h-5 w-5" />
+                      <span className="font-medium">Carro</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, category: 'motorcycle' })}
+                      className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                        formData.category === 'motorcycle'
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <Bike className="h-5 w-5" />
+                      <span className="font-medium">Moto</span>
+                    </button>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome da Marca *</Label>
                   <Input
@@ -224,6 +266,7 @@ export default function AdminBrands() {
                     <TableRow>
                       <TableHead>Logo</TableHead>
                       <TableHead>Nome</TableHead>
+                      <TableHead>Tipo</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
@@ -248,6 +291,15 @@ export default function AdminBrands() {
                           )}
                         </TableCell>
                         <TableCell className="font-medium">{brand.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="gap-1">
+                            {brand.category === 'motorcycle' ? (
+                              <><Bike className="h-3 w-3" /> Moto</>
+                            ) : (
+                              <><Car className="h-3 w-3" /> Carro</>
+                            )}
+                          </Badge>
+                        </TableCell>
                         <TableCell>
                           <Badge variant={brand.is_active ? "default" : "secondary"}>
                             {brand.is_active ? "Ativa" : "Inativa"}
