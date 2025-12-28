@@ -21,16 +21,24 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Search, SlidersHorizontal, X } from "lucide-react";
-import { FUEL_LABELS, TRANSMISSION_LABELS } from "@/lib/constants";
+import { Search, SlidersHorizontal, X, Car, Bike } from "lucide-react";
+import { 
+  FUEL_LABELS, 
+  TRANSMISSION_LABELS, 
+  CAR_FUEL_LABELS, 
+  MOTORCYCLE_FUEL_LABELS,
+  COOLING_TYPE_LABELS,
+  MOTORCYCLE_CATEGORY_LABELS 
+} from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Brand {
   id: string;
   name: string;
+  category: string;
 }
 
-interface Car {
+interface CarData {
   id: string;
   slug?: string | null;
   code: string;
@@ -46,6 +54,10 @@ interface Car {
   status: string;
   doors: number | null;
   condition: string | null;
+  category: string;
+  engine_cc: number | null;
+  cooling_type: string | null;
+  motorcycle_category: string | null;
   brands: {
     name: string;
     logo_url: string | null;
@@ -92,8 +104,8 @@ const CONDITION_OPTIONS = [
 
 export default function Cars() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [cars, setCars] = useState<Car[]>([]);
-  const [brands, setBrands] = useState<Brand[]>([]);
+  const [cars, setCars] = useState<CarData[]>([]);
+  const [allBrands, setAllBrands] = useState<Brand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { hasAds, getNextAd } = useAdsRotation();
@@ -110,12 +122,27 @@ export default function Cars() {
   const [doors, setDoors] = useState(searchParams.get("portas") || "");
   const [condition, setCondition] = useState(searchParams.get("condicao") || "");
   const [category, setCategory] = useState(searchParams.get("categoria") || "");
+  const [coolingType, setCoolingType] = useState(searchParams.get("refrigeracao") || "");
+  const [motorcycleCategory, setMotorcycleCategory] = useState(searchParams.get("categoria_moto") || "");
+
+  // Filter brands based on selected category
+  const filteredBrands = useMemo(() => {
+    if (!category) return allBrands;
+    return allBrands.filter(b => b.category === category);
+  }, [allBrands, category]);
 
   // Sync category from URL on mount and URL changes
   useEffect(() => {
     const urlCategory = searchParams.get("categoria") || "";
     if (urlCategory !== category) {
       setCategory(urlCategory);
+      // Clear category-specific filters when changing category
+      setBrand("");
+      setTransmission("");
+      setFuel("");
+      setDoors("");
+      setCoolingType("");
+      setMotorcycleCategory("");
     }
   }, [searchParams]);
 
@@ -123,10 +150,10 @@ export default function Cars() {
     const fetchBrands = async () => {
       const { data } = await supabase
         .from("brands")
-        .select("id, name")
+        .select("id, name, category")
         .eq("is_active", true)
         .order("name");
-      setBrands(data || []);
+      setAllBrands(data || []);
     };
     fetchBrands();
   }, []);
@@ -135,8 +162,6 @@ export default function Cars() {
     const fetchCars = async () => {
       setIsLoading(true);
       
-      // Fetch directly from cars table with brand join
-      // RLS policy filters to only available cars from active garages
       let query = supabase
         .from("cars")
         .select(`
@@ -155,6 +180,9 @@ export default function Cars() {
           doors,
           condition,
           category,
+          engine_cc,
+          cooling_type,
+          motorcycle_category,
           created_at,
           brands:brand_id (
             name,
@@ -188,8 +216,11 @@ export default function Cars() {
         }
       }
 
-      if (transmission) {
-        query = query.eq("transmission", transmission as "manual" | "automatic" | "cvt" | "semi_automatic");
+      // CAR-SPECIFIC FILTERS
+      if (category === "car" || !category) {
+        if (transmission) {
+          query = query.eq("transmission", transmission as "manual" | "automatic" | "cvt" | "semi_automatic");
+        }
       }
 
       if (fuel) {
@@ -200,12 +231,23 @@ export default function Cars() {
         query = query.eq("color", color);
       }
 
-      if (doors) {
+      // CAR-SPECIFIC: doors filter
+      if ((category === "car" || !category) && doors) {
         query = query.eq("doors", parseInt(doors));
       }
 
       if (condition) {
         query = query.eq("condition", condition);
+      }
+
+      // MOTORCYCLE-SPECIFIC FILTERS
+      if (category === "motorcycle") {
+        if (coolingType) {
+          query = query.eq("cooling_type", coolingType);
+        }
+        if (motorcycleCategory) {
+          query = query.eq("motorcycle_category", motorcycleCategory);
+        }
       }
 
       const { data, error } = await query;
@@ -221,7 +263,7 @@ export default function Cars() {
         }
 
         // Transform data to match component expected format
-        const transformedCars: Car[] = filteredData.map((car) => ({
+        const transformedCars: CarData[] = filteredData.map((car) => ({
           id: car.id,
           slug: car.slug,
           code: car.code,
@@ -234,15 +276,18 @@ export default function Cars() {
           color: car.color,
           price: car.price,
           photos: car.photos || [],
-          status: "available", // RLS only returns available cars
+          status: "available",
           doors: car.doors,
           condition: car.condition,
+          category: car.category,
+          engine_cc: car.engine_cc,
+          cooling_type: car.cooling_type,
+          motorcycle_category: car.motorcycle_category,
           brands: car.brands,
         }));
         
         // When no category filter (all vehicles), randomize the order
         if (!category) {
-          // Shuffle array using Fisher-Yates algorithm
           for (let i = transformedCars.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [transformedCars[i], transformedCars[j]] = [transformedCars[j], transformedCars[i]];
@@ -255,7 +300,25 @@ export default function Cars() {
     };
 
     fetchCars();
-  }, [search, brand, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category]);
+  }, [search, brand, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category, coolingType, motorcycleCategory]);
+
+  const handleCategoryChange = (newCategory: string) => {
+    // Clear category-specific filters when changing
+    setBrand("");
+    setTransmission("");
+    setFuel("");
+    setDoors("");
+    setCoolingType("");
+    setMotorcycleCategory("");
+    setCategory(newCategory);
+    
+    // Update URL
+    if (newCategory) {
+      setSearchParams({ categoria: newCategory });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   const clearFilters = () => {
     setSearch("");
@@ -269,16 +332,62 @@ export default function Cars() {
     setDoors("");
     setCondition("");
     setCategory("");
+    setCoolingType("");
+    setMotorcycleCategory("");
     setSearchParams({});
   };
 
-  const hasFilters = search || brand || yearFrom || yearTo || priceRange || transmission || fuel || color || doors || condition || category;
+  const hasFilters = search || brand || yearFrom || yearTo || priceRange || transmission || fuel || color || doors || condition || category || coolingType || motorcycleCategory;
 
-  const activeFiltersCount = [brand, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category].filter(Boolean).length;
+  const activeFiltersCount = [brand, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, coolingType, motorcycleCategory].filter(Boolean).length;
 
   const FilterContent = () => (
     <div className="space-y-4">
-      {/* Brand */}
+      {/* Category Selector - TOP OF FILTERS */}
+      <div>
+        <label className="text-sm font-medium text-foreground mb-2 block">
+          Tipo de Veículo
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            onClick={() => handleCategoryChange("")}
+            className={`flex items-center justify-center gap-1 p-2 rounded-lg border-2 transition-all text-sm ${
+              !category
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border hover:border-primary/50'
+            }`}
+          >
+            <span className="font-medium">Todos</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleCategoryChange("car")}
+            className={`flex items-center justify-center gap-1 p-2 rounded-lg border-2 transition-all text-sm ${
+              category === 'car'
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border hover:border-primary/50'
+            }`}
+          >
+            <Car className="h-4 w-4" />
+            <span className="font-medium">Carros</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleCategoryChange("motorcycle")}
+            className={`flex items-center justify-center gap-1 p-2 rounded-lg border-2 transition-all text-sm ${
+              category === 'motorcycle'
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border hover:border-primary/50'
+            }`}
+          >
+            <Bike className="h-4 w-4" />
+            <span className="font-medium">Motos</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Brand - Filtered by category */}
       <div>
         <label className="text-sm font-medium text-foreground mb-2 block">
           Marca
@@ -289,7 +398,7 @@ export default function Cars() {
           </SelectTrigger>
           <SelectContent className="bg-background border-border">
             <SelectItem value="all">Todas</SelectItem>
-            {brands.map((b) => (
+            {filteredBrands.map((b) => (
               <SelectItem key={b.id} value={b.name}>
                 {b.name}
               </SelectItem>
@@ -358,27 +467,52 @@ export default function Cars() {
         </Select>
       </div>
 
-      {/* Transmission */}
-      <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
-          Câmbio
-        </label>
-        <Select value={transmission || "all"} onValueChange={(v) => setTransmission(v === "all" ? "" : v)}>
-          <SelectTrigger className="bg-background">
-            <SelectValue placeholder="Qualquer" />
-          </SelectTrigger>
-          <SelectContent className="bg-background border-border">
-            <SelectItem value="all">Qualquer</SelectItem>
-            {Object.entries(TRANSMISSION_LABELS).map(([key, label]) => (
-              <SelectItem key={key} value={key}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* CAR-SPECIFIC FILTERS */}
+      {(category === "car" || !category) && (
+        <>
+          {/* Transmission - Only for cars */}
+          <div>
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Câmbio
+            </label>
+            <Select value={transmission || "all"} onValueChange={(v) => setTransmission(v === "all" ? "" : v)}>
+              <SelectTrigger className="bg-background">
+                <SelectValue placeholder="Qualquer" />
+              </SelectTrigger>
+              <SelectContent className="bg-background border-border">
+                <SelectItem value="all">Qualquer</SelectItem>
+                {Object.entries(TRANSMISSION_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      {/* Fuel */}
+          {/* Doors - Only for cars */}
+          <div>
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Portas
+            </label>
+            <Select value={doors || "all"} onValueChange={(v) => setDoors(v === "all" ? "" : v)}>
+              <SelectTrigger className="bg-background">
+                <SelectValue placeholder="Qualquer" />
+              </SelectTrigger>
+              <SelectContent className="bg-background border-border">
+                <SelectItem value="all">Qualquer</SelectItem>
+                {DOORS_OPTIONS.map((d) => (
+                  <SelectItem key={d.value} value={d.value}>
+                    {d.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </>
+      )}
+
+      {/* Fuel - Different options based on category */}
       <div>
         <label className="text-sm font-medium text-foreground mb-2 block">
           Combustível
@@ -389,7 +523,7 @@ export default function Cars() {
           </SelectTrigger>
           <SelectContent className="bg-background border-border">
             <SelectItem value="all">Qualquer</SelectItem>
-            {Object.entries(FUEL_LABELS).map(([key, label]) => (
+            {Object.entries(category === "motorcycle" ? MOTORCYCLE_FUEL_LABELS : (category === "car" ? CAR_FUEL_LABELS : FUEL_LABELS)).map(([key, label]) => (
               <SelectItem key={key} value={key}>
                 {label}
               </SelectItem>
@@ -397,6 +531,51 @@ export default function Cars() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* MOTORCYCLE-SPECIFIC FILTERS */}
+      {category === "motorcycle" && (
+        <>
+          {/* Cooling Type - Only for motorcycles */}
+          <div>
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Refrigeração
+            </label>
+            <Select value={coolingType || "all"} onValueChange={(v) => setCoolingType(v === "all" ? "" : v)}>
+              <SelectTrigger className="bg-background">
+                <SelectValue placeholder="Qualquer" />
+              </SelectTrigger>
+              <SelectContent className="bg-background border-border">
+                <SelectItem value="all">Qualquer</SelectItem>
+                {Object.entries(COOLING_TYPE_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Motorcycle Category - Only for motorcycles */}
+          <div>
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Categoria da Moto
+            </label>
+            <Select value={motorcycleCategory || "all"} onValueChange={(v) => setMotorcycleCategory(v === "all" ? "" : v)}>
+              <SelectTrigger className="bg-background">
+                <SelectValue placeholder="Qualquer" />
+              </SelectTrigger>
+              <SelectContent className="bg-background border-border">
+                <SelectItem value="all">Qualquer</SelectItem>
+                {Object.entries(MOTORCYCLE_CATEGORY_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </>
+      )}
 
       {/* Color */}
       <div>
@@ -412,26 +591,6 @@ export default function Cars() {
             {COLORS.map((c) => (
               <SelectItem key={c} value={c}>
                 {c}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Doors */}
-      <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
-          Portas
-        </label>
-        <Select value={doors || "all"} onValueChange={(v) => setDoors(v === "all" ? "" : v)}>
-          <SelectTrigger className="bg-background">
-            <SelectValue placeholder="Qualquer" />
-          </SelectTrigger>
-          <SelectContent className="bg-background border-border">
-            <SelectItem value="all">Qualquer</SelectItem>
-            {DOORS_OPTIONS.map((d) => (
-              <SelectItem key={d.value} value={d.value}>
-                {d.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -495,6 +654,26 @@ export default function Cars() {
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-12 h-12 bg-card border-border"
                 />
+              </div>
+              
+              {/* Category Quick Selector */}
+              <div className="flex gap-2">
+                <Button
+                  variant={category === "car" ? "default" : "outline"}
+                  className="gap-2 h-12"
+                  onClick={() => handleCategoryChange(category === "car" ? "" : "car")}
+                >
+                  <Car className="h-4 w-4" />
+                  <span className="hidden sm:inline">Carros</span>
+                </Button>
+                <Button
+                  variant={category === "motorcycle" ? "default" : "outline"}
+                  className="gap-2 h-12"
+                  onClick={() => handleCategoryChange(category === "motorcycle" ? "" : "motorcycle")}
+                >
+                  <Bike className="h-4 w-4" />
+                  <span className="hidden sm:inline">Motos</span>
+                </Button>
               </div>
               
               {/* Filter Button with Sheet for Mobile/All */}
@@ -583,9 +762,18 @@ export default function Cars() {
             </div>
           ) : (
             <div className="text-center py-16 bg-card/50 rounded-xl border border-border/50">
-              <p className="text-muted-foreground text-lg">
+              <div className="flex justify-center mb-4">
+                {category === "motorcycle" ? (
+                  <Bike className="h-16 w-16 text-muted-foreground/50" />
+                ) : category === "car" ? (
+                  <Car className="h-16 w-16 text-muted-foreground/50" />
+                ) : (
+                  <Search className="h-16 w-16 text-muted-foreground/50" />
+                )}
+              </div>
+              <p className="text-muted-foreground text-lg font-medium">
                 {category === "motorcycle" 
-                  ? "Nenhuma moto cadastrada nesta categoria" 
+                  ? "Nenhuma moto cadastrada no momento" 
                   : category === "car" 
                     ? "Nenhum carro cadastrado nesta categoria"
                     : "Nenhum veículo encontrado"}
