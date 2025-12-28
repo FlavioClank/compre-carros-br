@@ -31,14 +31,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Package, CheckCircle, Upload, X, ImagePlus } from "lucide-react";
-import { formatPrice, formatMileage, FUEL_LABELS, TRANSMISSION_LABELS } from "@/lib/constants";
+import { Plus, Edit, Package, CheckCircle, Upload, X, ImagePlus, Car, Bike } from "lucide-react";
+import { 
+  formatPrice, 
+  formatMileage, 
+  FUEL_LABELS, 
+  TRANSMISSION_LABELS,
+  COOLING_TYPE_LABELS,
+  MOTORCYCLE_CATEGORY_LABELS,
+  CATEGORY_LABELS
+} from "@/lib/constants";
 import type { Database } from "@/integrations/supabase/types";
 
 type FuelType = Database["public"]["Enums"]["fuel_type"];
 type TransmissionType = Database["public"]["Enums"]["transmission_type"];
+type VehicleCategory = 'car' | 'motorcycle';
 
 interface CarFormData {
+  category: VehicleCategory;
   brand_id: string;
   model: string;
   year: number;
@@ -50,9 +60,14 @@ interface CarFormData {
   price: number;
   description: string;
   photos: string[];
+  // Motorcycle-specific fields
+  engine_cc: number | null;
+  cooling_type: string | null;
+  motorcycle_category: string | null;
 }
 
 const initialFormData: CarFormData = {
+  category: "car",
   brand_id: "",
   model: "",
   year: new Date().getFullYear(),
@@ -64,6 +79,9 @@ const initialFormData: CarFormData = {
   price: 0,
   description: "",
   photos: [],
+  engine_cc: null,
+  cooling_type: null,
+  motorcycle_category: null,
 };
 
 export default function GarageCars() {
@@ -123,21 +141,37 @@ export default function GarageCars() {
   const createCarMutation = useMutation({
     mutationFn: async (data: CarFormData) => {
       if (!garage?.id) throw new Error("Garagem não encontrada");
-      const { error } = await supabase.from("cars").insert([{
+      
+      const insertData: any = {
         garage_id: garage.id,
+        category: data.category,
         brand_id: data.brand_id,
         model: data.model,
         year: data.year,
         version: data.version || null,
         mileage: data.mileage,
-        transmission: data.transmission,
         fuel: data.fuel,
         color: data.color,
         price: data.price,
         description: data.description || null,
         photos: data.photos.length > 0 ? data.photos : null,
         code: "TEMP",
-      }]);
+      };
+
+      // Add car-specific fields
+      if (data.category === 'car') {
+        insertData.transmission = data.transmission;
+      }
+
+      // Add motorcycle-specific fields
+      if (data.category === 'motorcycle') {
+        insertData.engine_cc = data.engine_cc;
+        insertData.cooling_type = data.cooling_type;
+        insertData.motorcycle_category = data.motorcycle_category;
+        insertData.transmission = 'manual'; // Default for motorcycles
+      }
+
+      const { error } = await supabase.from("cars").insert([insertData]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -158,21 +192,39 @@ export default function GarageCars() {
   // Update car mutation
   const updateCarMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<CarFormData> }) => {
+      const updateData: any = {
+        category: data.category,
+        brand_id: data.brand_id,
+        model: data.model,
+        year: data.year,
+        version: data.version || null,
+        mileage: data.mileage,
+        fuel: data.fuel,
+        color: data.color,
+        price: data.price,
+        description: data.description || null,
+        photos: data.photos && data.photos.length > 0 ? data.photos : null,
+      };
+
+      // Add car-specific fields
+      if (data.category === 'car') {
+        updateData.transmission = data.transmission;
+        updateData.engine_cc = null;
+        updateData.cooling_type = null;
+        updateData.motorcycle_category = null;
+      }
+
+      // Add motorcycle-specific fields
+      if (data.category === 'motorcycle') {
+        updateData.engine_cc = data.engine_cc;
+        updateData.cooling_type = data.cooling_type;
+        updateData.motorcycle_category = data.motorcycle_category;
+        updateData.transmission = 'manual';
+      }
+
       const { error } = await supabase
         .from("cars")
-        .update({
-          brand_id: data.brand_id,
-          model: data.model,
-          year: data.year,
-          version: data.version || null,
-          mileage: data.mileage,
-          transmission: data.transmission,
-          fuel: data.fuel,
-          color: data.color,
-          price: data.price,
-          description: data.description || null,
-          photos: data.photos && data.photos.length > 0 ? data.photos : null,
-        })
+        .update(updateData)
         .eq("id", id);
       if (error) throw error;
     },
@@ -228,6 +280,7 @@ export default function GarageCars() {
           price: car.price,
           mileage: car.mileage,
           color: car.color,
+          category: car.category,
         },
       });
       if (historyError) throw historyError;
@@ -331,6 +384,7 @@ export default function GarageCars() {
   const handleEdit = (car: any) => {
     setEditingCar(car);
     setFormData({
+      category: car.category || 'car',
       brand_id: car.brand_id,
       model: car.model,
       year: car.year,
@@ -342,6 +396,9 @@ export default function GarageCars() {
       price: car.price,
       description: car.description || "",
       photos: car.photos || [],
+      engine_cc: car.engine_cc || null,
+      cooling_type: car.cooling_type || null,
+      motorcycle_category: car.motorcycle_category || null,
     });
     setPreviewPhotos([]);
     setIsDialogOpen(true);
@@ -362,6 +419,18 @@ export default function GarageCars() {
   const removePreviewPhoto = (index: number) => {
     URL.revokeObjectURL(previewPhotos[index].preview);
     setPreviewPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCategoryChange = (category: VehicleCategory) => {
+    setFormData(prev => ({
+      ...prev,
+      category,
+      // Reset category-specific fields when switching
+      transmission: category === 'car' ? prev.transmission : 'manual',
+      engine_cc: category === 'motorcycle' ? prev.engine_cc : null,
+      cooling_type: category === 'motorcycle' ? prev.cooling_type : null,
+      motorcycle_category: category === 'motorcycle' ? prev.motorcycle_category : null,
+    }));
   };
 
   const availableCars = cars?.filter((car: any) => car.status === "available");
@@ -397,6 +466,38 @@ export default function GarageCars() {
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Vehicle Type Selector - TOP OF FORM */}
+                <div className="space-y-2">
+                  <Label>Tipo de Veículo *</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleCategoryChange('car')}
+                      className={`flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all ${
+                        formData.category === 'car'
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <Car className="h-5 w-5" />
+                      <span className="font-medium">Carro</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCategoryChange('motorcycle')}
+                      className={`flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all ${
+                        formData.category === 'motorcycle'
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <Bike className="h-5 w-5" />
+                      <span className="font-medium">Moto</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Common Fields */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="brand_id">Marca *</Label>
@@ -446,7 +547,7 @@ export default function GarageCars() {
                       id="version"
                       value={formData.version}
                       onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-                      placeholder="Ex: LTZ, Titanium..."
+                      placeholder={formData.category === 'car' ? "Ex: LTZ, Titanium..." : "Ex: ABS, CBS..."}
                     />
                   </div>
                 </div>
@@ -474,44 +575,124 @@ export default function GarageCars() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="transmission">Câmbio *</Label>
-                    <Select 
-                      value={formData.transmission} 
-                      onValueChange={(value) => setFormData({ ...formData, transmission: value as TransmissionType })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(TRANSMISSION_LABELS).map(([key, label]) => (
-                          <SelectItem key={key} value={key}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                {/* CAR-SPECIFIC FIELDS */}
+                {formData.category === 'car' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="transmission">Câmbio *</Label>
+                      <Select 
+                        value={formData.transmission} 
+                        onValueChange={(value) => setFormData({ ...formData, transmission: value as TransmissionType })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(TRANSMISSION_LABELS).map(([key, label]) => (
+                            <SelectItem key={key} value={key}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="fuel">Combustível *</Label>
+                      <Select 
+                        value={formData.fuel} 
+                        onValueChange={(value) => setFormData({ ...formData, fuel: value as FuelType })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(FUEL_LABELS).map(([key, label]) => (
+                            <SelectItem key={key} value={key}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="fuel">Combustível *</Label>
-                    <Select 
-                      value={formData.fuel} 
-                      onValueChange={(value) => setFormData({ ...formData, fuel: value as FuelType })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(FUEL_LABELS).map(([key, label]) => (
-                          <SelectItem key={key} value={key}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                )}
+
+                {/* MOTORCYCLE-SPECIFIC FIELDS */}
+                {formData.category === 'motorcycle' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="engine_cc">Cilindradas (cc) *</Label>
+                        <Input
+                          id="engine_cc"
+                          type="number"
+                          value={formData.engine_cc || ''}
+                          onChange={(e) => setFormData({ ...formData, engine_cc: parseInt(e.target.value) || null })}
+                          placeholder="Ex: 160, 300, 600..."
+                          required
+                          min={50}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="cooling_type">Refrigeração *</Label>
+                        <Select 
+                          value={formData.cooling_type || ''} 
+                          onValueChange={(value) => setFormData({ ...formData, cooling_type: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(COOLING_TYPE_LABELS).map(([key, label]) => (
+                              <SelectItem key={key} value={key}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="motorcycle_category">Categoria da Moto *</Label>
+                        <Select 
+                          value={formData.motorcycle_category || ''} 
+                          onValueChange={(value) => setFormData({ ...formData, motorcycle_category: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(MOTORCYCLE_CATEGORY_LABELS).map(([key, label]) => (
+                              <SelectItem key={key} value={key}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="fuel">Combustível *</Label>
+                        <Select 
+                          value={formData.fuel} 
+                          onValueChange={(value) => setFormData({ ...formData, fuel: value as FuelType })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(FUEL_LABELS).map(([key, label]) => (
+                              <SelectItem key={key} value={key}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="price">Preço *</Label>
@@ -647,6 +828,7 @@ export default function GarageCars() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Tipo</TableHead>
                       <TableHead>Código</TableHead>
                       <TableHead>Veículo</TableHead>
                       <TableHead>Ano</TableHead>
@@ -658,6 +840,16 @@ export default function GarageCars() {
                   <TableBody>
                     {availableCars.map((car: any) => (
                       <TableRow key={car.id}>
+                        <TableCell>
+                          <Badge variant={car.category === 'motorcycle' ? 'secondary' : 'default'}>
+                            {car.category === 'motorcycle' ? (
+                              <Bike className="h-3 w-3 mr-1" />
+                            ) : (
+                              <Car className="h-3 w-3 mr-1" />
+                            )}
+                            {CATEGORY_LABELS[car.category] || 'Carro'}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="font-mono text-sm">{car.code}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -725,6 +917,7 @@ export default function GarageCars() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Tipo</TableHead>
                       <TableHead>Código</TableHead>
                       <TableHead>Veículo</TableHead>
                       <TableHead>Ano</TableHead>
@@ -735,6 +928,16 @@ export default function GarageCars() {
                   <TableBody>
                     {soldCars.map((car: any) => (
                       <TableRow key={car.id} className="opacity-60">
+                        <TableCell>
+                          <Badge variant="outline">
+                            {car.category === 'motorcycle' ? (
+                              <Bike className="h-3 w-3 mr-1" />
+                            ) : (
+                              <Car className="h-3 w-3 mr-1" />
+                            )}
+                            {CATEGORY_LABELS[car.category] || 'Carro'}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="font-mono text-sm">{car.code}</TableCell>
                         <TableCell>
                           <div>

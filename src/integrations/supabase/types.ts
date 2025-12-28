@@ -135,9 +135,11 @@ export type Database = {
           code: string
           color: string
           condition: string | null
+          cooling_type: string | null
           created_at: string
           description: string | null
           doors: number | null
+          engine_cc: number | null
           fuel: Database["public"]["Enums"]["fuel_type"]
           garage_id: string
           garage_is_active: boolean
@@ -145,6 +147,7 @@ export type Database = {
           is_featured: boolean
           mileage: number
           model: string
+          motorcycle_category: string | null
           photos: string[] | null
           price: number
           slug: string | null
@@ -162,9 +165,11 @@ export type Database = {
           code: string
           color: string
           condition?: string | null
+          cooling_type?: string | null
           created_at?: string
           description?: string | null
           doors?: number | null
+          engine_cc?: number | null
           fuel: Database["public"]["Enums"]["fuel_type"]
           garage_id: string
           garage_is_active?: boolean
@@ -172,6 +177,7 @@ export type Database = {
           is_featured?: boolean
           mileage?: number
           model: string
+          motorcycle_category?: string | null
           photos?: string[] | null
           price: number
           slug?: string | null
@@ -189,9 +195,11 @@ export type Database = {
           code?: string
           color?: string
           condition?: string | null
+          cooling_type?: string | null
           created_at?: string
           description?: string | null
           doors?: number | null
+          engine_cc?: number | null
           fuel?: Database["public"]["Enums"]["fuel_type"]
           garage_id?: string
           garage_is_active?: boolean
@@ -199,6 +207,7 @@ export type Database = {
           is_featured?: boolean
           mileage?: number
           model?: string
+          motorcycle_category?: string | null
           photos?: string[] | null
           price?: number
           slug?: string | null

@@ -29,6 +29,28 @@ export const STATUS_LABELS: Record<string, string> = {
   sold: "Vendido",
 };
 
+// Vehicle category labels
+export const CATEGORY_LABELS: Record<string, string> = {
+  car: "Carro",
+  motorcycle: "Moto",
+};
+
+// Motorcycle cooling type labels
+export const COOLING_TYPE_LABELS: Record<string, string> = {
+  air: "Ar",
+  liquid: "Líquida",
+  oil: "Óleo",
+};
+
+// Motorcycle category labels
+export const MOTORCYCLE_CATEGORY_LABELS: Record<string, string> = {
+  sport: "Esportiva",
+  touring: "Estrada",
+  offroad: "Fora-de-estrada",
+  leisure: "Lazer",
+  urban: "Urbana",
+};
+
 // Format price to BRL
 export const formatPrice = (price: number): string => {
   return new Intl.NumberFormat("pt-BR", {
@@ -42,6 +64,11 @@ export const formatPrice = (price: number): string => {
 // Format mileage
 export const formatMileage = (mileage: number): string => {
   return new Intl.NumberFormat("pt-BR").format(mileage) + " km";
+};
+
+// Format engine cc
+export const formatEngineCC = (cc: number): string => {
+  return `${cc}cc`;
 };
 
 // Generate WhatsApp URL - SINGLE SOURCE OF TRUTH (wa.me only)
@@ -58,6 +85,9 @@ export const buildCarWhatsAppMessage = (car: {
   version?: string | null;
   price: number;
   brand_name?: string;
+  category?: string;
 }): string => {
-  return `Olá! Tenho interesse no veículo:\n\n🚗 *${car.brand_name || ""} ${car.model}*\n📅 Ano: ${car.year}\n${car.version ? `⚙️ Versão: ${car.version}\n` : ""}💰 Preço: ${formatPrice(car.price)}\n🔖 Código: ${car.code}\n🔗 Link: /carro/${car.id}\n\nPoderia me passar mais informações?`;
+  const vehicleEmoji = car.category === 'motorcycle' ? '🏍️' : '🚗';
+  const vehicleType = car.category === 'motorcycle' ? 'moto' : 'veículo';
+  return `Olá! Tenho interesse no ${vehicleType}:\n\n${vehicleEmoji} *${car.brand_name || ""} ${car.model}*\n📅 Ano: ${car.year}\n${car.version ? `⚙️ Versão: ${car.version}\n` : ""}💰 Preço: ${formatPrice(car.price)}\n🔖 Código: ${car.code}\n🔗 Link: /carro/${car.id}\n\nPoderia me passar mais informações?`;
 };

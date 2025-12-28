@@ -12,6 +12,9 @@ import {
   formatMileage,
   FUEL_LABELS,
   TRANSMISSION_LABELS,
+  COOLING_TYPE_LABELS,
+  MOTORCYCLE_CATEGORY_LABELS,
+  formatEngineCC,
   generateWhatsAppUrl,
 } from "@/lib/constants";
 import {
@@ -25,6 +28,9 @@ import {
   FileText,
   ArrowLeft,
   Share2,
+  Bike,
+  Thermometer,
+  Tag,
 } from "lucide-react";
 
 interface CarDetail {
@@ -43,6 +49,10 @@ interface CarDetail {
   photos: string[];
   status: string;
   created_at: string;
+  category: string;
+  engine_cc: number | null;
+  cooling_type: string | null;
+  motorcycle_category: string | null;
   brands: {
     name: string;
     logo_url: string | null;
@@ -85,6 +95,10 @@ export default function CarDetails() {
           description,
           status,
           created_at,
+          category,
+          engine_cc,
+          cooling_type,
+          motorcycle_category,
           brands:brand_id (
             name,
             logo_url
@@ -120,6 +134,10 @@ export default function CarDetails() {
           photos: data.photos || [],
           status: data.status,
           created_at: data.created_at,
+          category: data.category || 'car',
+          engine_cc: data.engine_cc,
+          cooling_type: data.cooling_type,
+          motorcycle_category: data.motorcycle_category,
           brands: data.brands,
         };
         setCar(carData);
@@ -170,6 +188,7 @@ export default function CarDetails() {
   const brandName = car.brands?.name || "";
   const invertBrandLogo = ["toyota", "nissan", "audi", "volkswagen"].includes(brandName.toLowerCase());
   const photos = car.photos?.length > 0 ? car.photos : ["/placeholder.svg"];
+  const isMotorcycle = car.category === 'motorcycle';
 
   const whatsappUrl = generateWhatsAppUrl(
     WHATSAPP_NUMBER,
@@ -181,6 +200,7 @@ export default function CarDetails() {
       version: car.version,
       price: car.price,
       brand_name: brandName,
+      category: car.category,
     })
   );
 
@@ -196,7 +216,17 @@ export default function CarDetails() {
   const canonicalUrl = `${window.location.origin}/carro/${car.slug || car.id}`;
   const shareUrl = canonicalUrl;
 
-  const specs = [
+  // Build specs based on vehicle type
+  const specs = isMotorcycle ? [
+    { icon: Calendar, label: "Ano", value: car.year },
+    { icon: Gauge, label: "Quilometragem", value: formatMileage(car.mileage) },
+    { icon: Bike, label: "Cilindradas", value: car.engine_cc ? formatEngineCC(car.engine_cc) : "-" },
+    { icon: Thermometer, label: "Refrigeração", value: car.cooling_type ? COOLING_TYPE_LABELS[car.cooling_type] : "-" },
+    { icon: Tag, label: "Categoria", value: car.motorcycle_category ? MOTORCYCLE_CATEGORY_LABELS[car.motorcycle_category] : "-" },
+    { icon: Fuel, label: "Combustível", value: FUEL_LABELS[car.fuel] || car.fuel },
+    { icon: Palette, label: "Cor", value: car.color },
+    { icon: FileText, label: "Código", value: car.code },
+  ] : [
     { icon: Calendar, label: "Ano", value: car.year },
     { icon: Gauge, label: "Quilometragem", value: formatMileage(car.mileage) },
     { icon: Car, label: "Câmbio", value: TRANSMISSION_LABELS[car.transmission] || car.transmission },
@@ -206,12 +236,17 @@ export default function CarDetails() {
   ];
 
   // SEO: Generate dynamic page title and meta description
+  const vehicleType = isMotorcycle ? 'Moto' : 'Carro';
   const pageTitle = `${brandName} ${car.model} ${car.year}${car.version ? ` ${car.version}` : ""} | CompreCarros`;
   const transmissionLabel = TRANSMISSION_LABELS[car.transmission] || car.transmission;
   const fuelLabel = FUEL_LABELS[car.fuel] || car.fuel;
+  
   const metaDescription = car.description 
     ? car.description.substring(0, 155) + (car.description.length > 155 ? "..." : "")
-    : `${brandName} ${car.model} ${car.year}, ${transmissionLabel}, ${fuelLabel}, ${formatMileage(car.mileage)}. ${formatPrice(car.price)}. Veículo verificado na CompreCarros.`;
+    : isMotorcycle
+      ? `${brandName} ${car.model} ${car.year}, ${car.engine_cc ? formatEngineCC(car.engine_cc) : ''}, ${fuelLabel}, ${formatMileage(car.mileage)}. ${formatPrice(car.price)}. Moto verificada na CompreCarros.`
+      : `${brandName} ${car.model} ${car.year}, ${transmissionLabel}, ${fuelLabel}, ${formatMileage(car.mileage)}. ${formatPrice(car.price)}. Veículo verificado na CompreCarros.`;
+  
   const mainPhoto = photos[0] || "/placeholder.svg";
 
   return (
@@ -262,6 +297,16 @@ export default function CarDetails() {
               {car.status === "sold" && (
                 <div className="absolute inset-0 bg-foreground/70 flex items-center justify-center">
                   <Badge className="badge-sold text-2xl px-6 py-3">VENDIDO</Badge>
+                </div>
+              )}
+
+              {/* Category Badge */}
+              {isMotorcycle && (
+                <div className="absolute top-4 right-4">
+                  <Badge className="bg-primary text-primary-foreground gap-1">
+                    <Bike className="h-4 w-4" />
+                    Moto
+                  </Badge>
                 </div>
               )}
 
@@ -394,7 +439,7 @@ export default function CarDetails() {
             {car.status === "available" && (
               <div className="bg-muted/50 rounded-xl p-6 border border-border">
                 <h3 className="font-display font-semibold text-foreground mb-2">
-                  Interessado neste veículo?
+                  Interessado {isMotorcycle ? 'nesta moto' : 'neste veículo'}?
                 </h3>
                 <p className="text-muted-foreground text-sm mb-4">
                   Entre em contato pelo WhatsApp e receba todas as informações.
