@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { generateCarUrl } from "@/lib/utils";
+import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 
 interface CarCardProps {
   car: {
