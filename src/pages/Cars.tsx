@@ -109,6 +109,15 @@ export default function Cars() {
   const [color, setColor] = useState(searchParams.get("cor") || "");
   const [doors, setDoors] = useState(searchParams.get("portas") || "");
   const [condition, setCondition] = useState(searchParams.get("condicao") || "");
+  const [category, setCategory] = useState(searchParams.get("categoria") || "");
+
+  // Sync category from URL on mount and URL changes
+  useEffect(() => {
+    const urlCategory = searchParams.get("categoria") || "";
+    if (urlCategory !== category) {
+      setCategory(urlCategory);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchBrands = async () => {
@@ -145,6 +154,7 @@ export default function Cars() {
           photos,
           doors,
           condition,
+          category,
           created_at,
           brands:brand_id (
             name,
@@ -152,6 +162,11 @@ export default function Cars() {
           )
         `)
         .order("created_at", { ascending: false });
+
+      // Apply category filter first (car or motorcycle)
+      if (category) {
+        query = query.eq("category", category);
+      }
 
       // Apply filters
       if (search) {
@@ -231,7 +246,7 @@ export default function Cars() {
     };
 
     fetchCars();
-  }, [search, brand, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition]);
+  }, [search, brand, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category]);
 
   const clearFilters = () => {
     setSearch("");
@@ -244,12 +259,13 @@ export default function Cars() {
     setColor("");
     setDoors("");
     setCondition("");
+    setCategory("");
     setSearchParams({});
   };
 
-  const hasFilters = search || brand || yearFrom || yearTo || priceRange || transmission || fuel || color || doors || condition;
+  const hasFilters = search || brand || yearFrom || yearTo || priceRange || transmission || fuel || color || doors || condition || category;
 
-  const activeFiltersCount = [brand, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition].filter(Boolean).length;
+  const activeFiltersCount = [brand, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category].filter(Boolean).length;
 
   const FilterContent = () => (
     <div className="space-y-4">
@@ -451,10 +467,10 @@ export default function Cars() {
           {/* Header */}
           <div className="mb-6">
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-              Veículos Disponíveis
+              {category === "motorcycle" ? "Motos Disponíveis" : category === "car" ? "Carros Disponíveis" : "Veículos Disponíveis"}
             </h1>
             <p className="text-muted-foreground mt-2">
-              Encontre o carro perfeito para você
+              {category === "motorcycle" ? "Encontre a moto perfeita para você" : category === "car" ? "Encontre o carro perfeito para você" : "Encontre o veículo perfeito para você"}
             </p>
           </div>
 
@@ -558,9 +574,15 @@ export default function Cars() {
             </div>
           ) : (
             <div className="text-center py-16 bg-card/50 rounded-xl border border-border/50">
-              <p className="text-muted-foreground text-lg">Nenhum veículo encontrado</p>
+              <p className="text-muted-foreground text-lg">
+                {category === "motorcycle" 
+                  ? "Nenhuma moto cadastrada nesta categoria" 
+                  : category === "car" 
+                    ? "Nenhum carro cadastrado nesta categoria"
+                    : "Nenhum veículo encontrado"}
+              </p>
               <p className="text-sm text-muted-foreground mt-2">
-                Tente ajustar os filtros de busca
+                {category ? "Não há veículos disponíveis no momento" : "Tente ajustar os filtros de busca"}
               </p>
               {hasFilters && (
                 <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4 gap-2">

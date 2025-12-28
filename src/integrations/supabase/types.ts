@@ -131,6 +131,7 @@ export type Database = {
       cars: {
         Row: {
           brand_id: string
+          category: string
           code: string
           color: string
           condition: string | null
@@ -157,6 +158,7 @@ export type Database = {
         }
         Insert: {
           brand_id: string
+          category?: string
           code: string
           color: string
           condition?: string | null
@@ -183,6 +185,7 @@ export type Database = {
         }
         Update: {
           brand_id?: string
+          category?: string
           code?: string
           color?: string
           condition?: string | null
