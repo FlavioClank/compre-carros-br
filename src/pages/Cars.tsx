@@ -104,9 +104,8 @@ const CONDITION_OPTIONS = [
 export default function Cars() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [cars, setCars] = useState<CarData[]>([]);
-  const [allBrands, setAllBrands] = useState<Brand[]>([]);
-  const [brandsWithCars, setBrandsWithCars] = useState<string[]>([]);
-  const [brandsWithMotorcycles, setBrandsWithMotorcycles] = useState<string[]>([]);
+  const [carBrands, setCarBrands] = useState<Brand[]>([]);
+  const [motorcycleBrands, setMotorcycleBrands] = useState<Brand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { hasAds, getNextAd } = useAdsRotation();
@@ -126,18 +125,20 @@ export default function Cars() {
   const [coolingType, setCoolingType] = useState(searchParams.get("refrigeracao") || "");
   const [motorcycleCategory, setMotorcycleCategory] = useState(searchParams.get("categoria_moto") || "");
 
-  // Get brands that have vehicles of the selected category
+  // Get brands based on selected category - COMPLETE SEPARATION
   const filteredBrands = useMemo(() => {
-    if (!category) return allBrands;
-    
     if (category === 'motorcycle') {
-      return allBrands.filter(b => brandsWithMotorcycles.includes(b.name));
+      return motorcycleBrands;
     }
     if (category === 'car') {
-      return allBrands.filter(b => brandsWithCars.includes(b.name));
+      return carBrands;
     }
-    return allBrands;
-  }, [allBrands, category, brandsWithCars, brandsWithMotorcycles]);
+    // "Todos" - combine both arrays, dedupe by id
+    const allBrandsMap = new Map<string, Brand>();
+    carBrands.forEach(b => allBrandsMap.set(b.id, b));
+    motorcycleBrands.forEach(b => allBrandsMap.set(b.id, b));
+    return Array.from(allBrandsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [category, carBrands, motorcycleBrands]);
 
   // Sync category from URL on mount and URL changes
   useEffect(() => {
@@ -156,7 +157,7 @@ export default function Cars() {
 
   useEffect(() => {
     const fetchBrandsData = async () => {
-      // Fetch car brands (category = 'car')
+      // Fetch car brands (category = 'car') - SEPARATE ARRAY
       const { data: carBrandsData } = await supabase
         .from("brands")
         .select("id, name")
@@ -164,7 +165,7 @@ export default function Cars() {
         .eq("category", "car")
         .order("name");
       
-      // Fetch motorcycle brands (category = 'motorcycle')
+      // Fetch motorcycle brands (category = 'motorcycle') - SEPARATE ARRAY
       const { data: motorcycleBrandsData } = await supabase
         .from("brands")
         .select("id, name")
@@ -172,15 +173,8 @@ export default function Cars() {
         .eq("category", "motorcycle")
         .order("name");
 
-      // All brands = car + motorcycle (for "Todos" filter)
-      const allBrandsMap = new Map<string, Brand>();
-      (carBrandsData || []).forEach(b => allBrandsMap.set(b.id, b));
-      (motorcycleBrandsData || []).forEach(b => allBrandsMap.set(b.id, b));
-      setAllBrands(Array.from(allBrandsMap.values()).sort((a, b) => a.name.localeCompare(b.name)));
-
-      // Set brand names for filtering
-      setBrandsWithCars((carBrandsData || []).map(b => b.name));
-      setBrandsWithMotorcycles((motorcycleBrandsData || []).map(b => b.name));
+      setCarBrands(carBrandsData || []);
+      setMotorcycleBrands(motorcycleBrandsData || []);
     };
     fetchBrandsData();
   }, []);
