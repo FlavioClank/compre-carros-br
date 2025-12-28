@@ -35,7 +35,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface Brand {
   id: string;
   name: string;
-  category: string;
 }
 
 interface CarData {
@@ -106,6 +105,8 @@ export default function Cars() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [cars, setCars] = useState<CarData[]>([]);
   const [allBrands, setAllBrands] = useState<Brand[]>([]);
+  const [brandsWithCars, setBrandsWithCars] = useState<string[]>([]);
+  const [brandsWithMotorcycles, setBrandsWithMotorcycles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { hasAds, getNextAd } = useAdsRotation();
@@ -125,11 +126,18 @@ export default function Cars() {
   const [coolingType, setCoolingType] = useState(searchParams.get("refrigeracao") || "");
   const [motorcycleCategory, setMotorcycleCategory] = useState(searchParams.get("categoria_moto") || "");
 
-  // Filter brands based on selected category
+  // Get brands that have vehicles of the selected category
   const filteredBrands = useMemo(() => {
     if (!category) return allBrands;
-    return allBrands.filter(b => b.category === category);
-  }, [allBrands, category]);
+    
+    if (category === 'motorcycle') {
+      return allBrands.filter(b => brandsWithMotorcycles.includes(b.name));
+    }
+    if (category === 'car') {
+      return allBrands.filter(b => brandsWithCars.includes(b.name));
+    }
+    return allBrands;
+  }, [allBrands, category, brandsWithCars, brandsWithMotorcycles]);
 
   // Sync category from URL on mount and URL changes
   useEffect(() => {
@@ -147,15 +155,44 @@ export default function Cars() {
   }, [searchParams]);
 
   useEffect(() => {
-    const fetchBrands = async () => {
-      const { data } = await supabase
+    const fetchBrandsData = async () => {
+      // Fetch all active brands
+      const { data: brandsData } = await supabase
         .from("brands")
-        .select("id, name, category")
+        .select("id, name")
         .eq("is_active", true)
         .order("name");
-      setAllBrands(data || []);
+      setAllBrands(brandsData || []);
+
+      // Fetch distinct brands that have cars
+      const { data: carsData } = await supabase
+        .from("cars")
+        .select("brands:brand_id(name)")
+        .eq("category", "car")
+        .eq("status", "available");
+      
+      const carBrandNames = [...new Set(
+        (carsData || [])
+          .map((c: any) => c.brands?.name)
+          .filter(Boolean)
+      )] as string[];
+      setBrandsWithCars(carBrandNames);
+
+      // Fetch distinct brands that have motorcycles
+      const { data: motorcyclesData } = await supabase
+        .from("cars")
+        .select("brands:brand_id(name)")
+        .eq("category", "motorcycle")
+        .eq("status", "available");
+      
+      const motorcycleBrandNames = [...new Set(
+        (motorcyclesData || [])
+          .map((c: any) => c.brands?.name)
+          .filter(Boolean)
+      )] as string[];
+      setBrandsWithMotorcycles(motorcycleBrandNames);
     };
-    fetchBrands();
+    fetchBrandsData();
   }, []);
 
   useEffect(() => {

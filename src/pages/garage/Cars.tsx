@@ -112,15 +112,14 @@ export default function GarageCars() {
     },
   });
 
-  // Fetch brands for select - filtered by vehicle category
+  // Fetch ALL active brands for registration (no category filter)
   const { data: brands } = useQuery({
-    queryKey: ["brands-select", formData.category],
+    queryKey: ["brands-select"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("brands")
-        .select("id, name, category")
+        .select("id, name")
         .eq("is_active", true)
-        .eq("category", formData.category)
         .order("name");
       if (error) throw error;
       return data;
@@ -425,11 +424,10 @@ export default function GarageCars() {
   };
 
   const handleCategoryChange = (category: VehicleCategory) => {
-    // Reset fields that are category-specific
+    // Reset fields that are category-specific but keep brand (since brands work for both)
     setFormData(prev => ({
       ...prev,
       category,
-      brand_id: "", // Clear brand when switching category
       // Reset car-specific fields
       transmission: category === 'car' ? 'automatic' : 'manual',
       // Set appropriate fuel defaults
