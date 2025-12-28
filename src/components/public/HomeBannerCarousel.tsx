@@ -43,17 +43,15 @@ export function HomeBannerCarousel() {
   const currentBanner = banners[currentIndex];
 
   return (
-    <section className="bg-background">
-      <div className="container py-4 md:py-6">
-        <div className="rounded-xl md:rounded-2xl bg-card shadow-card overflow-hidden">
-          <AspectRatio ratio={16 / 5} className="bg-muted flex items-center justify-center">
-            <img
-              src={currentBanner.image_url}
-              alt="Banner promocional"
-              className="w-full h-full object-contain"
-            />
-          </AspectRatio>
-        </div>
+    <section className="w-full bg-background">
+      <div className="w-full">
+        <AspectRatio ratio={16 / 5} className="bg-muted">
+          <img
+            src={currentBanner.image_url}
+            alt="Banner promocional"
+            className="w-full h-full object-cover"
+          />
+        </AspectRatio>
       </div>
     </section>
   );
