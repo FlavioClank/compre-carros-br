@@ -33,21 +33,36 @@ const BrandCard = memo(function BrandCard({
       draggable={false}
     >
       {brand.logo_url ? (
-        <img
-          src={brand.logo_url}
-          alt={brand.name}
-          width={96}
-          height={58}
-          loading="lazy"
-          decoding="async"
-          className={`max-w-[85%] max-h-11 md:max-h-14 object-contain flex-shrink-0 ${
-            isDark ? "brand-logo-premium-invert" : ""
-          }`}
-          draggable={false}
-        />
+        <div className="flex items-center justify-center max-w-[85%] max-h-11 md:max-h-14">
+          <img
+            src={brand.logo_url}
+            alt={brand.name}
+            width={96}
+            height={58}
+            loading="lazy"
+            decoding="async"
+            className={`max-w-full max-h-11 md:max-h-14 object-contain flex-shrink-0 ${
+              isDark ? "brand-logo-premium-invert" : ""
+            }`}
+            draggable={false}
+            onError={(e) => {
+              // Hide broken image and show initials fallback
+              const target = e.currentTarget;
+              target.style.display = "none";
+              const fallback = target.nextElementSibling as HTMLElement;
+              if (fallback) fallback.style.display = "flex";
+            }}
+          />
+          <span 
+            className="text-lg md:text-xl font-bold text-foreground"
+            style={{ display: "none" }}
+          >
+            {brand.name.substring(0, 2).toUpperCase()}
+          </span>
+        </div>
       ) : (
-        <span className="text-sm md:text-base font-bold text-foreground text-center px-1 truncate w-full">
-          {brand.name}
+        <span className="text-lg md:text-xl font-bold text-foreground text-center px-1">
+          {brand.name.substring(0, 2).toUpperCase()}
         </span>
       )}
       <span className="text-[10px] md:text-sm font-medium text-muted-foreground mt-2 text-center leading-tight px-1 w-full truncate">
