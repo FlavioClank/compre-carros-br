@@ -5,7 +5,7 @@ export const WHATSAPP_FORMATTED = "+55 65 99803-1761";
 export const SITE_NAME = "CompreCarros";
 export const SITE_DESCRIPTION = "Seu próximo carro está aqui. Encontre os melhores veículos com total segurança e transparência.";
 
-// Fuel type labels
+// Fuel type labels - ALL
 export const FUEL_LABELS: Record<string, string> = {
   gasoline: "Gasolina",
   ethanol: "Etanol",
@@ -13,6 +13,22 @@ export const FUEL_LABELS: Record<string, string> = {
   diesel: "Diesel",
   electric: "Elétrico",
   hybrid: "Híbrido",
+};
+
+// Fuel type labels - CAR ONLY (all options)
+export const CAR_FUEL_LABELS: Record<string, string> = {
+  gasoline: "Gasolina",
+  ethanol: "Etanol",
+  flex: "Flex",
+  diesel: "Diesel",
+  electric: "Elétrico",
+  hybrid: "Híbrido",
+};
+
+// Fuel type labels - MOTORCYCLE ONLY (gasolina, elétrico)
+export const MOTORCYCLE_FUEL_LABELS: Record<string, string> = {
+  gasoline: "Gasolina",
+  electric: "Elétrico",
 };
 
 // Transmission labels
@@ -35,12 +51,14 @@ export const CATEGORY_LABELS: Record<string, string> = {
   motorcycle: "Moto",
 };
 
-// Motorcycle cooling type labels
+// Motorcycle cooling type labels (ar, líquida - NOT óleo for motorcycles)
 export const COOLING_TYPE_LABELS: Record<string, string> = {
   air: "Ar",
   liquid: "Líquida",
-  oil: "Óleo",
 };
+
+// Car cooling type (óleo)
+export const CAR_COOLING_TYPE: string = "oil";
 
 // Motorcycle category labels
 export const MOTORCYCLE_CATEGORY_LABELS: Record<string, string> = {

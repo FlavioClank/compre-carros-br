@@ -35,7 +35,9 @@ import { Plus, Edit, Package, CheckCircle, Upload, X, ImagePlus, Car, Bike } fro
 import { 
   formatPrice, 
   formatMileage, 
-  FUEL_LABELS, 
+  FUEL_LABELS,
+  CAR_FUEL_LABELS,
+  MOTORCYCLE_FUEL_LABELS,
   TRANSMISSION_LABELS,
   COOLING_TYPE_LABELS,
   MOTORCYCLE_CATEGORY_LABELS,
@@ -110,14 +112,15 @@ export default function GarageCars() {
     },
   });
 
-  // Fetch brands for select
+  // Fetch brands for select - filtered by vehicle category
   const { data: brands } = useQuery({
-    queryKey: ["brands-select"],
+    queryKey: ["brands-select", formData.category],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("brands")
-        .select("id, name")
+        .select("id, name, category")
         .eq("is_active", true)
+        .eq("category", formData.category)
         .order("name");
       if (error) throw error;
       return data;
@@ -422,13 +425,18 @@ export default function GarageCars() {
   };
 
   const handleCategoryChange = (category: VehicleCategory) => {
+    // Reset fields that are category-specific
     setFormData(prev => ({
       ...prev,
       category,
-      // Reset category-specific fields when switching
-      transmission: category === 'car' ? prev.transmission : 'manual',
+      brand_id: "", // Clear brand when switching category
+      // Reset car-specific fields
+      transmission: category === 'car' ? 'automatic' : 'manual',
+      // Set appropriate fuel defaults
+      fuel: category === 'car' ? 'flex' : 'gasoline',
+      // Reset motorcycle-specific fields
       engine_cc: category === 'motorcycle' ? prev.engine_cc : null,
-      cooling_type: category === 'motorcycle' ? prev.cooling_type : null,
+      cooling_type: category === 'motorcycle' ? (prev.cooling_type && ['air', 'liquid'].includes(prev.cooling_type) ? prev.cooling_type : 'air') : null,
       motorcycle_category: category === 'motorcycle' ? prev.motorcycle_category : null,
     }));
   };
@@ -606,7 +614,7 @@ export default function GarageCars() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {Object.entries(FUEL_LABELS).map(([key, label]) => (
+                          {Object.entries(CAR_FUEL_LABELS).map(([key, label]) => (
                             <SelectItem key={key} value={key}>
                               {label}
                             </SelectItem>
@@ -682,7 +690,7 @@ export default function GarageCars() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {Object.entries(FUEL_LABELS).map(([key, label]) => (
+                            {Object.entries(MOTORCYCLE_FUEL_LABELS).map(([key, label]) => (
                               <SelectItem key={key} value={key}>
                                 {label}
                               </SelectItem>

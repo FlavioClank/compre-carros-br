@@ -240,6 +240,15 @@ export default function Cars() {
           brands: car.brands,
         }));
         
+        // When no category filter (all vehicles), randomize the order
+        if (!category) {
+          // Shuffle array using Fisher-Yates algorithm
+          for (let i = transformedCars.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [transformedCars[i], transformedCars[j]] = [transformedCars[j], transformedCars[i]];
+          }
+        }
+        
         setCars(transformedCars);
       }
       setIsLoading(false);
