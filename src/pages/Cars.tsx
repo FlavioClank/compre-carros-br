@@ -156,41 +156,31 @@ export default function Cars() {
 
   useEffect(() => {
     const fetchBrandsData = async () => {
-      // Fetch all active brands
-      const { data: brandsData } = await supabase
+      // Fetch car brands (category = 'car')
+      const { data: carBrandsData } = await supabase
         .from("brands")
         .select("id, name")
         .eq("is_active", true)
-        .order("name");
-      setAllBrands(brandsData || []);
-
-      // Fetch distinct brands that have cars
-      const { data: carsData } = await supabase
-        .from("cars")
-        .select("brands:brand_id(name)")
         .eq("category", "car")
-        .eq("status", "available");
+        .order("name");
       
-      const carBrandNames = [...new Set(
-        (carsData || [])
-          .map((c: any) => c.brands?.name)
-          .filter(Boolean)
-      )] as string[];
-      setBrandsWithCars(carBrandNames);
-
-      // Fetch distinct brands that have motorcycles
-      const { data: motorcyclesData } = await supabase
-        .from("cars")
-        .select("brands:brand_id(name)")
+      // Fetch motorcycle brands (category = 'motorcycle')
+      const { data: motorcycleBrandsData } = await supabase
+        .from("brands")
+        .select("id, name")
+        .eq("is_active", true)
         .eq("category", "motorcycle")
-        .eq("status", "available");
-      
-      const motorcycleBrandNames = [...new Set(
-        (motorcyclesData || [])
-          .map((c: any) => c.brands?.name)
-          .filter(Boolean)
-      )] as string[];
-      setBrandsWithMotorcycles(motorcycleBrandNames);
+        .order("name");
+
+      // All brands = car + motorcycle (for "Todos" filter)
+      const allBrandsMap = new Map<string, Brand>();
+      (carBrandsData || []).forEach(b => allBrandsMap.set(b.id, b));
+      (motorcycleBrandsData || []).forEach(b => allBrandsMap.set(b.id, b));
+      setAllBrands(Array.from(allBrandsMap.values()).sort((a, b) => a.name.localeCompare(b.name)));
+
+      // Set brand names for filtering
+      setBrandsWithCars((carBrandsData || []).map(b => b.name));
+      setBrandsWithMotorcycles((motorcycleBrandsData || []).map(b => b.name));
     };
     fetchBrandsData();
   }, []);
