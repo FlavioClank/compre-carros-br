@@ -199,13 +199,13 @@ export default function Login() {
         </div>
 
         <div className="relative text-center max-w-md">
-          <div className="h-24 w-24 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-8">
-            <Car className="h-12 w-12 text-white" />
+          <div className="h-24 w-24 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-8 shadow-lg">
+            <Car className="h-12 w-12 text-white drop-shadow-md" />
           </div>
-          <h2 className="font-display text-3xl font-bold mb-4 text-white">
+          <h2 className="font-display text-3xl font-bold mb-4 text-white drop-shadow-md">
             Painel de Gestão
           </h2>
-          <p className="text-white/90">
+          <p className="text-white text-lg leading-relaxed drop-shadow-sm font-medium">
             Gerencie veículos, acompanhe vendas e tenha controle total sobre sua
             operação de forma simples e segura.
           </p>

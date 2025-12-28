@@ -276,7 +276,8 @@ export default function GarageCars() {
         sold_reason: reason,
         car_snapshot: {
           code: car.code,
-          brand: car.brands?.name,
+          brand_id: car.brand_id, // Store brand_id for future reference
+          brand: car.brands?.name, // Keep brand name for display
           model: car.model,
           year: car.year,
           version: car.version,
