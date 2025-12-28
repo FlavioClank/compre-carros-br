@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
+import useEmblaCarousel from "embla-carousel-react";
 
 interface Banner {
   id: string;
@@ -9,7 +9,16 @@ interface Banner {
 
 export function HomeBannerCarousel() {
   const [banners, setBanners] = useState<Banner[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: true,
+      align: "center",
+      skipSnaps: false,
+      dragFree: false,
+    }
+  );
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -21,37 +30,56 @@ export function HomeBannerCarousel() {
 
       if (!error && data) {
         setBanners(data);
-        setCurrentIndex(0);
       }
+      setIsLoading(false);
     };
 
     fetchBanners();
   }, []);
 
+  // Auto-scroll every 5 seconds if more than 1 banner
   useEffect(() => {
-    if (banners.length <= 1) return;
+    if (!emblaApi || banners.length <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % banners.length);
+      emblaApi.scrollNext();
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [banners.length]);
+  }, [emblaApi, banners.length]);
 
-  if (banners.length === 0) return null;
+  if (isLoading || banners.length === 0) return null;
 
-  const currentBanner = banners[currentIndex];
+  // Single banner - no carousel needed
+  if (banners.length === 1) {
+    return (
+      <section className="w-full">
+        <img
+          src={banners[0].image_url}
+          alt="Banner promocional"
+          className="w-full h-auto"
+          style={{ display: "block" }}
+        />
+      </section>
+    );
+  }
 
+  // Multiple banners - use carousel
   return (
-    <section className="w-full bg-background">
-      <div className="w-full">
-        <AspectRatio ratio={16 / 5} className="bg-muted">
-          <img
-            src={currentBanner.image_url}
-            alt="Banner promocional"
-            className="w-full h-full object-cover"
-          />
-        </AspectRatio>
+    <section className="w-full overflow-hidden">
+      <div className="overflow-hidden" ref={emblaRef}>
+        <div className="flex">
+          {banners.map((banner) => (
+            <div key={banner.id} className="flex-[0_0_100%] min-w-0">
+              <img
+                src={banner.image_url}
+                alt="Banner promocional"
+                className="w-full h-auto"
+                style={{ display: "block" }}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

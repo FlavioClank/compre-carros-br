@@ -38,27 +38,26 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section className="bg-background py-6 md:py-8">
+    <section className="bg-background py-4 md:py-6">
       <div className="container">
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {/* Main action buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button
               onClick={() => navigate("/carros")}
               size="lg"
-              className="h-12 px-6 gap-2 w-full sm:w-auto"
+              className="h-11 px-6 gap-2 w-full sm:w-auto"
             >
               <Search className="h-5 w-5" />
-              Ver {totalCars} veículos disponíveis
+              Ver {totalCars} veículos
               <ChevronRight className="h-5 w-5" />
             </Button>
             <Button
               onClick={() => navigate("/marcas")}
               variant="secondary"
               size="lg"
-              className="h-12 px-6 gap-2 w-full sm:w-auto"
+              className="h-11 px-6 gap-2 w-full sm:w-auto"
             >
-              <Car className="h-5 w-5" />
               Explorar marcas
             </Button>
           </div>
@@ -67,20 +66,18 @@ export function HeroSection() {
           <div className="flex items-center justify-center gap-3">
             <Button
               onClick={() => navigate("/carros?tipo=carro")}
-              variant="outline"
               size="lg"
-              className="h-11 px-6 gap-2"
+              className="h-10 px-5 gap-2"
             >
-              <Car className="h-5 w-5" />
+              <Car className="h-4 w-4" />
               Carros
             </Button>
             <Button
               onClick={() => navigate("/carros?tipo=moto")}
-              variant="outline"
               size="lg"
-              className="h-11 px-6 gap-2"
+              className="h-10 px-5 gap-2"
             >
-              <Bike className="h-5 w-5" />
+              <Bike className="h-4 w-4" />
               Motos
             </Button>
           </div>
