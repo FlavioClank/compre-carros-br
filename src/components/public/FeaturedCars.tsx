@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { CarCardSingle } from "@/components/public/CarCardSingle";
-import { AdCard } from "@/components/public/AdCard";
+import { AdCardSingle } from "@/components/public/AdCardSingle";
 import { useAdsRotation } from "@/hooks/useAdsRotation";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Sparkles } from "lucide-react";
@@ -148,7 +148,7 @@ export function FeaturedCars() {
                   const ad = getNextAd();
                   if (ad) {
                     items.push(
-                      <AdCard key={`featured-ad-${ad.id}-${index}`} ad={ad} />
+                      <AdCardSingle key={`featured-ad-${ad.id}-${index}`} ad={ad} />
                     );
                   }
                 }
@@ -159,7 +159,7 @@ export function FeaturedCars() {
                 const finalAd = getNextAd();
                 if (finalAd) {
                   items.push(
-                    <AdCard
+                    <AdCardSingle
                       key={`featured-ad-final-${finalAd.id}`}
                       ad={finalAd}
                     />
