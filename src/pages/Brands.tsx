@@ -68,7 +68,7 @@ export default function Brands() {
               {brands.map((brand, index) => (
                 <Link
                   key={brand.id}
-                  to={`/carros?marca=${encodeURIComponent(brand.name)}`}
+                  to={`/carros?type=car&brandId=${brand.id}`}
                   className="group bg-card rounded-2xl border border-border p-6 flex flex-col items-center justify-center aspect-square hover:shadow-xl hover:border-accent/30 transition-all duration-300 animate-fade-in opacity-0"
                   style={{
                     animationDelay: `${index * 0.05}s`,
