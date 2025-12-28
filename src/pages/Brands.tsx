@@ -77,24 +77,30 @@ export default function Brands() {
                 >
                   <div className="h-20 w-20 flex items-center justify-center mb-4">
                     {brand.logo_url ? (
-                      <img
-                        src={brand.logo_url}
-                        alt={brand.name}
-                        className={`max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300 ${
-                          INVERT_LOGO_BRANDS.includes(brand.name.toLowerCase()) ? "brand-logo-premium-invert" : ""
-                        }`}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = "none";
-                          const parent = target.parentElement;
-                          if (parent) {
-                            parent.innerHTML = `<span class="font-display font-bold text-muted-foreground text-2xl">${brand.name.charAt(0)}</span>`;
-                          }
-                        }}
-                      />
+                      <>
+                        <img
+                          src={brand.logo_url}
+                          alt={brand.name}
+                          className={`max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300 ${
+                            INVERT_LOGO_BRANDS.includes(brand.name.toLowerCase()) ? "brand-logo-premium-invert" : ""
+                          }`}
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            target.style.display = "none";
+                            const fallback = target.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = "flex";
+                          }}
+                        />
+                        <span 
+                          className="font-display font-bold text-muted-foreground text-2xl"
+                          style={{ display: "none" }}
+                        >
+                          {brand.name.substring(0, 2).toUpperCase()}
+                        </span>
+                      </>
                     ) : (
                       <span className="font-display font-bold text-muted-foreground text-2xl">
-                        {brand.name.charAt(0)}
+                        {brand.name.substring(0, 2).toUpperCase()}
                       </span>
                     )}
                   </div>

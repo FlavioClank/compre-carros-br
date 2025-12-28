@@ -42,13 +42,15 @@ export default function AdminBrands() {
   const [formData, setFormData] = useState({ name: "", logo_url: "", category: "car" as BrandCategory });
 
   // Fetch brands
+  // Fetch all brands - ordered by is_active DESC (active first), then name ASC
   const { data: brands, isLoading } = useQuery({
     queryKey: ["admin-brands"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("brands")
         .select("*")
-        .order("name");
+        .order("is_active", { ascending: false })
+        .order("name", { ascending: true });
       if (error) throw error;
       return data;
     },
@@ -276,17 +278,29 @@ export default function AdminBrands() {
                       <TableRow key={brand.id}>
                         <TableCell>
                           {brand.logo_url ? (
-                            <img 
-                              src={brand.logo_url} 
-                              alt={brand.name}
-                              className="h-10 w-14 object-contain"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = "/placeholder.svg";
-                              }}
-                            />
+                            <div className="h-10 w-14 flex items-center justify-center">
+                              <img 
+                                src={brand.logo_url} 
+                                alt={brand.name}
+                                className="h-10 w-14 object-contain"
+                                onError={(e) => {
+                                  // Hide broken image and show initials fallback
+                                  const target = e.currentTarget;
+                                  target.style.display = "none";
+                                  const fallback = target.nextElementSibling as HTMLElement;
+                                  if (fallback) fallback.style.display = "flex";
+                                }}
+                              />
+                              <div 
+                                className="h-10 w-14 bg-muted rounded flex items-center justify-center text-sm font-bold text-muted-foreground"
+                                style={{ display: "none" }}
+                              >
+                                {brand.name.substring(0, 2).toUpperCase()}
+                              </div>
+                            </div>
                           ) : (
-                            <div className="h-10 w-14 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
-                              Sem logo
+                            <div className="h-10 w-14 bg-muted rounded flex items-center justify-center text-sm font-bold text-muted-foreground">
+                              {brand.name.substring(0, 2).toUpperCase()}
                             </div>
                           )}
                         </TableCell>
