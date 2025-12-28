@@ -9,9 +9,9 @@ import { HomeBannerCarousel } from "@/components/public/HomeBannerCarousel";
 const Index = () => {
   return (
     <PublicLayout>
+      <HomeBannerCarousel />
       <HeroSection />
       <BrandCarousel />
-      <HomeBannerCarousel />
       <FeaturedCars />
       <WhyChooseUs />
       <CTASection />
