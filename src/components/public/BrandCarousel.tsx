@@ -184,16 +184,13 @@ export function BrandCarousel() {
   if (brands.length === 0) return null;
 
   return (
-    <section className="py-3 md:py-8 bg-background overflow-hidden relative z-10">
+    <section className="py-3 md:py-6 bg-background overflow-hidden relative z-10">
       <div className="container">
         {/* Header */}
-        <div className="text-center mb-3 md:mb-5">
-          <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-1">
+        <div className="text-center mb-3 md:mb-4">
+          <h2 className="font-display text-lg md:text-xl font-bold text-foreground">
             Navegue por <span className="text-gradient">Marca</span>
           </h2>
-          <p className="text-sm md:text-sm text-muted-foreground">
-            Encontre veículos das melhores marcas
-          </p>
         </div>
 
         {/* Carousel Container - GPU-optimized */}
