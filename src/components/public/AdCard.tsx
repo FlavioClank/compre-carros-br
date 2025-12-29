@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 
 interface Ad {
@@ -15,8 +16,8 @@ interface AdCardProps {
 
 /**
  * AdCard
- * Renderiza apenas a área de imagem, sem footer.
- * Mesma proporção (aspect-[16/10]) da imagem do CarCard.
+ * Renderiza APENAS a área de imagem do card, sem footer.
+ * Deve ter exatamente a mesma altura visual da imagem do CarCard.
  */
 export function AdCard({ ad }: AdCardProps) {
   const CardWrapper = ad.link ? "a" : "div";
@@ -29,19 +30,26 @@ export function AdCard({ ad }: AdCardProps) {
     : {};
 
   return (
-    <CardWrapper {...wrapperProps} className="block">
+    <CardWrapper {...wrapperProps} className="block place-self-start">
       <VehicleCardShell>
-        <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+        <div className="relative block aspect-[16/10] overflow-hidden">
           <img
             src={ad.image_url}
             alt={ad.title}
             loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-cover"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = "/placeholder.svg";
             }}
           />
+
+          <Badge
+            variant="secondary"
+            className="absolute top-2 left-2 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-foreground/80 text-background"
+          >
+            Publicidade
+          </Badge>
         </div>
       </VehicleCardShell>
     </CardWrapper>
