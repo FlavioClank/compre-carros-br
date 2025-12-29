@@ -237,15 +237,15 @@ export default function CarDetails() {
 
   // SEO: Generate dynamic page title and meta description
   const vehicleType = isMotorcycle ? 'Moto' : 'Carro';
-  const pageTitle = `${brandName} ${car.model} ${car.year}${car.version ? ` ${car.version}` : ""} | CompreCarros`;
+  const pageTitle = `${brandName} ${car.model} ${car.year}${car.version ? ` ${car.version}` : ""} | CompreCarrosBr`;
   const transmissionLabel = TRANSMISSION_LABELS[car.transmission] || car.transmission;
   const fuelLabel = FUEL_LABELS[car.fuel] || car.fuel;
   
   const metaDescription = car.description 
     ? car.description.substring(0, 155) + (car.description.length > 155 ? "..." : "")
     : isMotorcycle
-      ? `${brandName} ${car.model} ${car.year}, ${car.engine_cc ? formatEngineCC(car.engine_cc) : ''}, ${fuelLabel}, ${formatMileage(car.mileage)}. ${formatPrice(car.price)}. Moto verificada na CompreCarros.`
-      : `${brandName} ${car.model} ${car.year}, ${transmissionLabel}, ${fuelLabel}, ${formatMileage(car.mileage)}. ${formatPrice(car.price)}. Veículo verificado na CompreCarros.`;
+      ? `${brandName} ${car.model} ${car.year}, ${car.engine_cc ? formatEngineCC(car.engine_cc) : ''}, ${fuelLabel}, ${formatMileage(car.mileage)}. ${formatPrice(car.price)}. Moto verificada na CompreCarrosBr.`
+      : `${brandName} ${car.model} ${car.year}, ${transmissionLabel}, ${fuelLabel}, ${formatMileage(car.mileage)}. ${formatPrice(car.price)}. Veículo verificado na CompreCarrosBr.`;
   
   const mainPhoto = photos[0] || "/placeholder.svg";
 

@@ -62,7 +62,7 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-accent" />
-                <span>contato@comprecarros.com.br</span>
+                <span>contato@comprecarrosbr.com.br</span>
               </li>
               <li className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-accent mt-1" />
