@@ -390,7 +390,7 @@ export default function AdminAds() {
                     <Label htmlFor="image-home" className="font-medium">Imagem para HOME *</Label>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Resolução recomendada: 1200 × 300 (4:1 horizontal)
+                    Resolução recomendada: 1600 × 400 (4:1 horizontal)
                   </p>
                   <Input
                     id="image-home"
@@ -420,7 +420,7 @@ export default function AdminAds() {
                             Atual: <span className="font-medium text-foreground">{imageDimsHome.width} × {imageDimsHome.height}px</span>
                           </span>
                           <span className="text-muted-foreground">
-                            Recomendado: <span className="font-medium text-primary">1200 × 300px</span>
+                            Recomendado: <span className="font-medium text-primary">1600 × 400px</span>
                           </span>
                         </div>
                       )}
@@ -431,7 +431,7 @@ export default function AdminAds() {
                       <div className="text-center text-muted-foreground">
                         <ImageIcon className="mx-auto h-5 w-5 mb-1" />
                         <p className="text-xs">Imagem horizontal (4:1)</p>
-                        <p className="text-[10px] mt-0.5">Recomendado: 1200 × 300px</p>
+                        <p className="text-[10px] mt-0.5">Recomendado: 1600 × 400px</p>
                       </div>
                     </div>
                   )}
