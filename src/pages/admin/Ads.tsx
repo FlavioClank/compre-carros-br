@@ -139,17 +139,85 @@ export default function AdminAds() {
     setIsDialogOpen(true);
   }
 
+  function validateImageDimensions(
+    img: HTMLImageElement,
+    type: "home" | "search"
+  ): { valid: boolean; message?: string } {
+    const width = img.naturalWidth;
+    const height = img.naturalHeight;
+    const aspectRatio = width / height;
+
+    if (type === "home") {
+      // Home: aspect ratio 2:1 (tolerance: 1.8 to 2.2)
+      const expectedRatio = 2;
+      const minRatio = 1.8;
+      const maxRatio = 2.2;
+      
+      if (aspectRatio < minRatio || aspectRatio > maxRatio) {
+        return {
+          valid: false,
+          message: `Proporção incorreta para Home. Esperado: 2:1 (horizontal). Atual: ${aspectRatio.toFixed(2)}:1. Recomendado: 1200×600px`,
+        };
+      }
+      
+      if (width < 600 || height < 300) {
+        return {
+          valid: false,
+          message: `Imagem muito pequena para Home. Mínimo: 600×300px. Atual: ${width}×${height}px`,
+        };
+      }
+    } else {
+      // Search: aspect ratio 16:9 (tolerance: 1.6 to 1.9)
+      const expectedRatio = 16 / 9; // ~1.78
+      const minRatio = 1.5;
+      const maxRatio = 1.9;
+      
+      if (aspectRatio < minRatio || aspectRatio > maxRatio) {
+        return {
+          valid: false,
+          message: `Proporção incorreta para Busca. Esperado: 16:9. Atual: ${aspectRatio.toFixed(2)}:1. Recomendado: 1600×900px`,
+        };
+      }
+      
+      if (width < 800 || height < 450) {
+        return {
+          valid: false,
+          message: `Imagem muito pequena para Busca. Mínimo: 800×450px. Atual: ${width}×${height}px`,
+        };
+      }
+    }
+
+    return { valid: true };
+  }
+
   function handleImageChange(
     e: React.ChangeEvent<HTMLInputElement>,
     type: "home" | "search"
   ) {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Imagem muito grande. Máximo 5MB.");
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem muito grande. Máximo 5MB.");
+      return;
+    }
+
+    // Create image to validate dimensions
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      const validation = validateImageDimensions(img, type);
+      URL.revokeObjectURL(objectUrl);
+
+      if (!validation.valid) {
+        toast.error(validation.message);
+        // Clear the input
+        e.target.value = "";
         return;
       }
-      
+
+      // Valid image - set preview
       const reader = new FileReader();
       reader.onloadend = () => {
         if (type === "home") {
@@ -161,7 +229,14 @@ export default function AdminAds() {
         }
       };
       reader.readAsDataURL(file);
-    }
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      toast.error("Erro ao carregar imagem");
+    };
+
+    img.src = objectUrl;
   }
 
   async function uploadImage(file: File): Promise<string | null> {
