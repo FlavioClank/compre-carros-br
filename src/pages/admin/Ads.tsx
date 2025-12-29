@@ -75,8 +75,10 @@ export default function AdminAds() {
   // Separate image states for Home and Search
   const [imageFileHome, setImageFileHome] = useState<File | null>(null);
   const [imagePreviewHome, setImagePreviewHome] = useState<string | null>(null);
+  const [imageDimsHome, setImageDimsHome] = useState<{ width: number; height: number } | null>(null);
   const [imageFileSearch, setImageFileSearch] = useState<File | null>(null);
   const [imagePreviewSearch, setImagePreviewSearch] = useState<string | null>(null);
+  const [imageDimsSearch, setImageDimsSearch] = useState<{ width: number; height: number } | null>(null);
   
   const [formData, setFormData] = useState<AdFormData>({
     title: "",
@@ -114,8 +116,10 @@ export default function AdminAds() {
     });
     setImageFileHome(null);
     setImagePreviewHome(null);
+    setImageDimsHome(null);
     setImageFileSearch(null);
     setImagePreviewSearch(null);
+    setImageDimsSearch(null);
     setEditingAd(null);
   }
 
@@ -134,6 +138,8 @@ export default function AdminAds() {
     });
     setImagePreviewHome(ad.image_url_home);
     setImagePreviewSearch(ad.image_url_search);
+    setImageDimsHome(null); // Will be loaded when image loads
+    setImageDimsSearch(null);
     setImageFileHome(null);
     setImageFileSearch(null);
     setIsDialogOpen(true);
@@ -207,25 +213,28 @@ export default function AdminAds() {
     const objectUrl = URL.createObjectURL(file);
 
     img.onload = () => {
+      const width = img.naturalWidth;
+      const height = img.naturalHeight;
       const validation = validateImageDimensions(img, type);
       URL.revokeObjectURL(objectUrl);
 
       if (!validation.valid) {
         toast.error(validation.message);
-        // Clear the input
         e.target.value = "";
         return;
       }
 
-      // Valid image - set preview
+      // Valid image - set preview and dimensions
       const reader = new FileReader();
       reader.onloadend = () => {
         if (type === "home") {
           setImageFileHome(file);
           setImagePreviewHome(reader.result as string);
+          setImageDimsHome({ width, height });
         } else {
           setImageFileSearch(file);
           setImagePreviewSearch(reader.result as string);
+          setImageDimsSearch({ width, height });
         }
       };
       reader.readAsDataURL(file);
@@ -449,19 +458,38 @@ export default function AdminAds() {
                     className="cursor-pointer"
                   />
                   {imagePreviewHome && (
-                    <div className="relative w-full h-28 rounded-md overflow-hidden border">
-                      <img
-                        src={imagePreviewHome}
-                        alt="Preview Home"
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="space-y-1">
+                      <div className="relative w-full h-28 rounded-md overflow-hidden border">
+                        <img
+                          src={imagePreviewHome}
+                          alt="Preview Home"
+                          className="w-full h-full object-cover"
+                          onLoad={(e) => {
+                            if (!imageDimsHome) {
+                              const img = e.target as HTMLImageElement;
+                              setImageDimsHome({ width: img.naturalWidth, height: img.naturalHeight });
+                            }
+                          }}
+                        />
+                      </div>
+                      {imageDimsHome && (
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="text-muted-foreground">
+                            Atual: <span className="font-medium text-foreground">{imageDimsHome.width} × {imageDimsHome.height}px</span>
+                          </span>
+                          <span className="text-muted-foreground">
+                            Recomendado: <span className="font-medium text-primary">1200 × 600px</span>
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                   {!imagePreviewHome && (
                     <div className="flex items-center justify-center w-full h-28 bg-muted rounded-md border border-dashed">
                       <div className="text-center text-muted-foreground">
                         <ImageIcon className="mx-auto h-6 w-6 mb-1" />
-                        <p className="text-xs">Imagem horizontal</p>
+                        <p className="text-xs">Imagem horizontal (2:1)</p>
+                        <p className="text-[10px] mt-0.5">Recomendado: 1200 × 600px</p>
                       </div>
                     </div>
                   )}
@@ -484,19 +512,38 @@ export default function AdminAds() {
                     className="cursor-pointer"
                   />
                   {imagePreviewSearch && (
-                    <div className="relative w-full h-28 rounded-md overflow-hidden border">
-                      <img
-                        src={imagePreviewSearch}
-                        alt="Preview Busca"
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="space-y-1">
+                      <div className="relative w-full h-28 rounded-md overflow-hidden border">
+                        <img
+                          src={imagePreviewSearch}
+                          alt="Preview Busca"
+                          className="w-full h-full object-cover"
+                          onLoad={(e) => {
+                            if (!imageDimsSearch) {
+                              const img = e.target as HTMLImageElement;
+                              setImageDimsSearch({ width: img.naturalWidth, height: img.naturalHeight });
+                            }
+                          }}
+                        />
+                      </div>
+                      {imageDimsSearch && (
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="text-muted-foreground">
+                            Atual: <span className="font-medium text-foreground">{imageDimsSearch.width} × {imageDimsSearch.height}px</span>
+                          </span>
+                          <span className="text-muted-foreground">
+                            Recomendado: <span className="font-medium text-primary">1600 × 900px</span>
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                   {!imagePreviewSearch && (
                     <div className="flex items-center justify-center w-full h-28 bg-muted rounded-md border border-dashed">
                       <div className="text-center text-muted-foreground">
                         <ImageIcon className="mx-auto h-6 w-6 mb-1" />
-                        <p className="text-xs">Imagem quadrada/16:9</p>
+                        <p className="text-xs">Imagem 16:9</p>
+                        <p className="text-[10px] mt-0.5">Recomendado: 1600 × 900px</p>
                       </div>
                     </div>
                   )}
