@@ -5,8 +5,8 @@ interface Ad {
   id: string;
   title: string;
   category: string;
-  image_url: string;
-  description: string | null;
+  image_url_home: string | null;
+  image_url_search: string | null;
   link: string | null;
 }
 
@@ -31,7 +31,7 @@ export function useAdsRotation() {
     async function fetchAds() {
       const { data, error } = await supabase
         .from("ads")
-        .select("id, title, category, image_url, description, link")
+        .select("id, title, category, image_url_home, image_url_search, link")
         .eq("is_active", true)
         .order("created_at", { ascending: true });
 
