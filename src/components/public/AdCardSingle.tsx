@@ -48,12 +48,12 @@ export function AdCardSingle({ ad }: AdCardSingleProps) {
             />
           </div>
           
-          {/* Main image - never cropped */}
+          {/* Main image - cover on mobile (no white bands), contain on desktop */}
           <img
             src={imageUrl}
             alt={`Publicidade: ${ad.title}`}
             loading="lazy"
-            className="relative z-10 w-full h-full object-contain bg-transparent"
+            className="relative z-10 w-full h-full object-cover object-center md:object-contain bg-transparent"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = "/placeholder.svg";
