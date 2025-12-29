@@ -38,12 +38,20 @@ export function AdCardSingle({ ad }: AdCardSingleProps) {
     <CardWrapper {...wrapperProps} className="block">
       <VehicleCardShell>
         {/* EXACT same height as CarCardSingle image section: h-28 md:h-40 lg:h-44 */}
-        <div className="relative w-full h-28 md:h-40 lg:h-44 overflow-hidden">
+        <div className="relative w-full h-28 md:h-40 lg:h-44 overflow-hidden bg-muted">
+          {/* Blur background layer - prevents visible borders */}
+          <img
+            src={imageUrl}
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-40"
+          />
+          
+          {/* Main image - never cropped */}
           <img
             src={imageUrl}
             alt={`Publicidade: ${ad.title}`}
             loading="lazy"
-            className="w-full h-full object-cover object-center"
+            className="relative z-10 w-full h-full object-contain"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = "/placeholder.svg";
@@ -52,7 +60,7 @@ export function AdCardSingle({ ad }: AdCardSingleProps) {
 
           <Badge
             variant="secondary"
-            className="absolute top-1.5 left-1.5 rounded-full px-1.5 py-0.5 text-[9px] md:text-[11px] font-semibold bg-foreground/80 text-background"
+            className="absolute top-1.5 left-1.5 z-20 rounded-full px-1.5 py-0.5 text-[9px] md:text-[11px] font-semibold bg-foreground/80 text-background"
           >
             Publicidade
           </Badge>
