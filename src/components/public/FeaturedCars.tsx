@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { CarCardSingle } from "@/components/public/CarCardSingle";
-import { AdCardSingle } from "@/components/public/AdCardSingle";
+import { CarCard } from "@/components/public/CarCard";
+import { AdCard } from "@/components/public/AdCard";
 import { useAdsRotation } from "@/hooks/useAdsRotation";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Sparkles } from "lucide-react";
@@ -21,8 +21,12 @@ interface Car {
   fuel: string;
   color: string;
   price: number;
-  photos: string[] | null;
+  photos: string[];
   status: string;
+  category: string;
+  engine_cc: number | null;
+  cooling_type: string | null;
+  motorcycle_category: string | null;
   is_featured: boolean;
   brands: {
     name: string;
@@ -54,6 +58,10 @@ export function FeaturedCars() {
             color,
             price,
             photos,
+            category,
+            engine_cc,
+            cooling_type,
+            motorcycle_category,
             is_featured,
             created_at,
             description,
@@ -80,8 +88,12 @@ export function FeaturedCars() {
           fuel: car.fuel,
           color: car.color,
           price: car.price,
-          photos: car.photos,
+          photos: car.photos || [],
           status: "available",
+          category: car.category,
+          engine_cc: car.engine_cc,
+          cooling_type: car.cooling_type,
+          motorcycle_category: car.motorcycle_category,
           is_featured: car.is_featured,
           brands: car.brands,
         }));
@@ -125,18 +137,20 @@ export function FeaturedCars() {
           </Link>
         </div>
 
-        {/* Cards - with intercalated ads */}
-        <div className="space-y-3 md:space-y-4">
-          {isLoading ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-28 md:h-40 w-full rounded-xl bg-card" />
-            ))
-          ) : cars.length > 0 ? (
-            (() => {
+        {/* Cards - with intercalated ads (same grid as /carros) */}
+        {isLoading ? (
+          <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-[4/5] rounded-xl bg-card" />
+            ))}
+          </div>
+        ) : cars.length > 0 ? (
+          <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {(() => {
               const items: React.ReactNode[] = [];
 
               cars.forEach((car, index) => {
-                items.push(<CarCardSingle key={car.id} car={car} />);
+                items.push(<CarCard key={car.id} car={car} />);
 
                 // Insert ad after every 5 cars, but never as the first item
                 if (
@@ -147,9 +161,7 @@ export function FeaturedCars() {
                 ) {
                   const ad = getNextAd();
                   if (ad) {
-                    items.push(
-                      <AdCardSingle key={`featured-ad-${ad.id}-${index}`} ad={ad} />
-                    );
+                    items.push(<AdCard key={`featured-ad-${ad.id}-${index}`} ad={ad} />);
                   }
                 }
               });
@@ -159,23 +171,20 @@ export function FeaturedCars() {
                 const finalAd = getNextAd();
                 if (finalAd) {
                   items.push(
-                    <AdCardSingle
-                      key={`featured-ad-final-${finalAd.id}`}
-                      ad={finalAd}
-                    />
+                    <AdCard key={`featured-ad-final-${finalAd.id}`} ad={finalAd} />
                   );
                 }
               }
 
               return items;
-            })()
-          ) : (
-            <div className="text-center py-10 bg-card/50 rounded-xl border border-border/50">
-              <p className="text-muted-foreground text-sm">Nenhum veículo disponível</p>
-              <p className="text-xs text-muted-foreground mt-1">Volte em breve</p>
-            </div>
-          )}
-        </div>
+            })()}
+          </div>
+        ) : (
+          <div className="text-center py-10 bg-card/50 rounded-xl border border-border/50">
+            <p className="text-muted-foreground text-sm">Nenhum veículo disponível</p>
+            <p className="text-xs text-muted-foreground mt-1">Volte em breve</p>
+          </div>
+        )}
 
         {cars.length > 0 && (
           <div className="text-center mt-6">
