@@ -5,8 +5,8 @@ interface Ad {
   id: string;
   title: string;
   category: string;
-  image_url: string;
-  description: string | null;
+  image_url_home: string | null;
+  image_url_search: string | null;
   link: string | null;
 }
 
@@ -15,9 +15,8 @@ interface AdCardProps {
 }
 
 /**
- * AdCard
- * Renderiza APENAS a área de imagem do card, sem footer.
- * Deve ter exatamente a mesma altura visual da imagem do CarCard.
+ * AdCard - usado na BUSCA de veículos
+ * Usa image_url_search e o aspect-ratio 16:10 da busca
  */
 export function AdCard({ ad }: AdCardProps) {
   const CardWrapper = ad.link ? "a" : "div";
@@ -29,12 +28,14 @@ export function AdCard({ ad }: AdCardProps) {
       }
     : {};
 
+  const imageUrl = ad.image_url_search || "/placeholder.svg";
+
   return (
     <CardWrapper {...wrapperProps} className="block">
       <VehicleCardShell>
         <div className="relative block aspect-[16/10] overflow-hidden">
           <img
-            src={ad.image_url}
+            src={imageUrl}
             alt={`Publicidade: ${ad.title}`}
             loading="lazy"
             className="w-full h-full object-cover"

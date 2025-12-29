@@ -2,10 +2,9 @@ import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -33,7 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, ExternalLink, Image as ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, Image as ImageIcon, Home, Search } from "lucide-react";
 
 const AD_CATEGORIES = [
   { value: "mecanica", label: "Mecânica" },
@@ -51,8 +50,8 @@ interface Ad {
   id: string;
   title: string;
   category: string;
-  image_url: string;
-  description: string | null;
+  image_url_home: string | null;
+  image_url_search: string | null;
   link: string | null;
   is_active: boolean;
   created_at: string;
@@ -61,7 +60,6 @@ interface Ad {
 interface AdFormData {
   title: string;
   category: string;
-  description: string;
   link: string;
   is_active: boolean;
 }
@@ -73,12 +71,16 @@ export default function AdminAds() {
   const [editingAd, setEditingAd] = useState<Ad | null>(null);
   const [deleteAdId, setDeleteAdId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  // Separate image states for Home and Search
+  const [imageFileHome, setImageFileHome] = useState<File | null>(null);
+  const [imagePreviewHome, setImagePreviewHome] = useState<string | null>(null);
+  const [imageFileSearch, setImageFileSearch] = useState<File | null>(null);
+  const [imagePreviewSearch, setImagePreviewSearch] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState<AdFormData>({
     title: "",
     category: "",
-    description: "",
     link: "",
     is_active: true,
   });
@@ -107,12 +109,13 @@ export default function AdminAds() {
     setFormData({
       title: "",
       category: "",
-      description: "",
       link: "",
       is_active: true,
     });
-    setImageFile(null);
-    setImagePreview(null);
+    setImageFileHome(null);
+    setImagePreviewHome(null);
+    setImageFileSearch(null);
+    setImagePreviewSearch(null);
     setEditingAd(null);
   }
 
@@ -126,26 +129,36 @@ export default function AdminAds() {
     setFormData({
       title: ad.title,
       category: ad.category,
-      description: ad.description || "",
       link: ad.link || "",
       is_active: ad.is_active,
     });
-    setImagePreview(ad.image_url);
-    setImageFile(null);
+    setImagePreviewHome(ad.image_url_home);
+    setImagePreviewSearch(ad.image_url_search);
+    setImageFileHome(null);
+    setImageFileSearch(null);
     setIsDialogOpen(true);
   }
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleImageChange(
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: "home" | "search"
+  ) {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         toast.error("Imagem muito grande. Máximo 5MB.");
         return;
       }
-      setImageFile(file);
+      
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        if (type === "home") {
+          setImageFileHome(file);
+          setImagePreviewHome(reader.result as string);
+        } else {
+          setImageFileSearch(file);
+          setImagePreviewSearch(reader.result as string);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -178,30 +191,49 @@ export default function AdminAds() {
       return;
     }
 
-    if (!editingAd && !imageFile) {
-      toast.error("Selecione uma imagem para o anúncio");
-      return;
+    // Validate images for new ads
+    if (!editingAd) {
+      if (!imageFileHome) {
+        toast.error("Selecione uma imagem para a Home");
+        return;
+      }
+      if (!imageFileSearch) {
+        toast.error("Selecione uma imagem para a Busca");
+        return;
+      }
     }
 
     setIsSubmitting(true);
 
     try {
-      let imageUrl = editingAd?.image_url || "";
+      let imageUrlHome = editingAd?.image_url_home || "";
+      let imageUrlSearch = editingAd?.image_url_search || "";
 
-      if (imageFile) {
-        const uploadedUrl = await uploadImage(imageFile);
+      // Upload Home image if changed
+      if (imageFileHome) {
+        const uploadedUrl = await uploadImage(imageFileHome);
         if (!uploadedUrl) {
           setIsSubmitting(false);
           return;
         }
-        imageUrl = uploadedUrl;
+        imageUrlHome = uploadedUrl;
+      }
+
+      // Upload Search image if changed
+      if (imageFileSearch) {
+        const uploadedUrl = await uploadImage(imageFileSearch);
+        if (!uploadedUrl) {
+          setIsSubmitting(false);
+          return;
+        }
+        imageUrlSearch = uploadedUrl;
       }
 
       const adData = {
         title: formData.title,
         category: formData.category,
-        image_url: imageUrl,
-        description: formData.description || null,
+        image_url_home: imageUrlHome,
+        image_url_search: imageUrlSearch,
         link: formData.link || null,
         is_active: formData.is_active,
       };
@@ -284,7 +316,7 @@ export default function AdminAds() {
                 Novo Anúncio
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
                   {editingAd ? "Editar Anúncio" : "Novo Anúncio"}
@@ -292,7 +324,7 @@ export default function AdminAds() {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Nome do Estabelecimento *</Label>
+                  <Label htmlFor="title">Nome do Anúncio (uso interno) *</Label>
                   <Input
                     id="title"
                     value={formData.title}
@@ -305,7 +337,7 @@ export default function AdminAds() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category">Tipo *</Label>
+                  <Label htmlFor="category">Categoria *</Label>
                   <Select
                     value={formData.category}
                     onValueChange={(value) =>
@@ -313,7 +345,7 @@ export default function AdminAds() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
+                      <SelectValue placeholder="Selecione a categoria" />
                     </SelectTrigger>
                     <SelectContent>
                       {AD_CATEGORIES.map((cat) => (
@@ -325,47 +357,74 @@ export default function AdminAds() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="image">Imagem *</Label>
-                  <div className="flex flex-col gap-2">
-                    <Input
-                      id="image"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="cursor-pointer"
-                    />
-                    {imagePreview && (
-                      <div className="relative w-full h-40 rounded-md overflow-hidden border">
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    {!imagePreview && (
-                      <div className="flex items-center justify-center w-full h-40 bg-muted rounded-md border border-dashed">
-                        <div className="text-center text-muted-foreground">
-                          <ImageIcon className="mx-auto h-8 w-8 mb-2" />
-                          <p className="text-sm">Selecione uma imagem</p>
-                        </div>
-                      </div>
-                    )}
+                {/* Image for HOME */}
+                <div className="space-y-2 p-3 border rounded-lg bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <Home className="h-4 w-4 text-primary" />
+                    <Label htmlFor="image-home" className="font-medium">Imagem para HOME *</Label>
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    Resolução recomendada: 1200 × 600 (horizontal)
+                  </p>
+                  <Input
+                    id="image-home"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageChange(e, "home")}
+                    className="cursor-pointer"
+                  />
+                  {imagePreviewHome && (
+                    <div className="relative w-full h-28 rounded-md overflow-hidden border">
+                      <img
+                        src={imagePreviewHome}
+                        alt="Preview Home"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  {!imagePreviewHome && (
+                    <div className="flex items-center justify-center w-full h-28 bg-muted rounded-md border border-dashed">
+                      <div className="text-center text-muted-foreground">
+                        <ImageIcon className="mx-auto h-6 w-6 mb-1" />
+                        <p className="text-xs">Imagem horizontal</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição (opcional)</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    placeholder="Breve descrição do estabelecimento"
-                    rows={3}
+                {/* Image for SEARCH */}
+                <div className="space-y-2 p-3 border rounded-lg bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <Search className="h-4 w-4 text-primary" />
+                    <Label htmlFor="image-search" className="font-medium">Imagem para BUSCA *</Label>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Resolução recomendada: 1600 × 900 (16:9)
+                  </p>
+                  <Input
+                    id="image-search"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageChange(e, "search")}
+                    className="cursor-pointer"
                   />
+                  {imagePreviewSearch && (
+                    <div className="relative w-full h-28 rounded-md overflow-hidden border">
+                      <img
+                        src={imagePreviewSearch}
+                        alt="Preview Busca"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  {!imagePreviewSearch && (
+                    <div className="flex items-center justify-center w-full h-28 bg-muted rounded-md border border-dashed">
+                      <div className="text-center text-muted-foreground">
+                        <ImageIcon className="mx-auto h-6 w-6 mb-1" />
+                        <p className="text-xs">Imagem quadrada/16:9</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -435,31 +494,53 @@ export default function AdminAds() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {ads.map((ad) => (
               <Card key={ad.id} className="overflow-hidden">
-                <div className="relative h-40">
-                  <img
-                    src={ad.image_url}
-                    alt={ad.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <Badge
-                    variant={ad.is_active ? "default" : "secondary"}
-                    className="absolute top-2 right-2"
-                  >
-                    {ad.is_active ? "Ativo" : "Inativo"}
-                  </Badge>
+                {/* Show both images in admin */}
+                <div className="grid grid-cols-2 gap-1">
+                  <div className="relative h-24">
+                    {ad.image_url_home ? (
+                      <img
+                        src={ad.image_url_home}
+                        alt={`${ad.title} - Home`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <Home className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                    )}
+                    <Badge variant="secondary" className="absolute bottom-1 left-1 text-[10px] px-1">
+                      Home
+                    </Badge>
+                  </div>
+                  <div className="relative h-24">
+                    {ad.image_url_search ? (
+                      <img
+                        src={ad.image_url_search}
+                        alt={`${ad.title} - Busca`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <Search className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                    )}
+                    <Badge variant="secondary" className="absolute bottom-1 left-1 text-[10px] px-1">
+                      Busca
+                    </Badge>
+                  </div>
                 </div>
                 <CardContent className="p-4 space-y-3">
-                  <div>
-                    <h3 className="font-semibold text-foreground">{ad.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {getCategoryLabel(ad.category)}
-                    </p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-semibold text-foreground">{ad.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {getCategoryLabel(ad.category)}
+                      </p>
+                    </div>
+                    <Badge variant={ad.is_active ? "default" : "secondary"}>
+                      {ad.is_active ? "Ativo" : "Inativo"}
+                    </Badge>
                   </div>
-                  {ad.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {ad.description}
-                    </p>
-                  )}
                   {ad.link && (
                     <a
                       href={ad.link}
@@ -499,23 +580,25 @@ export default function AdminAds() {
             ))}
           </div>
         )}
-      </div>
 
-      <AlertDialog open={!!deleteAdId} onOpenChange={() => setDeleteAdId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir anúncio?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação não pode ser desfeita. O anúncio será removido
-              permanentemente.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        <AlertDialog open={!!deleteAdId} onOpenChange={() => setDeleteAdId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir este anúncio? Esta ação não pode
+                ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete}>
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </AdminLayout>
   );
 }

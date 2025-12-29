@@ -48,9 +48,9 @@ export type Database = {
         Row: {
           category: string
           created_at: string
-          description: string | null
           id: string
-          image_url: string
+          image_url_home: string | null
+          image_url_search: string | null
           is_active: boolean
           link: string | null
           title: string
@@ -59,9 +59,9 @@ export type Database = {
         Insert: {
           category: string
           created_at?: string
-          description?: string | null
           id?: string
-          image_url: string
+          image_url_home?: string | null
+          image_url_search?: string | null
           is_active?: boolean
           link?: string | null
           title: string
@@ -70,9 +70,9 @@ export type Database = {
         Update: {
           category?: string
           created_at?: string
-          description?: string | null
           id?: string
-          image_url?: string
+          image_url_home?: string | null
+          image_url_search?: string | null
           is_active?: boolean
           link?: string | null
           title?: string
