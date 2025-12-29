@@ -786,13 +786,13 @@ export default function Cars() {
 
           {/* Cars Grid with Ads Intercalation */}
           {isLoading ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="aspect-[4/5] rounded-xl bg-card" />
               ))}
             </div>
           ) : cars.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
               {(() => {
                 const items: React.ReactNode[] = [];
 
