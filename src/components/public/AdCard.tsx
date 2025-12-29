@@ -15,8 +15,8 @@ interface AdCardProps {
 
 /**
  * AdCard
- * Precisa ocupar exatamente o mesmo espaço visual de um CarCard no grid.
- * Estrutura: área de imagem (aspect-[16/10]) + placeholder de conteúdo com altura fixa.
+ * Renderiza apenas a área de imagem, sem footer.
+ * Mesma proporção (aspect-[16/10]) da imagem do CarCard.
  */
 export function AdCard({ ad }: AdCardProps) {
   const CardWrapper = ad.link ? "a" : "div";
@@ -29,10 +29,9 @@ export function AdCard({ ad }: AdCardProps) {
     : {};
 
   return (
-    <CardWrapper {...wrapperProps} className="block h-full">
-      <VehicleCardShell className="h-full">
-        {/* Área de imagem idêntica ao CarCard */}
-        <div className="relative block aspect-[16/10] overflow-hidden bg-muted">
+    <CardWrapper {...wrapperProps} className="block">
+      <VehicleCardShell>
+        <div className="relative aspect-[16/10] overflow-hidden bg-muted">
           <img
             src={ad.image_url}
             alt={ad.title}
@@ -44,9 +43,6 @@ export function AdCard({ ad }: AdCardProps) {
             }}
           />
         </div>
-
-        {/* Placeholder para igualar a altura total do CarCard */}
-        <div className="p-3 h-[72px]" aria-hidden="true" />
       </VehicleCardShell>
     </CardWrapper>
   );
