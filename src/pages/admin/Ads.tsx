@@ -390,7 +390,7 @@ export default function AdminAds() {
                     <Label htmlFor="image-home" className="font-medium">Imagem para HOME *</Label>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Resolução recomendada: 1200 × 600 (horizontal)
+                    Resolução recomendada: 1200 × 300 (4:1 horizontal)
                   </p>
                   <Input
                     id="image-home"
@@ -401,7 +401,7 @@ export default function AdminAds() {
                   />
                   {imagePreviewHome && (
                     <div className="space-y-1">
-                      <div className="relative w-full h-28 rounded-md overflow-hidden border">
+                      <div className="relative w-full h-20 rounded-md overflow-hidden border">
                         <img
                           src={imagePreviewHome}
                           alt="Preview Home"
@@ -420,18 +420,18 @@ export default function AdminAds() {
                             Atual: <span className="font-medium text-foreground">{imageDimsHome.width} × {imageDimsHome.height}px</span>
                           </span>
                           <span className="text-muted-foreground">
-                            Recomendado: <span className="font-medium text-primary">1200 × 600px</span>
+                            Recomendado: <span className="font-medium text-primary">1200 × 300px</span>
                           </span>
                         </div>
                       )}
                     </div>
                   )}
                   {!imagePreviewHome && (
-                    <div className="flex items-center justify-center w-full h-28 bg-muted rounded-md border border-dashed">
+                    <div className="flex items-center justify-center w-full h-20 bg-muted rounded-md border border-dashed">
                       <div className="text-center text-muted-foreground">
-                        <ImageIcon className="mx-auto h-6 w-6 mb-1" />
-                        <p className="text-xs">Imagem horizontal (2:1)</p>
-                        <p className="text-[10px] mt-0.5">Recomendado: 1200 × 600px</p>
+                        <ImageIcon className="mx-auto h-5 w-5 mb-1" />
+                        <p className="text-xs">Imagem horizontal (4:1)</p>
+                        <p className="text-[10px] mt-0.5">Recomendado: 1200 × 300px</p>
                       </div>
                     </div>
                   )}
