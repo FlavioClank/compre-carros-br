@@ -2,7 +2,7 @@
 export const WHATSAPP_NUMBER = "5565998031761";
 export const WHATSAPP_FORMATTED = "+55 65 99803-1761";
 
-export const SITE_NAME = "CompreCarros";
+export const SITE_NAME = "CompreCarrosBr";
 export const SITE_DESCRIPTION = "Seu próximo carro está aqui. Encontre os melhores veículos com total segurança e transparência.";
 
 // Fuel type labels - ALL

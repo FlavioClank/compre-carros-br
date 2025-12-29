@@ -30,7 +30,7 @@ export function WhyChooseUs() {
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-12">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-            Por que escolher a <span className="text-accent">CompreCarros</span>?
+            Por que escolher a <span className="text-accent">CompreCarrosBr</span>?
           </h2>
           <p className="text-muted-foreground mt-4">
             Somos especialistas em intermediação de veículos, garantindo

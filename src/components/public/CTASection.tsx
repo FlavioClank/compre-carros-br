@@ -27,7 +27,7 @@ export function CTASection() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href={generateWhatsAppUrl(WHATSAPP_NUMBER, "Olá! Vi o site CompreCarros e gostaria de saber mais sobre os veículos disponíveis.")}
+              href={generateWhatsAppUrl(WHATSAPP_NUMBER, "Olá! Vi o site CompreCarrosBr e gostaria de saber mais sobre os veículos disponíveis.")}
               target="_blank"
               rel="noopener noreferrer"
             >
