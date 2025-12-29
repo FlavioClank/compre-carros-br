@@ -65,7 +65,7 @@ export function CarCard({ car }: CarCardProps) {
   );
 
   return (
-    <div className="group bg-card rounded-xl overflow-hidden border border-border shadow-card card-hover">
+    <VehicleCardShell>
       {/* Image */}
       <Link to={carUrl} className="relative block aspect-[16/10] overflow-hidden">
         <img
@@ -175,6 +175,6 @@ export function CarCard({ car }: CarCardProps) {
           )}
         </div>
       </div>
-    </div>
+    </VehicleCardShell>
   );
 }

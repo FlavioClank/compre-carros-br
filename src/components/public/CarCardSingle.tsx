@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { generateCarUrl } from "@/lib/utils";
+import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 
 interface CarCardSingleProps {
   car: {
@@ -56,9 +57,7 @@ export function CarCardSingle({ car }: CarCardSingleProps) {
   );
 
   return (
-    <div className={`group bg-card rounded-xl overflow-hidden border shadow-sm ${
-      car.is_featured ? "border-accent/50 ring-1 ring-accent/20" : "border-border"
-    }`}>
+    <VehicleCardShell className={car.is_featured ? "border-accent/50 ring-1 ring-accent/20" : ""}>
       <div className="flex flex-row">
         {/* Image Section */}
         <Link 
@@ -168,6 +167,6 @@ export function CarCardSingle({ car }: CarCardSingleProps) {
           </div>
         </div>
       </div>
-    </div>
+    </VehicleCardShell>
   );
 }
