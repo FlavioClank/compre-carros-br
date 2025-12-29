@@ -37,13 +37,13 @@ export function AdCardSingle({ ad }: AdCardSingleProps) {
   return (
     <CardWrapper {...wrapperProps} className="block">
       <VehicleCardShell>
-        {/* Full width image, same height as CarCardSingle */}
-        <div className="relative w-full aspect-[16/6] overflow-hidden">
+        {/* EXACT same height as CarCardSingle image section: h-28 md:h-40 lg:h-44 */}
+        <div className="relative w-full h-28 md:h-40 lg:h-44 overflow-hidden">
           <img
             src={imageUrl}
             alt={`Publicidade: ${ad.title}`}
             loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover object-center"
+            className="w-full h-full object-cover object-center"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = "/placeholder.svg";
