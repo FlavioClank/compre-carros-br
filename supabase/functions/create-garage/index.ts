@@ -1,9 +1,55 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// CORS restritivo - apenas domínios permitidos
+const ALLOWED_ORIGINS = [
+  "https://kgtscjvgipowuvuindxt.lovable.app",
+  "https://lovable.dev",
+  "http://localhost:5173",
+  "http://localhost:8080"
+];
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
+
+// Validação de inputs
+function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 255;
+}
+
+function validatePassword(password: string): boolean {
+  return password.length >= 8 && password.length <= 128;
+}
+
+function validateName(name: string): boolean {
+  return name.trim().length >= 2 && name.length <= 100;
+}
+
+function validatePhone(phone: string | undefined): boolean {
+  if (!phone) return true;
+  return phone.length <= 20;
+}
+
+function validateAddress(address: string | undefined): boolean {
+  if (!address) return true;
+  return address.length <= 255;
+}
+
+function validateCity(city: string | undefined): boolean {
+  if (!city) return true;
+  return city.length <= 100;
+}
+
+function validateState(state: string | undefined): boolean {
+  if (!state) return true;
+  return state.length <= 50;
+}
 
 interface CreateGarageRequest {
   name: string;
@@ -16,9 +62,20 @@ interface CreateGarageRequest {
 }
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get("Origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Only allow POST
+  if (req.method !== "POST") {
+    return new Response(
+      JSON.stringify({ error: "Método não permitido" }),
+      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 
   try {
@@ -68,10 +125,59 @@ Deno.serve(async (req) => {
     const body: CreateGarageRequest = await req.json();
     console.log("Creating garage for email:", body.email);
 
-    // Validate required fields
+    // Validate all inputs
     if (!body.name || !body.email || !body.password) {
       return new Response(
         JSON.stringify({ error: "Nome, email e senha são obrigatórios" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!validateName(body.name)) {
+      return new Response(
+        JSON.stringify({ error: "Nome deve ter entre 2 e 100 caracteres" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!validateEmail(body.email)) {
+      return new Response(
+        JSON.stringify({ error: "Email inválido ou muito longo" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!validatePassword(body.password)) {
+      return new Response(
+        JSON.stringify({ error: "Senha deve ter entre 8 e 128 caracteres" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!validatePhone(body.phone)) {
+      return new Response(
+        JSON.stringify({ error: "Telefone muito longo (máx. 20 caracteres)" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!validateAddress(body.address)) {
+      return new Response(
+        JSON.stringify({ error: "Endereço muito longo (máx. 255 caracteres)" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!validateCity(body.city)) {
+      return new Response(
+        JSON.stringify({ error: "Cidade muito longa (máx. 100 caracteres)" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!validateState(body.state)) {
+      return new Response(
+        JSON.stringify({ error: "Estado muito longo (máx. 50 caracteres)" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -202,6 +308,8 @@ Deno.serve(async (req) => {
 
   } catch (error: any) {
     console.error("Error creating garage:", error);
+    const origin = req.headers.get("Origin");
+    const corsHeaders = getCorsHeaders(origin);
     return new Response(
       JSON.stringify({ error: error.message || "Erro interno do servidor" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

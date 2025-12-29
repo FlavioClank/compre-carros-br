@@ -3,8 +3,5 @@ project_id = "kgtscjvgipowuvuindxt"
 [functions.reset-garage-password]
 verify_jwt = false
 
-[functions.setup-admin]
-verify_jwt = false
-
 [functions.create-garage]
 verify_jwt = false
