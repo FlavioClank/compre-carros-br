@@ -38,20 +38,22 @@ export function AdCardSingle({ ad }: AdCardSingleProps) {
     <CardWrapper {...wrapperProps} className="block">
       <VehicleCardShell>
         {/* EXACT same height as CarCardSingle image section: h-28 md:h-40 lg:h-44 */}
-        <div className="relative w-full h-28 md:h-40 lg:h-44 overflow-hidden bg-muted">
-          {/* Blur background layer - prevents visible borders */}
-          <img
-            src={imageUrl}
-            aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-40"
-          />
+        <div className="relative w-full h-28 md:h-40 lg:h-44 overflow-hidden">
+          {/* Blur background layer - DESKTOP ONLY - soft fill for empty space */}
+          <div className="hidden md:block absolute inset-0">
+            <img
+              src={imageUrl}
+              aria-hidden="true"
+              className="w-full h-full object-cover blur-md scale-105 opacity-25"
+            />
+          </div>
           
           {/* Main image - never cropped */}
           <img
             src={imageUrl}
             alt={`Publicidade: ${ad.title}`}
             loading="lazy"
-            className="relative z-10 w-full h-full object-contain"
+            className="relative z-10 w-full h-full object-contain bg-transparent"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = "/placeholder.svg";
