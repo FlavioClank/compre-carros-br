@@ -30,12 +30,12 @@ export function AdCard({ ad }: AdCardProps) {
     : {};
 
   return (
-    <CardWrapper {...wrapperProps} className="block place-self-start">
+    <CardWrapper {...wrapperProps} className="block">
       <VehicleCardShell>
         <div className="relative block aspect-[16/10] overflow-hidden">
           <img
             src={ad.image_url}
-            alt={ad.title}
+            alt={`Publicidade: ${ad.title}`}
             loading="lazy"
             className="w-full h-full object-cover"
             onError={(e) => {
