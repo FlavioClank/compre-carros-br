@@ -55,12 +55,17 @@ interface Ad {
   link: string | null;
   is_active: boolean;
   created_at: string;
+  click_type?: string | null;
+  click_target?: string | null;
+  whatsapp_number?: string | null;
 }
 
 interface AdFormData {
   title: string;
   category: string;
-  link: string;
+  click_type: "link" | "instagram" | "whatsapp";
+  click_target: string;
+  whatsapp_number: string;
   is_active: boolean;
 }
 
@@ -83,7 +88,9 @@ export default function AdminAds() {
   const [formData, setFormData] = useState<AdFormData>({
     title: "",
     category: "",
-    link: "",
+    click_type: "link",
+    click_target: "",
+    whatsapp_number: "",
     is_active: true,
   });
 
@@ -111,7 +118,9 @@ export default function AdminAds() {
     setFormData({
       title: "",
       category: "",
-      link: "",
+      click_type: "link",
+      click_target: "",
+      whatsapp_number: "",
       is_active: true,
     });
     setImageFileHome(null);
@@ -133,7 +142,9 @@ export default function AdminAds() {
     setFormData({
       title: ad.title,
       category: ad.category,
-      link: ad.link || "",
+      click_type: (ad.click_type as "link" | "instagram" | "whatsapp") || "link",
+      click_target: ad.click_target || ad.link || "",
+      whatsapp_number: ad.whatsapp_number || "",
       is_active: ad.is_active,
     });
     setImagePreviewHome(ad.image_url_home);
@@ -260,8 +271,17 @@ export default function AdminAds() {
         category: formData.category,
         image_url_home: imageUrlHome,
         image_url_search: imageUrlSearch,
-        link: formData.link || null,
+        // Legacy link column kept for backward compatibility (uses click_target when applicable)
+        link:
+          formData.click_type === "whatsapp" ? null : formData.click_target || null,
         is_active: formData.is_active,
+        click_type: formData.click_type,
+        click_target:
+          formData.click_type === "whatsapp" ? null : formData.click_target || null,
+        whatsapp_number:
+          formData.click_type === "whatsapp"
+            ? formData.whatsapp_number.replace(/\D/g, "") || null
+            : null,
       };
 
       if (editingAd) {
@@ -492,15 +512,63 @@ export default function AdminAds() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="link">Link (opcional)</Label>
-                  <Input
-                    id="link"
-                    value={formData.link}
-                    onChange={(e) =>
-                      setFormData({ ...formData, link: e.target.value })
+                  <Label htmlFor="click-type">Destino do clique</Label>
+                  <Select
+                    value={formData.click_type}
+                    onValueChange={(value: "link" | "instagram" | "whatsapp") =>
+                      setFormData((prev) => ({ ...prev, click_type: value }))
                     }
-                    placeholder="WhatsApp, site ou Instagram"
-                  />
+                  >
+                    <SelectTrigger id="click-type">
+                      <SelectValue placeholder="Selecione o tipo de link" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="link">Link de site</SelectItem>
+                      <SelectItem value="instagram">Instagram</SelectItem>
+                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  {formData.click_type === "whatsapp" ? (
+                    <>
+                      <Label htmlFor="whatsapp-number">Número do WhatsApp (com DDI)</Label>
+                      <Input
+                        id="whatsapp-number"
+                        value={formData.whatsapp_number}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            whatsapp_number: e.target.value,
+                          }))
+                        }
+                        placeholder="Ex: 5565999999999"
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        O clique abre o WhatsApp com mensagem automática do CompreCarrosBr.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Label htmlFor="link">Link</Label>
+                      <Input
+                        id="link"
+                        value={formData.click_target}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            click_target: e.target.value,
+                          }))
+                        }
+                        placeholder={
+                          formData.click_type === "instagram"
+                            ? "Cole o link do Instagram"
+                            : "Cole o link completo (https://...)"
+                        }
+                      />
+                    </>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between">

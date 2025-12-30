@@ -47,6 +47,8 @@ export type Database = {
       ads: {
         Row: {
           category: string
+          click_target: string | null
+          click_type: string
           created_at: string
           id: string
           image_url_home: string | null
@@ -55,9 +57,12 @@ export type Database = {
           link: string | null
           title: string
           updated_at: string
+          whatsapp_number: string | null
         }
         Insert: {
           category: string
+          click_target?: string | null
+          click_type?: string
           created_at?: string
           id?: string
           image_url_home?: string | null
@@ -66,9 +71,12 @@ export type Database = {
           link?: string | null
           title: string
           updated_at?: string
+          whatsapp_number?: string | null
         }
         Update: {
           category?: string
+          click_target?: string | null
+          click_type?: string
           created_at?: string
           id?: string
           image_url_home?: string | null
@@ -77,27 +85,40 @@ export type Database = {
           link?: string | null
           title?: string
           updated_at?: string
+          whatsapp_number?: string | null
         }
         Relationships: []
       }
       banners: {
         Row: {
+          click_target: string | null
+          click_type: string
           created_at: string
           id: string
           image_url: string
           is_active: boolean
+          position: number
+          whatsapp_number: string | null
         }
         Insert: {
+          click_target?: string | null
+          click_type?: string
           created_at?: string
           id?: string
           image_url: string
           is_active?: boolean
+          position?: number
+          whatsapp_number?: string | null
         }
         Update: {
+          click_target?: string | null
+          click_type?: string
           created_at?: string
           id?: string
           image_url?: string
           is_active?: boolean
+          position?: number
+          whatsapp_number?: string | null
         }
         Relationships: []
       }

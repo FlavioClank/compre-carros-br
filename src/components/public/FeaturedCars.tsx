@@ -34,7 +34,7 @@ export function FeaturedCars() {
   const [cars, setCars] = useState<Car[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalCars, setTotalCars] = useState(0);
-  const { hasAds, getNextAd } = useAdsRotation();
+  const { ads, hasAds, getNextAd, resetRotation } = useAdsRotation();
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -135,33 +135,63 @@ export function FeaturedCars() {
             (() => {
               const items: React.ReactNode[] = [];
 
+              let orderedAds: any[] = [];
+              if (hasAds) {
+                resetRotation();
+                for (let i = 0; i < ads.length; i++) {
+                  const ad = getNextAd();
+                  if (ad) orderedAds.push(ad);
+                }
+              }
+
+              let adIndex = 0;
+
               cars.forEach((car, index) => {
                 items.push(<CarCardSingle key={car.id} car={car} />);
 
-                // Insert ad after every 5 cars, but never as the first item
-                if (
-                  hasAds &&
-                  cars.length >= 5 &&
-                  (index + 1) % 5 === 0 &&
-                  index + 1 < cars.length
-                ) {
-                  const ad = getNextAd();
-                  if (ad) {
+                // Insert ad after every 5 cars
+                if (hasAds && orderedAds.length > 0 && (index + 1) % 5 === 0) {
+                  if (adIndex < orderedAds.length) {
+                    const ad = orderedAds[adIndex];
                     items.push(
-                      <AdCardSingle key={`featured-ad-${ad.id}-${index}`} ad={ad} />
+                      <AdCardSingle
+                        key={`featured-ad-${ad.id}-${index}`}
+                        ad={ad}
+                      />
                     );
+                    adIndex++;
                   }
                 }
               });
 
-              // Always ensure a final ad at the end of the list
-              if (hasAds) {
-                const finalAd = getNextAd();
-                if (finalAd) {
+              // After last car, append all remaining ads
+              if (hasAds && orderedAds.length > 0 && adIndex < orderedAds.length) {
+                for (let i = adIndex; i < orderedAds.length; i++) {
+                  const ad = orderedAds[i];
                   items.push(
                     <AdCardSingle
-                      key={`featured-ad-final-${finalAd.id}`}
-                      ad={finalAd}
+                      key={`featured-ad-final-${ad.id}-${i}`}
+                      ad={ad}
+                    />
+                  );
+                }
+              }
+
+              return items;
+            })()
+          ) : hasAds ? (
+            // Nenhum carro, mas ainda assim exibir todos os anúncios
+            (() => {
+              const items: React.ReactNode[] = [];
+
+              resetRotation();
+              for (let i = 0; i < ads.length; i++) {
+                const ad = getNextAd();
+                if (ad) {
+                  items.push(
+                    <AdCardSingle
+                      key={`featured-ad-only-${ad.id}-${i}`}
+                      ad={ad}
                     />
                   );
                 }

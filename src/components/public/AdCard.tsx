@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { VehicleCardShell } from "@/components/public/VehicleCardShell";
+import { generateWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/constants";
 
 interface Ad {
   id: string;
@@ -8,21 +9,21 @@ interface Ad {
   image_url_home: string | null;
   image_url_search: string | null;
   link: string | null;
+  click_type?: string | null;
+  click_target?: string | null;
+  whatsapp_number?: string | null;
 }
 
 interface AdCardProps {
   ad: Ad;
 }
 
-/**
- * AdCard - usado na BUSCA de veículos
- * Usa image_url_search e o aspect-ratio 16:10 da busca
- */
 export function AdCard({ ad }: AdCardProps) {
-  const CardWrapper = ad.link ? "a" : "div";
-  const wrapperProps = ad.link
+  const href = getAdHref(ad);
+  const CardWrapper = href ? "a" : "div";
+  const wrapperProps = href
     ? {
-        href: ad.link,
+        href,
         target: "_blank",
         rel: "noopener noreferrer",
       }
@@ -55,4 +56,21 @@ export function AdCard({ ad }: AdCardProps) {
       </VehicleCardShell>
     </CardWrapper>
   );
+}
+
+function getAdHref(ad: Ad): string | undefined {
+  const type = ad.click_type || (ad.link ? "link" : null);
+
+  if (type === "whatsapp" && ad.whatsapp_number) {
+    const message =
+      "Olá! Vim do CompreCarrosBr 🚗 Seu anúncio apareceu para mim e gostaria de saber mais.";
+    return generateWhatsAppUrl(ad.whatsapp_number.replace(/\D/g, ""), message);
+  }
+
+  const target = ad.click_target || ad.link || undefined;
+  if ((type === "link" || type === "instagram") && target) {
+    return target;
+  }
+
+  return undefined;
 }
