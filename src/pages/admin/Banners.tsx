@@ -7,11 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Banner {
   id: string;
   image_url: string;
   is_active: boolean;
+  position: number;
+  click_type: string | null;
+  click_target: string | null;
+  whatsapp_number: string | null;
 }
 
 export default function AdminBanners() {
@@ -20,13 +31,18 @@ export default function AdminBanners() {
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [position, setPosition] = useState<number>(0);
+  const [clickType, setClickType] = useState<"none" | "link" | "instagram" | "whatsapp">("none");
+  const [clickTarget, setClickTarget] = useState<string>("");
+  const [whatsappNumber, setWhatsappNumber] = useState<string>("");
 
   const fetchBanners = async () => {
     setIsLoading(true);
     const { data, error } = await supabase
       .from("banners")
-      .select("id, image_url, is_active")
-      .order("created_at", { ascending: false });
+      .select("id, image_url, is_active, position, click_type, click_target, whatsapp_number")
+      .order("position", { ascending: true })
+      .order("created_at", { ascending: true });
 
     if (error) {
       console.error("Error fetching banners", error);
@@ -85,9 +101,17 @@ export default function AdminBanners() {
 
       const imageUrl = publicUrlData.publicUrl;
 
-      const { error: insertError } = await supabase.from("banners").insert({
+      const payload = {
         image_url: imageUrl,
-      });
+        position,
+        click_type: clickType === "none" ? null : clickType,
+        click_target:
+          clickType === "link" || clickType === "instagram" ? clickTarget || null : null,
+        whatsapp_number:
+          clickType === "whatsapp" ? whatsappNumber.replace(/\D/g, "") || null : null,
+      };
+
+      const { error: insertError } = await supabase.from("banners").insert(payload);
 
       if (insertError) throw insertError;
 
@@ -98,6 +122,10 @@ export default function AdminBanners() {
 
       setFile(null);
       setPreviewUrl(null);
+      setPosition(0);
+      setClickType("none");
+      setClickTarget("");
+      setWhatsappNumber("");
       await fetchBanners();
     } catch (error) {
       console.error("Error uploading banner", error);
@@ -178,6 +206,79 @@ export default function AdminBanners() {
               </p>
             </div>
 
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="position">Posição do banner</Label>
+                <Input
+                  id="position"
+                  type="number"
+                  min={0}
+                  value={position}
+                  onChange={(e) => setPosition(Number(e.target.value) || 0)}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Banners aparecem no site em ordem crescente de posição.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="click-type">Ação ao clicar</Label>
+                <Select
+                  value={clickType}
+                  onValueChange={(value: "none" | "link" | "instagram" | "whatsapp") =>
+                    setClickType(value)
+                  }
+                >
+                  <SelectTrigger id="click-type">
+                    <SelectValue placeholder="Nenhuma ação" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhuma ação</SelectItem>
+                    <SelectItem value="link">Link de site</SelectItem>
+                    <SelectItem value="instagram">Instagram</SelectItem>
+                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                {clickType === "whatsapp" ? (
+                  <>
+                    <Label htmlFor="whatsapp-number">Número do WhatsApp (com DDI)</Label>
+                    <Input
+                      id="whatsapp-number"
+                      placeholder="Ex: 5565999999999"
+                      value={whatsappNumber}
+                      onChange={(e) => setWhatsappNumber(e.target.value)}
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      O clique abre o WhatsApp com mensagem automática do CompreCarrosBr.
+                    </p>
+                  </>
+                ) : clickType === "link" || clickType === "instagram" ? (
+                  <>
+                    <Label htmlFor="click-target">
+                      {clickType === "instagram" ? "Link do Instagram" : "Link do site"}
+                    </Label>
+                    <Input
+                      id="click-target"
+                      placeholder={
+                        clickType === "instagram"
+                          ? "Cole o link do perfil ou postagem"
+                          : "Cole o link completo (https://...)"
+                      }
+                      value={clickTarget}
+                      onChange={(e) => setClickTarget(e.target.value)}
+                    />
+                  </>
+                ) : (
+                  <div className="pt-6 text-[11px] text-muted-foreground">
+                    Nenhuma ação configurada. O clique não redirecionará o usuário.
+                  </div>
+                )}
+              </div>
+            </div>
+
             {previewUrl && (
               <div className="rounded-xl border border-border bg-card p-3">
                 <p className="text-xs text-muted-foreground mb-2">Pré-visualização</p>
@@ -223,27 +324,37 @@ export default function AdminBanners() {
                       />
                     </div>
                     <div className="p-3 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          id={`active-${banner.id}`}
-                          checked={banner.is_active}
-                          onCheckedChange={() => handleToggleActive(banner)}
-                        />
-                        <Label
-                          htmlFor={`active-${banner.id}`}
-                          className="text-xs text-muted-foreground"
-                        >
-                          {banner.is_active ? "Ativo" : "Inativo"}
-                        </Label>
+                      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                        <span>Posição: <strong>{banner.position}</strong></span>
+                        {banner.click_type && (
+                          <span>
+                            Clique: {banner.click_type === "whatsapp" ? "WhatsApp" : banner.click_type === "instagram" ? "Instagram" : "Link"}
+                          </span>
+                        )}
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs"
-                        onClick={() => handleDelete(banner)}
-                      >
-                        Remover
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id={`active-${banner.id}`}
+                            checked={banner.is_active}
+                            onCheckedChange={() => handleToggleActive(banner)}
+                          />
+                          <Label
+                            htmlFor={`active-${banner.id}`}
+                            className="text-xs text-muted-foreground"
+                          >
+                            {banner.is_active ? "Ativo" : "Inativo"}
+                          </Label>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => handleDelete(banner)}
+                        >
+                          Remover
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}

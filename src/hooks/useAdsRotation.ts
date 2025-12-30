@@ -31,7 +31,7 @@ export function useAdsRotation() {
     async function fetchAds() {
       const { data, error } = await supabase
         .from("ads")
-        .select("id, title, category, image_url_home, image_url_search, link")
+        .select("id, title, category, image_url_home, image_url_search, link, click_type, click_target, whatsapp_number")
         .eq("is_active", true)
         .order("created_at", { ascending: true });
 
