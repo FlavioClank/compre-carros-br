@@ -1,15 +1,17 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// CORS restritivo - apenas domínios permitidos
-const ALLOWED_ORIGINS = [
-  "https://kgtscjvgipowuvuindxt.lovable.app",
-  "https://lovable.dev",
-  "http://localhost:5173",
-  "http://localhost:8080"
-];
+// Dynamic CORS - validates and echoes valid origins
+function isValidOrigin(origin: string | null): boolean {
+  if (!origin) return false;
+  return (
+    origin.endsWith(".lovable.app") ||
+    origin.endsWith(".lovableproject.com") ||
+    origin.startsWith("http://localhost:")
+  );
+}
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin = isValidOrigin(origin) && origin ? origin : "";
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -23,7 +25,11 @@ function validateEmail(email: string): boolean {
   return emailRegex.test(email) && email.length <= 255;
 }
 
-function validatePassword(password: string): boolean {
+// Super Admin pode definir qualquer senha (mínimo 1 caractere)
+function validatePassword(password: string, isSuperAdmin: boolean = false): boolean {
+  if (isSuperAdmin) {
+    return password.length >= 1 && password.length <= 128;
+  }
   return password.length >= 8 && password.length <= 128;
 }
 
@@ -147,9 +153,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!validatePassword(body.password)) {
+    // Super Admin ignora validação restritiva de senha
+    if (!validatePassword(body.password, true)) {
       return new Response(
-        JSON.stringify({ error: "Senha deve ter entre 8 e 128 caracteres" }),
+        JSON.stringify({ error: "Senha não pode estar vazia (máx. 128 caracteres)" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
