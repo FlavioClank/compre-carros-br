@@ -9,7 +9,8 @@ const ALLOWED_ORIGINS = [
 ];
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin)
+  const isPreviewOrigin = origin?.endsWith(".lovableproject.com");
+  const allowedOrigin = origin && (ALLOWED_ORIGINS.includes(origin) || isPreviewOrigin)
     ? origin
     : ALLOWED_ORIGINS[0];
 
