@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Tags,
   Megaphone,
+  BarChart3,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -30,6 +31,7 @@ const menuItems = [
   { icon: Tags, label: "Marcas", href: "/admin/brands" },
   { icon: Megaphone, label: "Anúncios", href: "/admin/ads" },
   { icon: Megaphone, label: "Banners", href: "/admin/banners" },
+  { icon: BarChart3, label: "Estatísticas", href: "/admin/stats" },
   { icon: History, label: "Histórico", href: "/admin/history" },
   { icon: FileText, label: "Logs", href: "/admin/logs" },
 ];
