@@ -32,6 +32,7 @@ import {
   Thermometer,
   Tag,
 } from "lucide-react";
+import { trackClick } from "@/lib/analytics";
 
 interface CarDetail {
   id: string;
@@ -449,6 +450,13 @@ export default function CarDetails() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block"
+                  onClick={() =>
+                    trackClick("car", car.id, {
+                      source: "details_whatsapp",
+                      brand: brandName,
+                      model: car.model,
+                    })
+                  }
                 >
                   <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground gap-2">
                     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">

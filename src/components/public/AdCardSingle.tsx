@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 import { generateWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/constants";
+import { trackClick } from "@/lib/analytics";
 
 interface Ad {
   id: string;
@@ -32,7 +33,20 @@ export function AdCardSingle({ ad }: AdCardSingleProps) {
   const imageUrl = ad.image_url_home || "/placeholder.svg";
 
   return (
-    <CardWrapper {...wrapperProps} className="block">
+    <CardWrapper
+      {...wrapperProps}
+      className="block"
+      {...(href
+        ? {
+            onClick: () =>
+              trackClick("ad", ad.id, {
+                placement: "home",
+                category: ad.category,
+                title: ad.title,
+              }),
+          }
+        : {})}
+    >
       <VehicleCardShell>
         {/* EXACT same height as CarCardSingle image section: h-28 md:h-40 lg:h-44 */}
         <div className="relative w-full h-28 md:h-40 lg:h-44 overflow-hidden">

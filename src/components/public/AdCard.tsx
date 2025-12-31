@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 import { generateWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/constants";
+import { trackClick } from "@/lib/analytics";
 
 interface Ad {
   id: string;
@@ -32,7 +33,20 @@ export function AdCard({ ad }: AdCardProps) {
   const imageUrl = ad.image_url_search || "/placeholder.svg";
 
   return (
-    <CardWrapper {...wrapperProps} className="block">
+    <CardWrapper
+      {...wrapperProps}
+      className="block"
+      {...(href
+        ? {
+            onClick: () =>
+              trackClick("ad", ad.id, {
+                placement: "search",
+                category: ad.category,
+                title: ad.title,
+              }),
+          }
+        : {})}
+    >
       <VehicleCardShell>
         <div className="relative block aspect-[16/10] overflow-hidden">
           <img
