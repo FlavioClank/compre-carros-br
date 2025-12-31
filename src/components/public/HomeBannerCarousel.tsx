@@ -53,6 +53,16 @@ export function HomeBannerCarousel() {
     return () => clearInterval(interval);
   }, [emblaApi, banners.length]);
 
+  const handlePrev = () => {
+    if (!emblaApi) return;
+    emblaApi.scrollPrev();
+  };
+
+  const handleNext = () => {
+    if (!emblaApi) return;
+    emblaApi.scrollNext();
+  };
+
   const getBannerHref = (banner: Banner): string | undefined => {
     const type = banner.click_type || "none";
 
