@@ -33,7 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Eye, EyeOff, Edit, Power, Building2, KeyRound, Car, Trash2 } from "lucide-react";
+import { Plus, Eye, EyeOff, Edit, Power, Building2, KeyRound, Car, Trash2, Mail } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 interface GarageFormData {
@@ -52,10 +52,13 @@ export default function AdminGarages() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isChangeEmailDialogOpen, setIsChangeEmailDialogOpen] = useState(false);
   const [deletingGarage, setDeletingGarage] = useState<any>(null);
   const [editingGarage, setEditingGarage] = useState<any>(null);
   const [resetPasswordGarage, setResetPasswordGarage] = useState<any>(null);
+  const [changeEmailGarage, setChangeEmailGarage] = useState<any>(null);
   const [newPassword, setNewPassword] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
   const [formData, setFormData] = useState<GarageFormData>({
     name: "",
@@ -224,7 +227,6 @@ export default function AdminGarages() {
     },
   });
 
-  // Delete garage mutation (CASCADE deletes all cars)
   const deleteGarageMutation = useMutation({
     mutationFn: async (garageId: string) => {
       const { error } = await supabase
@@ -245,6 +247,52 @@ export default function AdminGarages() {
     onError: (error: any) => {
       toast({ 
         title: "Erro ao excluir garagem", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const changeEmailMutation = useMutation({
+    mutationFn: async ({ garageId, email }: { garageId: string; email: string }) => {
+      const trimmed = email.trim().toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!emailRegex.test(trimmed)) {
+        throw new Error("Email inválido");
+      }
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      if (!token) {
+        throw new Error("Sessão expirada. Faça login novamente.");
+      }
+
+      const { data, error } = await supabase.functions.invoke("update-garage-email", {
+        body: { garageId, newEmail: trimmed },
+      });
+
+      if (error) {
+        throw new Error(error.message || "Erro ao alterar email");
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      toast({ title: "Email atualizado com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ["admin-garages"] });
+      setIsChangeEmailDialogOpen(false);
+      setChangeEmailGarage(null);
+      setNewEmail("");
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Erro ao alterar email", 
         description: error.message,
         variant: "destructive" 
       });
@@ -295,6 +343,12 @@ export default function AdminGarages() {
   const handleDelete = (garage: any) => {
     setDeletingGarage(garage);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleChangeEmail = (garage: any) => {
+    setChangeEmailGarage(garage);
+    setNewEmail(garage.profiles?.email || "");
+    setIsChangeEmailDialogOpen(true);
   };
 
   const togglePasswordVisibility = (id: string) => {
@@ -466,9 +520,17 @@ export default function AdminGarages() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEdit(garage)}
-                              title="Editar"
+                              title="Editar dados da garagem"
                             >
                               <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleChangeEmail(garage)}
+                              title="Alterar email de login"
+                            >
+                              <Mail className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
@@ -546,6 +608,42 @@ export default function AdminGarages() {
                   disabled={newPassword.length < 6 || resetPasswordMutation.isPending}
                 >
                   {resetPasswordMutation.isPending ? "Processando..." : "Redefinir Senha"}
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Change Email Dialog */}
+        <Dialog open={isChangeEmailDialogOpen} onOpenChange={setIsChangeEmailDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Alterar email de login</DialogTitle>
+            </DialogHeader>
+            {changeEmailGarage && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Atualizando email da garagem: <strong>{changeEmailGarage.name}</strong>
+                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="new_email">Novo email de acesso *</Label>
+                  <Input
+                    id="new_email"
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={() => changeEmailMutation.mutate({ 
+                    garageId: changeEmailGarage.id, 
+                    email: newEmail 
+                  })}
+                  disabled={changeEmailMutation.isPending}
+                >
+                  {changeEmailMutation.isPending ? "Salvando..." : "Salvar novo email"}
                 </Button>
               </div>
             )}
