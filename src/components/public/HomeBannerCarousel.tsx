@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import useEmblaCarousel from "embla-carousel-react";
 import { generateWhatsAppUrl } from "@/lib/constants";
+import { trackClick } from "@/lib/analytics";
 
 interface Banner {
   id: string;
@@ -16,14 +17,12 @@ export function HomeBannerCarousel() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    {
-      loop: true,
-      align: "center",
-      skipSnaps: false,
-      dragFree: false,
-    }
-  );
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    align: "center",
+    skipSnaps: false,
+    dragFree: false,
+  });
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -87,7 +86,12 @@ export function HomeBannerCarousel() {
     if (!href) return image;
 
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer">
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => trackClick("banner", banner.id)}
+      >
         {image}
       </a>
     );

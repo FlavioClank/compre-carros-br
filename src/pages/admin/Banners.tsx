@@ -35,6 +35,17 @@ export default function AdminBanners() {
   const [clickType, setClickType] = useState<"none" | "link" | "instagram" | "whatsapp">("none");
   const [clickTarget, setClickTarget] = useState<string>("");
   const [whatsappNumber, setWhatsappNumber] = useState<string>("");
+  const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
+
+  const resetForm = () => {
+    setFile(null);
+    setPreviewUrl(null);
+    setPosition(0);
+    setClickType("none");
+    setClickTarget("");
+    setWhatsappNumber("");
+    setEditingBanner(null);
+  };
 
   const fetchBanners = async () => {
     setIsLoading(true);
@@ -66,13 +77,15 @@ export default function AdminBanners() {
     setFile(selected);
     if (selected) {
       setPreviewUrl(URL.createObjectURL(selected));
+    } else if (editingBanner) {
+      setPreviewUrl(editingBanner.image_url);
     } else {
       setPreviewUrl(null);
     }
   };
 
-  const handleUpload = async () => {
-    if (!file) {
+  const handleSave = async () => {
+    if (!editingBanner && !file) {
       toast({
         title: "Selecione uma imagem",
         description: "Escolha um arquivo de imagem para o banner.",
@@ -83,23 +96,29 @@ export default function AdminBanners() {
 
     try {
       setUploading(true);
-      const fileExt = file.name.split(".").pop();
-      const filePath = `banner-${Date.now()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("banners")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
+      let imageUrl = editingBanner?.image_url || "";
 
-      if (uploadError) throw uploadError;
+      // Se um novo arquivo foi selecionado, faz upload e usa a nova URL
+      if (file) {
+        const fileExt = file.name.split(".").pop();
+        const filePath = `banner-${Date.now()}.${fileExt}`;
 
-      const { data: publicUrlData } = supabase.storage
-        .from("banners")
-        .getPublicUrl(filePath);
+        const { error: uploadError } = await supabase.storage
+          .from("banners")
+          .upload(filePath, file, {
+            cacheControl: "3600",
+            upsert: false,
+          });
 
-      const imageUrl = publicUrlData.publicUrl;
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage
+          .from("banners")
+          .getPublicUrl(filePath);
+
+        imageUrl = publicUrlData.publicUrl;
+      }
 
       const payload = {
         image_url: imageUrl,
@@ -111,27 +130,36 @@ export default function AdminBanners() {
           clickType === "whatsapp" ? whatsappNumber.replace(/\D/g, "") || null : null,
       };
 
-      const { error: insertError } = await supabase.from("banners").insert(payload);
+      if (editingBanner) {
+        const { error: updateError } = await supabase
+          .from("banners")
+          .update(payload)
+          .eq("id", editingBanner.id);
 
-      if (insertError) throw insertError;
+        if (updateError) throw updateError;
 
-      toast({
-        title: "Banner cadastrado",
-        description: "O banner foi enviado com sucesso.",
-      });
+        toast({
+          title: "Banner atualizado",
+          description: "As informações do banner foram salvas.",
+        });
+      } else {
+        const { error: insertError } = await supabase.from("banners").insert(payload);
 
-      setFile(null);
-      setPreviewUrl(null);
-      setPosition(0);
-      setClickType("none");
-      setClickTarget("");
-      setWhatsappNumber("");
+        if (insertError) throw insertError;
+
+        toast({
+          title: "Banner cadastrado",
+          description: "O banner foi enviado com sucesso.",
+        });
+      }
+
+      resetForm();
       await fetchBanners();
     } catch (error) {
-      console.error("Error uploading banner", error);
+      console.error("Error saving banner", error);
       toast({
-        title: "Erro ao enviar banner",
-        description: "Verifique a imagem e tente novamente.",
+        title: editingBanner ? "Erro ao atualizar banner" : "Erro ao enviar banner",
+        description: "Verifique os dados e tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -176,6 +204,17 @@ export default function AdminBanners() {
     }
   };
 
+  const handleEdit = (banner: Banner) => {
+    setEditingBanner(banner);
+    setPosition(banner.position ?? 0);
+    const type = (banner.click_type as "none" | "link" | "instagram" | "whatsapp") || "none";
+    setClickType(type);
+    setClickTarget(banner.click_target || "");
+    setWhatsappNumber(banner.whatsapp_number || "");
+    setPreviewUrl(banner.image_url);
+    setFile(null);
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -190,7 +229,7 @@ export default function AdminBanners() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Cadastro de banner</CardTitle>
+            <CardTitle>{editingBanner ? "Editar banner" : "Cadastro de banner"}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -292,9 +331,26 @@ export default function AdminBanners() {
               </div>
             )}
 
-            <Button onClick={handleUpload} disabled={uploading}>
-              {uploading ? "Enviando..." : "Salvar banner"}
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button onClick={handleSave} disabled={uploading}>
+                {uploading
+                  ? editingBanner
+                    ? "Salvando..."
+                    : "Enviando..."
+                  : editingBanner
+                    ? "Atualizar banner"
+                    : "Salvar banner"}
+              </Button>
+              {editingBanner && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetForm}
+                >
+                  Cancelar edição
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -346,14 +402,24 @@ export default function AdminBanners() {
                             {banner.is_active ? "Ativo" : "Inativo"}
                           </Label>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs"
-                          onClick={() => handleDelete(banner)}
-                        >
-                          Remover
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => handleEdit(banner)}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => handleDelete(banner)}
+                          >
+                            Remover
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
