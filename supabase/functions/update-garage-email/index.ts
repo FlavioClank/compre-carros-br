@@ -1,18 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
-const ALLOWED_ORIGINS = [
-  "https://kgtscjvgipowuvuindxt.lovable.app",
-  "https://lovable.dev",
-  "http://localhost:5173",
-  "http://localhost:8080",
-];
+function isValidOrigin(origin: string | null): boolean {
+  if (!origin) return false;
+  return (
+    origin.endsWith(".lovable.app") ||
+    origin.endsWith(".lovableproject.com") ||
+    origin.startsWith("http://localhost:")
+  );
+}
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
-  const isPreviewOrigin = origin?.endsWith(".lovableproject.com");
-  const allowedOrigin = origin && (ALLOWED_ORIGINS.includes(origin) || isPreviewOrigin)
-    ? origin
-    : ALLOWED_ORIGINS[0];
+  // Echo back the origin if valid; use empty string otherwise (blocks request)
+  const allowedOrigin = isValidOrigin(origin) && origin ? origin : "";
 
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
