@@ -120,14 +120,17 @@ export default function AdminBanners() {
         imageUrl = publicUrlData.publicUrl;
       }
 
+      // click_type é NOT NULL no banco - sempre enviar valor válido
+      const finalClickType = clickType || editingBanner?.click_type || "none";
+      
       const payload = {
         image_url: imageUrl,
         position,
-        click_type: clickType === "none" ? null : clickType,
+        click_type: finalClickType,
         click_target:
-          clickType === "link" || clickType === "instagram" ? clickTarget || null : null,
+          finalClickType === "link" || finalClickType === "instagram" ? clickTarget || null : null,
         whatsapp_number:
-          clickType === "whatsapp" ? whatsappNumber.replace(/\D/g, "") || null : null,
+          finalClickType === "whatsapp" ? whatsappNumber.replace(/\D/g, "") || null : null,
       };
 
       if (editingBanner) {
