@@ -20,8 +20,13 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
   };
 }
 
-// Validação de inputs
-function validatePassword(password: string): boolean {
+// Validação de inputs - Super Admin pode definir qualquer senha
+function validatePassword(password: string, isSuperAdmin: boolean = false): boolean {
+  if (isSuperAdmin) {
+    // Super Admin: apenas validação mínima (não vazio, máximo 128)
+    return typeof password === "string" && password.length >= 1 && password.length <= 128;
+  }
+  // Usuário comum: 8-128 caracteres
   return typeof password === "string" && password.length >= 8 && password.length <= 128;
 }
 
@@ -95,9 +100,9 @@ serve(async (req) => {
       });
     }
 
-    // Validate password
-    if (!validatePassword(password)) {
-      return new Response(JSON.stringify({ error: "Senha deve ter entre 8 e 128 caracteres" }), {
+    // Validate password - Super Admin ignora validações restritivas
+    if (!validatePassword(password, true)) {
+      return new Response(JSON.stringify({ error: "Senha não pode estar vazia (máx. 128 caracteres)" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
