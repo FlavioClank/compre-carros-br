@@ -240,6 +240,11 @@ export default function AdminBanners() {
                 accept="image/*"
                 onChange={handleFileChange}
               />
+              {editingBanner && (
+                <p className="text-xs text-muted-foreground break-all">
+                  Imagem atual: <span className="underline">{editingBanner.image_url}</span>
+                </p>
+              )}
               <p className="text-xs text-muted-foreground">
                 Prefira imagens em proporção horizontal (16:5), Full HD ou superiores. A imagem será ajustada automaticamente sem cortes.
               </p>

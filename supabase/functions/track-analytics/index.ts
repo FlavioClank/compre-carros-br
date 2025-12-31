@@ -8,7 +8,11 @@ const ALLOWED_ORIGINS = [
 ];
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const isPreviewOrigin = origin?.endsWith(".lovableproject.com");
+  const allowedOrigin = origin && (ALLOWED_ORIGINS.includes(origin) || isPreviewOrigin)
+    ? origin
+    : ALLOWED_ORIGINS[0];
+
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
