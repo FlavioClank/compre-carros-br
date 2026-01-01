@@ -284,7 +284,7 @@ export default function CarDetails() {
           {/* Gallery */}
           <div className="space-y-4">
             {/* Main Image */}
-            <div className="relative aspect-[4/3] bg-muted rounded-2xl overflow-hidden">
+            <div className="relative w-full max-h-[70vh] md:max-h-none md:aspect-[4/3] bg-muted rounded-2xl overflow-hidden">
               <OptimizedImage
                 src={photos[currentPhotoIndex]}
                 alt={`${brandName} ${car.model}`}
@@ -292,8 +292,8 @@ export default function CarDetails() {
                 height={600}
                 quality={85}
                 eager={currentPhotoIndex === 0}
-                className="w-full h-full object-cover"
-                containerClassName="w-full h-full"
+                className="w-full h-auto max-h-[70vh] md:max-h-none md:h-full object-contain md:object-cover"
+                containerClassName="w-full h-auto md:h-full flex items-center justify-center"
               />
 
               {/* Status Badge */}
@@ -379,7 +379,7 @@ export default function CarDetails() {
           </div>
 
           {/* Details */}
-          <div className="space-y-6">
+          <div className="space-y-6 text-base md:text-sm leading-relaxed md:leading-normal">
             {/* Title & Price */}
             <div>
               <div className="flex items-start justify-between gap-4">
@@ -388,7 +388,7 @@ export default function CarDetails() {
                     {brandName} {car.model}
                   </h1>
                   {car.version && (
-                    <p className="text-muted-foreground text-lg mt-1">{car.version}</p>
+                    <p className="text-muted-foreground text-lg md:text-lg mt-1">{car.version}</p>
                   )}
                 </div>
                 <button
@@ -408,19 +408,19 @@ export default function CarDetails() {
             </div>
 
             {/* Specs Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               {specs.map((spec) => {
                 const Icon = spec.icon;
                 return (
                   <div
                     key={spec.label}
-                    className="bg-muted/50 rounded-xl p-4 border border-border"
+                    className="bg-muted/50 rounded-xl p-3 md:p-4 border border-border"
                   >
                     <div className="flex items-center gap-2 text-muted-foreground mb-1">
                       <Icon className="h-4 w-4" />
-                      <span className="text-sm">{spec.label}</span>
+                      <span className="text-sm md:text-sm">{spec.label}</span>
                     </div>
-                    <p className="font-semibold text-foreground">{spec.value}</p>
+                    <p className="font-semibold text-foreground text-base md:text-sm">{spec.value}</p>
                   </div>
                 );
               })}
@@ -429,10 +429,10 @@ export default function CarDetails() {
             {/* Description */}
             {car.description && (
               <div>
-                <h3 className="font-display font-semibold text-foreground mb-2">
+                <h3 className="font-display font-semibold text-foreground mb-2 text-lg md:text-base">
                   Descrição
                 </h3>
-                <p className="text-muted-foreground whitespace-pre-line">
+                <p className="text-muted-foreground whitespace-pre-line text-base md:text-sm leading-relaxed">
                   {car.description}
                 </p>
               </div>
@@ -440,11 +440,11 @@ export default function CarDetails() {
 
             {/* CTA */}
             {car.status === "available" && (
-              <div className="bg-muted/50 rounded-xl p-6 border border-border">
-                <h3 className="font-display font-semibold text-foreground mb-2">
+              <div className="bg-muted/50 rounded-xl p-5 md:p-6 border border-border">
+                <h3 className="font-display font-semibold text-foreground mb-2 text-lg md:text-base">
                   Interessado {isMotorcycle ? 'nesta moto' : 'neste veículo'}?
                 </h3>
-                <p className="text-muted-foreground text-sm mb-4">
+                <p className="text-muted-foreground text-base md:text-sm mb-4 leading-relaxed">
                   Entre em contato pelo WhatsApp e receba todas as informações.
                 </p>
                 <a
