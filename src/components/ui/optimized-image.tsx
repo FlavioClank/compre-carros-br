@@ -18,8 +18,15 @@ interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> 
 const SUPABASE_STORAGE_REGEX =
   /^https:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\//;
 
-// In-memory cache: prevents re-showing skeleton/fade for images already loaded in this session
-const imageLoadCache = new Set<string>();
+// Global in-memory cache: prevents re-showing skeleton/fade for images already loaded in this session
+// This persists across component remounts and scroll events
+const imageLoadCache = new Map<string, boolean>();
+
+// Preload check - mark URLs as loaded if browser has them cached
+function markAsLoadedIfCached(url: string, cacheKey: string): boolean {
+  if (imageLoadCache.has(cacheKey)) return true;
+  return false;
+}
 
 /**
  * Checks if a URL is valid for image loading
@@ -102,7 +109,8 @@ const OptimizedImageInner = forwardRef<HTMLDivElement, OptimizedImageProps>(func
   const safeSrc = isValidSrc(src) ? src : fallback;
   const cacheKey = `${safeSrc}|w:${width ?? ""}|h:${height ?? ""}|q:${quality}`;
 
-  const [isLoaded, setIsLoaded] = useState(() => imageLoadCache.has(cacheKey));
+  // Check cache on initial render - if cached, skip skeleton entirely
+  const [isLoaded, setIsLoaded] = useState(() => imageLoadCache.get(cacheKey) === true);
   const [hasError, setHasError] = useState(false);
 
   // Use lazy loading unless eager is true
@@ -123,11 +131,11 @@ const OptimizedImageInner = forwardRef<HTMLDivElement, OptimizedImageProps>(func
 
   // If the same image is re-mounted later in the session, keep it as loaded
   useEffect(() => {
-    if (imageLoadCache.has(cacheKey)) setIsLoaded(true);
+    if (imageLoadCache.get(cacheKey) === true) setIsLoaded(true);
   }, [cacheKey]);
 
   const handleLoad = useCallback(() => {
-    imageLoadCache.add(cacheKey);
+    imageLoadCache.set(cacheKey, true);
     setIsLoaded(true);
   }, [cacheKey]);
 

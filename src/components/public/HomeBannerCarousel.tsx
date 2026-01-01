@@ -82,9 +82,10 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
   }, []);
 
   const renderImage = useCallback(
-    (banner: Banner, eager: boolean = false) => {
+    (banner: Banner, isFirst: boolean = false) => {
       const href = getBannerHref(banner);
 
+      // Only the first banner loads eagerly, rest are lazy
       const image = (
         <OptimizedImage
           src={banner.image_url}
@@ -92,7 +93,7 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
           width={1200}
           height={600}
           quality={80}
-          eager={eager}
+          eager={isFirst}
           className="w-full h-auto"
           containerClassName="w-full"
           showSkeleton={true}
