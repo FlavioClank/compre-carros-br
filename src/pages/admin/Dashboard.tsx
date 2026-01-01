@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Package, CheckCircle, TrendingUp } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 export default function AdminDashboard() {
   // Fetch stats
@@ -103,7 +104,16 @@ export default function AdminDashboard() {
                   <div key={car.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                     <div className="flex items-center gap-3">
                       {car.photos?.[0] && (
-                        <img src={car.photos[0]} alt={car.model} className="h-12 w-16 object-cover rounded" />
+                        <OptimizedImage
+                          src={car.photos[0]}
+                          alt={car.model}
+                          width={64}
+                          height={48}
+                          quality={60}
+                          className="h-12 w-16 object-cover rounded"
+                          containerClassName="h-12 w-16 rounded"
+                          showSkeleton={false}
+                        />
                       )}
                       <div>
                         <p className="font-medium">{car.brands?.name} {car.model}</p>

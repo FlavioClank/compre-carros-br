@@ -32,7 +32,18 @@ import GarageDashboard from "./pages/garage/Dashboard";
 import GarageCars from "./pages/garage/Cars";
 import GarageHistory from "./pages/garage/History";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Cache data for 5 minutes, don't refetch on window focus or scroll
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

@@ -44,6 +44,7 @@ import {
   CATEGORY_LABELS
 } from "@/lib/constants";
 import type { Database } from "@/integrations/supabase/types";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 type FuelType = Database["public"]["Enums"]["fuel_type"];
 type TransmissionType = Database["public"]["Enums"]["transmission_type"];
@@ -864,10 +865,15 @@ export default function GarageCars() {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             {car.photos?.[0] && (
-                              <img 
-                                src={car.photos[0]} 
-                                alt={car.model} 
+                              <OptimizedImage
+                                src={car.photos[0]}
+                                alt={car.model}
+                                width={80}
+                                height={56}
+                                quality={60}
                                 className="h-10 w-14 object-cover rounded"
+                                containerClassName="h-10 w-14 rounded"
+                                showSkeleton={false}
                               />
                             )}
                             <div>
