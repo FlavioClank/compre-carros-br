@@ -100,17 +100,17 @@ export const CarCard = memo(function CarCard({ car }: CarCardProps) {
           </div>
         )}
 
-        {/* Category & Code Badges */}
-        <div className="absolute top-2 right-2 flex gap-1">
-          {isMotorcycle && (
-            <Badge variant="secondary" className="bg-primary/90 text-primary-foreground backdrop-blur-sm text-[10px] px-1.5 py-0.5">
+        {/* Category Badge */}
+        {isMotorcycle && (
+          <div className="absolute top-2 right-2">
+            <Badge
+              variant="secondary"
+              className="bg-primary/90 text-primary-foreground backdrop-blur-sm text-[10px] px-1.5 py-0.5"
+            >
               <Bike className="h-3 w-3" />
             </Badge>
-          )}
-          <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm text-[10px] font-mono px-1.5 py-0.5">
-            {car.code}
-          </Badge>
-        </div>
+          </div>
+        )}
       </Link>
 
       {/* Content */}
