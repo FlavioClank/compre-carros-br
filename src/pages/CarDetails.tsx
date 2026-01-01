@@ -6,6 +6,7 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ImageLightbox } from "@/components/ImageLightbox";
 import {
   WHATSAPP_NUMBER,
   buildCarWhatsAppMessage,
@@ -32,6 +33,7 @@ import {
   Share2,
   Tag,
   Thermometer,
+  ZoomIn,
 } from "lucide-react";
 import { trackClick } from "@/lib/analytics";
 
@@ -66,6 +68,7 @@ export default function CarDetails() {
   const [car, setCar] = useState<CarDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   useEffect(() => {
     const fetchCar = async () => {
@@ -220,6 +223,11 @@ export default function CarDetails() {
     setCurrentPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
   };
 
+  const openLightbox = (index: number) => {
+    setCurrentPhotoIndex(index);
+    setIsLightboxOpen(true);
+  };
+
   // Canonical URL using slug for SEO (fallback to ID if no slug)
   const canonicalUrl = `${window.location.origin}/carro/${car.slug || car.id}`;
   const shareUrl = canonicalUrl;
@@ -326,7 +334,10 @@ export default function CarDetails() {
               {/* Galeria */}
               <section className="min-w-0 min-h-0 w-full max-w-full">
                 <div className="space-y-3 min-w-0 min-h-0">
-                  <div className="relative w-full max-w-full aspect-[4/3] max-h-[70vh] overflow-hidden rounded-2xl bg-muted">
+                  <div 
+                    className="relative w-full max-w-full aspect-[4/3] max-h-[70vh] overflow-hidden rounded-2xl bg-muted cursor-zoom-in group"
+                    onClick={() => openLightbox(currentPhotoIndex)}
+                  >
                     <OptimizedImage
                       src={photos[currentPhotoIndex]}
                       alt={`${brandName} ${car.model}`}
@@ -338,9 +349,15 @@ export default function CarDetails() {
                       containerClassName="w-full h-full flex items-center justify-center"
                     />
 
+                    {/* Zoom indicator */}
+                    <div className="absolute bottom-4 left-4 bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5">
+                      <ZoomIn className="h-4 w-4" />
+                      Ampliar
+                    </div>
+
                     {/* Status */}
                     {car.status === "sold" && (
-                      <div className="absolute inset-0 bg-foreground/70 flex items-center justify-center">
+                      <div className="absolute inset-0 bg-foreground/70 flex items-center justify-center pointer-events-none">
                         <Badge className="badge-sold text-2xl px-6 py-3">
                           VENDIDO
                         </Badge>
@@ -349,7 +366,7 @@ export default function CarDetails() {
 
                     {/* Categoria */}
                     {isMotorcycle && (
-                      <div className="absolute top-4 right-4">
+                      <div className="absolute top-4 right-4 pointer-events-none">
                         <Badge className="bg-primary text-primary-foreground gap-1">
                           <Bike className="h-4 w-4" />
                           Moto
@@ -359,7 +376,7 @@ export default function CarDetails() {
 
                     {/* Logo da marca */}
                     {car.brands?.logo_url && (
-                      <div className="absolute top-4 left-4 h-12 w-12 bg-background/90 rounded-lg p-2 backdrop-blur-sm">
+                      <div className="absolute top-4 left-4 h-12 w-12 bg-background/90 rounded-lg p-2 backdrop-blur-sm pointer-events-none">
                         <img
                           src={car.brands.logo_url}
                           alt={brandName}
@@ -373,7 +390,7 @@ export default function CarDetails() {
                       <>
                         <button
                           type="button"
-                          onClick={prevPhoto}
+                          onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
                           className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors"
                           aria-label="Foto anterior"
                         >
@@ -381,14 +398,14 @@ export default function CarDetails() {
                         </button>
                         <button
                           type="button"
-                          onClick={nextPhoto}
+                          onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
                           className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors"
                           aria-label="Próxima foto"
                         >
                           <ChevronRight className="h-6 w-6" />
                         </button>
 
-                        <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium">
+                        <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium pointer-events-none">
                           {currentPhotoIndex + 1} / {photos.length}
                         </div>
                       </>
@@ -538,6 +555,17 @@ export default function CarDetails() {
           </main>
         </div>
       </div>
+
+      {/* Lightbox Modal */}
+      <ImageLightbox
+        images={photos}
+        currentIndex={currentPhotoIndex}
+        isOpen={isLightboxOpen}
+        onClose={() => setIsLightboxOpen(false)}
+        onPrev={prevPhoto}
+        onNext={nextPhoto}
+        alt={`${brandName} ${car.model}`}
+      />
     </PublicLayout>
   );
 }
