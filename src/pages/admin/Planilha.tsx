@@ -51,7 +51,7 @@ import {
 } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Check, Calendar, AlertCircle, Trash2, Eye, MousePointerClick, Send, CalendarIcon } from "lucide-react";
+import { Plus, Check, Calendar, AlertCircle, Trash2, Eye, MousePointerClick, Send, CalendarIcon, FileText } from "lucide-react";
 import { format, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { generateWhatsAppUrl } from "@/lib/constants";
@@ -128,7 +128,7 @@ export default function AdminPlanilha() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-
+  const [previewBilling, setPreviewBilling] = useState<BillingRecord | null>(null);
   const [formData, setFormData] = useState({
     ad_id: "",
     company_name: "",
@@ -650,6 +650,28 @@ export default function AdminPlanilha() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
+                              {/* Preview Report Button - Only for paid companies */}
+                              {isPaid && (billing.whatsapp_number || billing.ad_whatsapp) && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="border-blue-600/30 text-blue-600 hover:bg-blue-600/10"
+                                        onClick={() => setPreviewBilling(billing)}
+                                      >
+                                        <FileText className="h-4 w-4 mr-1" />
+                                        Prévia
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      Pré-visualizar relatório
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+
                               {/* WhatsApp Report Button - Only for paid companies with WhatsApp */}
                               {isPaid && whatsappUrl && (
                                 <TooltipProvider>
@@ -662,11 +684,11 @@ export default function AdminPlanilha() {
                                         className="inline-flex items-center justify-center h-9 px-3 text-sm font-medium rounded-md border border-green-600/30 text-green-600 bg-transparent hover:bg-green-600/10 transition-colors"
                                       >
                                         <Send className="h-4 w-4 mr-1" />
-                                        Relatório
+                                        Enviar
                                       </a>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      Enviar relatório semanal via WhatsApp
+                                      Enviar relatório via WhatsApp
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
@@ -723,6 +745,42 @@ export default function AdminPlanilha() {
             )}
           </CardContent>
         </Card>
+
+        {/* Preview Report Dialog */}
+        <Dialog open={!!previewBilling} onOpenChange={() => setPreviewBilling(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Pré-visualização do Relatório
+              </DialogTitle>
+            </DialogHeader>
+            {previewBilling && (
+              <div className="space-y-4">
+                <div className="bg-muted/50 rounded-lg p-4 whitespace-pre-wrap text-sm font-mono leading-relaxed border">
+                  {generateWeeklyReport(previewBilling)}
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setPreviewBilling(null)}>
+                    Fechar
+                  </Button>
+                  {getWhatsAppReportUrl(previewBilling) && (
+                    <a
+                      href={getWhatsAppReportUrl(previewBilling)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center h-10 px-4 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
+                      onClick={() => setPreviewBilling(null)}
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Enviar via WhatsApp
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
           <AlertDialogContent>
