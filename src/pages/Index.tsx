@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, forwardRef } from "react";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { HeroSection } from "@/components/public/HeroSection";
 import { BrandCarousel } from "@/components/public/BrandCarousel";
@@ -8,21 +8,23 @@ import { CTASection } from "@/components/public/CTASection";
 import { HomeBannerCarousel } from "@/components/public/HomeBannerCarousel";
 import { trackSiteVisit } from "@/lib/analytics";
 
-const Index = () => {
+const Index = forwardRef<HTMLDivElement>(function Index(_props, ref) {
   useEffect(() => {
     trackSiteVisit({ path: window.location.pathname || "/" });
   }, []);
 
   return (
-    <PublicLayout>
-      <HomeBannerCarousel />
-      <HeroSection />
-      <BrandCarousel />
-      <FeaturedCars />
-      <WhyChooseUs />
-      <CTASection />
-    </PublicLayout>
+    <div ref={ref}>
+      <PublicLayout>
+        <HomeBannerCarousel />
+        <HeroSection />
+        <BrandCarousel />
+        <FeaturedCars />
+        <WhyChooseUs />
+        <CTASection />
+      </PublicLayout>
+    </div>
   );
-};
+});
 
 export default Index;

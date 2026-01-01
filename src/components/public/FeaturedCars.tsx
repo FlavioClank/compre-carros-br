@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { Link } from "react-router-dom";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { supabase } from "@/integrations/supabase/client";
 import { CarCardSingle } from "@/components/public/CarCardSingle";
 import { AdCardSingle } from "@/components/public/AdCardSingle";
@@ -7,6 +8,11 @@ import { useAdsRotation } from "@/hooks/useAdsRotation";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+
+// Fixed card heights for stable virtualization
+const CARD_HEIGHT_MOBILE = 120; // h-28 + padding
+const CARD_HEIGHT_DESKTOP = 176; // h-40 + padding
+const GAP = 16;
 
 // Car interface for component
 interface Car {
@@ -30,11 +36,62 @@ interface Car {
   } | null;
 }
 
+interface Ad {
+  id: string;
+  title: string;
+  category: string;
+  image_url_home: string | null;
+  image_url_search: string | null;
+  link: string | null;
+  click_type?: string | null;
+  click_target?: string | null;
+  whatsapp_number?: string | null;
+}
+
+type ListItem = 
+  | { type: "car"; data: Car }
+  | { type: "ad"; data: Ad };
+
+// Memoized row component to prevent re-renders
+const VirtualRow = memo(function VirtualRow({ 
+  item, 
+  style 
+}: { 
+  item: ListItem; 
+  style: React.CSSProperties;
+}) {
+  return (
+    <div style={style} className="px-0">
+      {item.type === "car" ? (
+        <CarCardSingle car={item.data} />
+      ) : (
+        <AdCardSingle ad={item.data} />
+      )}
+    </div>
+  );
+});
+
 export function FeaturedCars() {
   const [cars, setCars] = useState<Car[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalCars, setTotalCars] = useState(0);
-  const { ads, hasAds, getNextAd, resetRotation } = useAdsRotation();
+  const { ads, hasAds } = useAdsRotation();
+  
+  const parentRef = useRef<HTMLDivElement>(null);
+  
+  // Detect if mobile for proper row height
+  const [isMobile, setIsMobile] = useState(() => 
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -103,6 +160,45 @@ export function FeaturedCars() {
     fetchCars();
   }, []);
 
+  // Build list items with intercalated ads
+  const listItems = useMemo((): ListItem[] => {
+    if (cars.length === 0 && hasAds) {
+      return ads.map((ad) => ({ type: "ad" as const, data: ad }));
+    }
+
+    const items: ListItem[] = [];
+    let adIndex = 0;
+
+    cars.forEach((car, index) => {
+      items.push({ type: "car" as const, data: car });
+
+      // Insert ad after every 5 cars
+      if (hasAds && (index + 1) % 5 === 0 && adIndex < ads.length) {
+        items.push({ type: "ad" as const, data: ads[adIndex] });
+        adIndex++;
+      }
+    });
+
+    // Append remaining ads at the end
+    while (adIndex < ads.length) {
+      items.push({ type: "ad" as const, data: ads[adIndex] });
+      adIndex++;
+    }
+
+    return items;
+  }, [cars, ads, hasAds]);
+
+  const rowHeight = isMobile ? CARD_HEIGHT_MOBILE : CARD_HEIGHT_DESKTOP;
+
+  const virtualizer = useVirtualizer({
+    count: listItems.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => rowHeight + GAP,
+    overscan: 3,
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
+
   return (
     <section className="py-4 md:py-12 bg-background">
       <div className="container">
@@ -125,87 +221,54 @@ export function FeaturedCars() {
           </Link>
         </div>
 
-        {/* Cards - with intercalated ads */}
-        <div className="space-y-3 md:space-y-4">
-          {isLoading ? (
-            Array.from({ length: 6 }).map((_, i) => (
+        {/* Virtualized Cards */}
+        {isLoading ? (
+          <div className="space-y-3 md:space-y-4">
+            {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-28 md:h-40 w-full rounded-xl bg-card" />
-            ))
-          ) : cars.length > 0 ? (
-            (() => {
-              const items: React.ReactNode[] = [];
-
-              let orderedAds: any[] = [];
-              if (hasAds) {
-                resetRotation();
-                for (let i = 0; i < ads.length; i++) {
-                  const ad = getNextAd();
-                  if (ad) orderedAds.push(ad);
-                }
-              }
-
-              let adIndex = 0;
-
-              cars.forEach((car, index) => {
-                items.push(<CarCardSingle key={car.id} car={car} />);
-
-                // Insert ad after every 5 cars
-                if (hasAds && orderedAds.length > 0 && (index + 1) % 5 === 0) {
-                  if (adIndex < orderedAds.length) {
-                    const ad = orderedAds[adIndex];
-                    items.push(
-                      <AdCardSingle
-                        key={`featured-ad-${ad.id}-${index}`}
-                        ad={ad}
-                      />
-                    );
-                    adIndex++;
-                  }
-                }
-              });
-
-              // After last car, append all remaining ads
-              if (hasAds && orderedAds.length > 0 && adIndex < orderedAds.length) {
-                for (let i = adIndex; i < orderedAds.length; i++) {
-                  const ad = orderedAds[i];
-                  items.push(
-                    <AdCardSingle
-                      key={`featured-ad-final-${ad.id}-${i}`}
-                      ad={ad}
-                    />
-                  );
-                }
-              }
-
-              return items;
-            })()
-          ) : hasAds ? (
-            // Nenhum carro, mas ainda assim exibir todos os anúncios
-            (() => {
-              const items: React.ReactNode[] = [];
-
-              resetRotation();
-              for (let i = 0; i < ads.length; i++) {
-                const ad = getNextAd();
-                if (ad) {
-                  items.push(
-                    <AdCardSingle
-                      key={`featured-ad-only-${ad.id}-${i}`}
-                      ad={ad}
-                    />
-                  );
-                }
-              }
-
-              return items;
-            })()
-          ) : (
-            <div className="text-center py-10 bg-card/50 rounded-xl border border-border/50">
-              <p className="text-muted-foreground text-sm">Nenhum veículo disponível</p>
-              <p className="text-xs text-muted-foreground mt-1">Volte em breve</p>
+            ))}
+          </div>
+        ) : listItems.length > 0 ? (
+          <div
+            ref={parentRef}
+            className="overflow-auto"
+            style={{ 
+              height: Math.min(listItems.length * (rowHeight + GAP), 600),
+              contain: 'strict'
+            }}
+          >
+            <div
+              style={{
+                height: virtualizer.getTotalSize(),
+                width: '100%',
+                position: 'relative',
+              }}
+            >
+              {virtualItems.map((virtualRow) => {
+                const item = listItems[virtualRow.index];
+                return (
+                  <VirtualRow
+                    key={item.type === 'car' ? `car-${item.data.id}` : `ad-${item.data.id}`}
+                    item={item}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: virtualRow.size - GAP,
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  />
+                );
+              })}
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="text-center py-10 bg-card/50 rounded-xl border border-border/50">
+            <p className="text-muted-foreground text-sm">Nenhum veículo disponível</p>
+            <p className="text-xs text-muted-foreground mt-1">Volte em breve</p>
+          </div>
+        )}
 
         {cars.length > 0 && (
           <div className="text-center mt-6">
