@@ -52,6 +52,15 @@ export function trackClick(entityType: AnalyticsEntityType, entityId: string, me
   });
 }
 
+export function trackView(entityType: AnalyticsEntityType, entityId: string, metadata?: Record<string, any>) {
+  void sendEvent({
+    type: "visit",
+    entityType,
+    entityId,
+    metadata,
+  });
+}
+
 export function trackSiteVisit(metadata?: Record<string, any>) {
   void sendEvent({
     type: "visit",
