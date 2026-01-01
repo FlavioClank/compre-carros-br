@@ -45,13 +45,15 @@ import {
 } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Check, Calendar, AlertCircle, Trash2, Eye, MousePointerClick, MessageSquare, Copy } from "lucide-react";
+import { Plus, Check, Calendar, AlertCircle, Trash2, Eye, MousePointerClick, Send } from "lucide-react";
 import { format, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { generateWhatsAppUrl } from "@/lib/constants";
 
 interface Ad {
   id: string;
   title: string;
+  whatsapp_number: string | null;
 }
 
 interface BillingRecord {
@@ -61,7 +63,10 @@ interface BillingRecord {
   monthly_fee: number;
   billing_day: number;
   created_at: string;
+  metrics_reset_at: string | null;
+  whatsapp_number: string | null;
   ad_title?: string;
+  ad_whatsapp?: string | null;
 }
 
 interface Payment {
@@ -121,6 +126,7 @@ export default function AdminPlanilha() {
     ad_id: "",
     company_name: "",
     monthly_fee: "",
+    whatsapp_number: "",
   });
 
   useEffect(() => {
@@ -133,7 +139,7 @@ export default function AdminPlanilha() {
     const [billingsRes, paymentsRes, adsRes] = await Promise.all([
       supabase.from("ad_billing").select("*").order("created_at", { ascending: false }),
       supabase.from("ad_billing_payments").select("*"),
-      supabase.from("ads").select("id, title").order("title"),
+      supabase.from("ads").select("id, title, whatsapp_number").order("title"),
     ]);
 
     if (billingsRes.error) {
@@ -153,17 +159,19 @@ export default function AdminPlanilha() {
       console.error(adsRes.error);
     } else {
       setAds(adsRes.data || []);
-      // Fetch metrics for all ads
-      if (adsRes.data && adsRes.data.length > 0) {
-        await fetchMetrics(adsRes.data.map((a) => a.id));
+      // Fetch metrics for all ads with their reset dates
+      if (billingsRes.data && billingsRes.data.length > 0) {
+        await fetchMetrics(billingsRes.data);
       }
     }
 
     setIsLoading(false);
   }
 
-  async function fetchMetrics(adIds: string[]) {
+  async function fetchMetrics(billingRecords: BillingRecord[]) {
     try {
+      const adIds = billingRecords.map((b) => b.ad_id);
+      
       // Get all analytics logs for ads
       const { data: logs, error } = await supabase
         .from("action_logs")
@@ -188,21 +196,32 @@ export default function AdminPlanilha() {
         metricsMap[id] = { views: 0, clicks: 0, weeklyViews: 0, weeklyClicks: 0 };
       });
 
+      // Create a map of ad_id -> metrics_reset_at for quick lookup
+      const resetDateMap: Record<string, Date | null> = {};
+      billingRecords.forEach((b) => {
+        resetDateMap[b.ad_id] = b.metrics_reset_at ? new Date(b.metrics_reset_at) : null;
+      });
+
       // Process logs
       (logs || []).forEach((log) => {
         if (!log.entity_id) return;
         
         const logDate = new Date(log.created_at);
+        const resetDate = resetDateMap[log.entity_id];
+        
+        // For weekly metrics, only count after metrics_reset_at (if set) and within this week
+        const isAfterReset = !resetDate || logDate >= resetDate;
         const isThisWeek = logDate >= weekStart && logDate <= weekEnd;
+        const countForWeekly = isAfterReset && isThisWeek;
 
         if (log.action === "visit") {
           metricsMap[log.entity_id].views++;
-          if (isThisWeek) {
+          if (countForWeekly) {
             metricsMap[log.entity_id].weeklyViews++;
           }
         } else if (log.action === "click") {
           metricsMap[log.entity_id].clicks++;
-          if (isThisWeek) {
+          if (countForWeekly) {
             metricsMap[log.entity_id].weeklyClicks++;
           }
         }
@@ -214,12 +233,16 @@ export default function AdminPlanilha() {
     }
   }
 
-  // Enrich billings with ad title
+  // Enrich billings with ad title and whatsapp
   const enrichedBillings = useMemo(() => {
-    return billings.map((b) => ({
-      ...b,
-      ad_title: ads.find((a) => a.id === b.ad_id)?.title || "Anúncio removido",
-    }));
+    return billings.map((b) => {
+      const ad = ads.find((a) => a.id === b.ad_id);
+      return {
+        ...b,
+        ad_title: ad?.title || "Anúncio removido",
+        ad_whatsapp: b.whatsapp_number || ad?.whatsapp_number || null,
+      };
+    });
   }, [billings, ads]);
 
   // Filter ads that don't have billing yet
@@ -233,6 +256,7 @@ export default function AdminPlanilha() {
       ad_id: "",
       company_name: "",
       monthly_fee: "",
+      whatsapp_number: "",
     });
   }
 
@@ -240,7 +264,7 @@ export default function AdminPlanilha() {
     e.preventDefault();
 
     if (!formData.ad_id || !formData.company_name || !formData.monthly_fee) {
-      toast.error("Preencha todos os campos");
+      toast.error("Preencha todos os campos obrigatórios");
       return;
     }
 
@@ -255,6 +279,7 @@ export default function AdminPlanilha() {
         company_name: formData.company_name,
         monthly_fee: parseFloat(formData.monthly_fee),
         billing_day: billingDay,
+        whatsapp_number: formData.whatsapp_number || null,
       });
 
       if (error) throw error;
@@ -278,21 +303,31 @@ export default function AdminPlanilha() {
 
     try {
       // Insert payment for current month (doesn't change next due date)
-      const { error } = await supabase.from("ad_billing_payments").insert({
+      const { error: paymentError } = await supabase.from("ad_billing_payments").insert({
         billing_id: billing.id,
         reference_month: currentMonth,
         reference_year: currentYear,
       });
 
-      if (error) {
-        if (error.code === "23505") {
+      if (paymentError) {
+        if (paymentError.code === "23505") {
           toast.error("Este mês já foi marcado como pago");
           return;
         }
-        throw error;
+        throw paymentError;
       }
 
-      toast.success(`Pagamento de ${format(today, "MMMM/yyyy", { locale: ptBR })} registrado`);
+      // Reset metrics by updating metrics_reset_at to now
+      const { error: resetError } = await supabase
+        .from("ad_billing")
+        .update({ metrics_reset_at: today.toISOString() })
+        .eq("id", billing.id);
+
+      if (resetError) {
+        console.error("Error resetting metrics:", resetError);
+      }
+
+      toast.success(`Pagamento de ${format(today, "MMMM/yyyy", { locale: ptBR })} registrado. Métricas resetadas.`);
       fetchData();
     } catch (error) {
       console.error(error);
@@ -324,16 +359,14 @@ export default function AdminPlanilha() {
     return report;
   }
 
-  async function copyReportToClipboard(billing: BillingRecord) {
-    const report = generateWeeklyReport(billing);
+  function getWhatsAppReportUrl(billing: BillingRecord): string | null {
+    const whatsappNumber = billing.ad_whatsapp;
+    if (!whatsappNumber) return null;
     
-    try {
-      await navigator.clipboard.writeText(report);
-      toast.success("Relatório copiado para a área de transferência!");
-    } catch (error) {
-      console.error("Failed to copy:", error);
-      toast.error("Erro ao copiar relatório");
-    }
+    const report = generateWeeklyReport(billing);
+    const cleanNumber = whatsappNumber.replace(/\D/g, "");
+    
+    return generateWhatsAppUrl(cleanNumber, report);
   }
 
   const pendingCount = useMemo(() => {
@@ -393,6 +426,20 @@ export default function AdminPlanilha() {
                     }
                     placeholder="Ex: Auto Mecânica Silva"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>WhatsApp da Empresa (para relatórios)</Label>
+                  <Input
+                    value={formData.whatsapp_number}
+                    onChange={(e) =>
+                      setFormData({ ...formData, whatsapp_number: e.target.value })
+                    }
+                    placeholder="Ex: 5565999999999"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Se não informado, usará o WhatsApp do anúncio
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -465,7 +512,7 @@ export default function AdminPlanilha() {
                               </span>
                             </TooltipTrigger>
                             <TooltipContent>
-                              Total / Esta semana
+                              Total / Período atual
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -480,7 +527,7 @@ export default function AdminPlanilha() {
                               </span>
                             </TooltipTrigger>
                             <TooltipContent>
-                              Total / Esta semana
+                              Total / Período atual
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -499,11 +546,12 @@ export default function AdminPlanilha() {
                       const isOverdue = status === "pending" && isPastDue;
                       const metrics = adMetrics[billing.ad_id] || { views: 0, clicks: 0, weeklyViews: 0, weeklyClicks: 0 };
                       const isPaid = status === "paid";
+                      const whatsappUrl = getWhatsAppReportUrl(billing);
 
                       return (
                         <TableRow
                           key={billing.id}
-                          className={isOverdue ? "bg-destructive/10" : ""}
+                          className={isOverdue ? "bg-red-100 dark:bg-red-950/30" : ""}
                         >
                           <TableCell className="font-medium">
                             {billing.ad_title}
@@ -528,7 +576,7 @@ export default function AdminPlanilha() {
                           <TableCell>
                             {status === "paid" ? (
                               <Badge className="bg-green-500/20 text-green-600 hover:bg-green-500/30">
-                                Pago
+                                🟢 Pago
                               </Badge>
                             ) : isOverdue ? (
                               <Badge variant="destructive">🔴 Pendente</Badge>
@@ -538,23 +586,45 @@ export default function AdminPlanilha() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
-                              {/* Weekly Report Button - Only for paid companies */}
-                              {isPaid && (
+                              {/* WhatsApp Report Button - Only for paid companies with WhatsApp */}
+                              {isPaid && whatsappUrl && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <a
+                                        href={whatsappUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center justify-center h-9 px-3 text-sm font-medium rounded-md border border-green-600/30 text-green-600 bg-transparent hover:bg-green-600/10 transition-colors"
+                                      >
+                                        <Send className="h-4 w-4 mr-1" />
+                                        Relatório
+                                      </a>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      Enviar relatório semanal via WhatsApp
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                              
+                              {/* Show disabled button if paid but no WhatsApp */}
+                              {isPaid && !whatsappUrl && (
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        className="text-green-600 border-green-600/30 hover:bg-green-600/10"
-                                        onClick={() => copyReportToClipboard(billing)}
+                                        className="text-muted-foreground"
+                                        disabled
                                       >
-                                        <Copy className="h-4 w-4 mr-1" />
+                                        <Send className="h-4 w-4 mr-1" />
                                         Relatório
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      Copiar relatório semanal para WhatsApp
+                                      WhatsApp não cadastrado
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>

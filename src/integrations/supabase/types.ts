@@ -51,8 +51,10 @@ export type Database = {
           company_name: string
           created_at: string
           id: string
+          metrics_reset_at: string | null
           monthly_fee: number
           updated_at: string
+          whatsapp_number: string | null
         }
         Insert: {
           ad_id: string
@@ -60,8 +62,10 @@ export type Database = {
           company_name: string
           created_at?: string
           id?: string
+          metrics_reset_at?: string | null
           monthly_fee?: number
           updated_at?: string
+          whatsapp_number?: string | null
         }
         Update: {
           ad_id?: string
@@ -69,8 +73,10 @@ export type Database = {
           company_name?: string
           created_at?: string
           id?: string
+          metrics_reset_at?: string | null
           monthly_fee?: number
           updated_at?: string
+          whatsapp_number?: string | null
         }
         Relationships: [
           {
