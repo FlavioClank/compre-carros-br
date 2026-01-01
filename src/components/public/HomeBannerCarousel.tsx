@@ -14,7 +14,7 @@ interface Banner {
   whatsapp_number: string | null;
 }
 
-export function HomeBannerCarousel() {
+export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [autoplayKey, setAutoplayKey] = useState(0);
@@ -35,9 +35,7 @@ export function HomeBannerCarousel() {
         .order("position", { ascending: true })
         .order("created_at", { ascending: true });
 
-      if (!error && data) {
-        setBanners(data);
-      }
+      if (!error && data) setBanners(data);
       setIsLoading(false);
     };
 
@@ -55,19 +53,19 @@ export function HomeBannerCarousel() {
     return () => clearInterval(interval);
   }, [emblaApi, banners.length, autoplayKey]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (!emblaApi) return;
     emblaApi.scrollPrev();
     setAutoplayKey((key) => key + 1);
-  };
+  }, [emblaApi]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (!emblaApi) return;
     emblaApi.scrollNext();
     setAutoplayKey((key) => key + 1);
-  };
+  }, [emblaApi]);
 
-  const getBannerHref = (banner: Banner): string | undefined => {
+  const getBannerHref = useCallback((banner: Banner): string | undefined => {
     const type = banner.click_type || "none";
 
     if (type === "whatsapp" && banner.whatsapp_number) {
@@ -81,40 +79,44 @@ export function HomeBannerCarousel() {
     }
 
     return undefined;
-  };
-
-  if (isLoading || banners.length === 0) return null;
-
-  const renderImage = useCallback((banner: Banner, eager: boolean = false) => {
-    const href = getBannerHref(banner);
-
-    const image = (
-      <OptimizedImage
-        src={banner.image_url}
-        alt="Banner promocional"
-        width={1200}
-        height={600}
-        quality={80}
-        eager={eager}
-        className="w-full h-auto"
-        containerClassName="w-full"
-        showSkeleton={true}
-      />
-    );
-
-    if (!href) return image;
-
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() => trackClick("banner", banner.id)}
-      >
-        {image}
-      </a>
-    );
   }, []);
+
+  const renderImage = useCallback(
+    (banner: Banner, eager: boolean = false) => {
+      const href = getBannerHref(banner);
+
+      const image = (
+        <OptimizedImage
+          src={banner.image_url}
+          alt="Banner promocional"
+          width={1200}
+          height={600}
+          quality={80}
+          eager={eager}
+          className="w-full h-auto"
+          containerClassName="w-full"
+          showSkeleton={true}
+        />
+      );
+
+      if (!href) return image;
+
+      return (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => trackClick("banner", banner.id)}
+        >
+          {image}
+        </a>
+      );
+    },
+    [getBannerHref]
+  );
+
+  // Important: do not early-return before hooks above (prevents hook-order crashes)
+  if (isLoading || banners.length === 0) return null;
 
   // Single banner - no carousel needed
   if (banners.length === 1) {
@@ -221,4 +223,5 @@ export function HomeBannerCarousel() {
       </div>
     </section>
   );
-}
+});
+
