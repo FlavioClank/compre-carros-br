@@ -91,7 +91,7 @@ export const formatEngineCC = (cc: number): string => {
 
 // Generate WhatsApp URL - SINGLE SOURCE OF TRUTH (wa.me only)
 export const generateWhatsAppUrl = (phone: string, message: string): string => {
-  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${phone}/?text=${encodeURIComponent(message)}`;
 };
 
 // Build WhatsApp message for a car inquiry (URL generation must use generateWhatsAppUrl)
