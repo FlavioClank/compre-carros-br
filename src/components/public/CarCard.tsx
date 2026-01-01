@@ -19,6 +19,7 @@ import { generateCarUrl } from "@/lib/utils";
 import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 import { trackClick } from "@/lib/analytics";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { getCarCoverImage } from "@/lib/image-utils";
 
 interface CarCardProps {
   car: {
@@ -48,7 +49,7 @@ interface CarCardProps {
 
 export const CarCard = memo(function CarCard({ car }: CarCardProps) {
   const brandName = car.brands?.name || "";
-  const mainPhoto = car.photos?.[0] || "/placeholder.svg";
+  const mainPhoto = getCarCoverImage(car.photos);
   const invertBrandLogo = ["toyota", "nissan", "audi", "volkswagen"].includes(brandName.toLowerCase());
   const carUrl = generateCarUrl({ id: car.id, slug: car.slug, model: car.model, version: car.version, brands: car.brands });
   const isMotorcycle = car.category === 'motorcycle';
