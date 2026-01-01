@@ -379,35 +379,32 @@ export default function AdminPlanilha() {
 
   function generateWeeklyReport(billing: BillingRecord) {
     const metrics = adMetrics[billing.ad_id] || { weeklyViews: 0, weeklyClicks: 0 };
-    
-    const report = `Olá, *${billing.company_name}*! 👋
 
-Notícias da semana sobre o seu anúncio na *CompreCarrosBr*! 🚀
-O seu anúncio continua atraindo interessados!
+    // Mantém o texto com emojis nativos e quebras de linha via \n; a URL deve sempre usar encodeURIComponent.
+    const mensagem = `Olá, *${billing.company_name}*! 👋\n\n` +
+      `Notícias da semana sobre o seu anúncio na *CompreCarrosBr*! 🚀\n` +
+      `O seu anúncio continua atraindo interessados!\n\n` +
+      `📊 *RELATÓRIO RÁPIDO:*\n` +
+      `👀 *Visualizações:* ${metrics.weeklyViews} pessoas viram sua empresa.\n` +
+      `🖱️ *Interessados:* ${metrics.weeklyClicks} cliques diretos no seu anúncio.\n\n` +
+      `Nossa plataforma está trabalhando para gerar visibilidade e novos clientes para você!\n\n` +
+      `Atenciosamente,\n` +
+      `*Equipe CompreCarrosBr* 🚗💨`;
 
-📊 *RELATÓRIO RÁPIDO:*
-👀 *Visualizações:* ${metrics.weeklyViews} pessoas viram sua empresa.
-🖱️ *Interessados:* ${metrics.weeklyClicks} cliques diretos no seu anúncio.
-
-Nossa plataforma está trabalhando para gerar visibilidade e novos clientes para você!
-
-Atenciosamente,
-*Equipe CompreCarrosBr* 🚗💨`;
-
-    return report;
+    return mensagem;
   }
 
   function getWhatsAppReportUrl(billing: BillingRecord): string | null {
     // Prioriza o WhatsApp da cobrança, senão usa o do anúncio
     const whatsappNumber = billing.whatsapp_number || billing.ad_whatsapp;
     if (!whatsappNumber) return null;
-    
-    const report = generateWeeklyReport(billing);
-    const cleanNumber = whatsappNumber.replace(/\D/g, "");
-    
-    // Gera a URL manualmente para garantir encoding correto
-    const encodedMessage = encodeURIComponent(report);
-    return `https://wa.me/${cleanNumber}?text=${encodedMessage}`;
+
+    const mensagem = generateWeeklyReport(billing);
+    const telefone = whatsappNumber.replace(/\D/g, "");
+
+    // Padrão exigido: https://wa.me/55.../?text= + encodeURIComponent(mensagem)
+    const urlFinal = `https://wa.me/${telefone}/?text=${encodeURIComponent(mensagem)}`;
+    return urlFinal;
   }
 
   const pendingCount = useMemo(() => {
