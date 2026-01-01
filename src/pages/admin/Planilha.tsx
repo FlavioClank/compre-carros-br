@@ -37,10 +37,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Check, Calendar, AlertCircle, Trash2 } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, Check, Calendar, AlertCircle, Trash2, Eye, MousePointerClick, MessageSquare, Copy } from "lucide-react";
+import { format, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface Ad {
@@ -64,6 +70,13 @@ interface Payment {
   reference_month: number;
   reference_year: number;
   paid_at: string;
+}
+
+interface AdMetrics {
+  views: number;
+  clicks: number;
+  weeklyViews: number;
+  weeklyClicks: number;
 }
 
 function getBillingStatus(
@@ -98,6 +111,7 @@ export default function AdminPlanilha() {
   const [billings, setBillings] = useState<BillingRecord[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [ads, setAds] = useState<Ad[]>([]);
+  const [adMetrics, setAdMetrics] = useState<Record<string, AdMetrics>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -139,9 +153,65 @@ export default function AdminPlanilha() {
       console.error(adsRes.error);
     } else {
       setAds(adsRes.data || []);
+      // Fetch metrics for all ads
+      if (adsRes.data && adsRes.data.length > 0) {
+        await fetchMetrics(adsRes.data.map((a) => a.id));
+      }
     }
 
     setIsLoading(false);
+  }
+
+  async function fetchMetrics(adIds: string[]) {
+    try {
+      // Get all analytics logs for ads
+      const { data: logs, error } = await supabase
+        .from("action_logs")
+        .select("entity_id, action, created_at")
+        .eq("entity_type", "ad")
+        .in("entity_id", adIds);
+
+      if (error) {
+        console.error("Error fetching metrics:", error);
+        return;
+      }
+
+      // Calculate weekly date range
+      const now = new Date();
+      const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
+      const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Sunday
+
+      const metricsMap: Record<string, AdMetrics> = {};
+
+      // Initialize metrics for all ads
+      adIds.forEach((id) => {
+        metricsMap[id] = { views: 0, clicks: 0, weeklyViews: 0, weeklyClicks: 0 };
+      });
+
+      // Process logs
+      (logs || []).forEach((log) => {
+        if (!log.entity_id) return;
+        
+        const logDate = new Date(log.created_at);
+        const isThisWeek = logDate >= weekStart && logDate <= weekEnd;
+
+        if (log.action === "visit") {
+          metricsMap[log.entity_id].views++;
+          if (isThisWeek) {
+            metricsMap[log.entity_id].weeklyViews++;
+          }
+        } else if (log.action === "click") {
+          metricsMap[log.entity_id].clicks++;
+          if (isThisWeek) {
+            metricsMap[log.entity_id].weeklyClicks++;
+          }
+        }
+      });
+
+      setAdMetrics(metricsMap);
+    } catch (error) {
+      console.error("Error processing metrics:", error);
+    }
   }
 
   // Enrich billings with ad title
@@ -243,6 +313,26 @@ export default function AdminPlanilha() {
       toast.error("Erro ao remover cobrança");
     } finally {
       setDeleteId(null);
+    }
+  }
+
+  function generateWeeklyReport(billing: BillingRecord) {
+    const metrics = adMetrics[billing.ad_id] || { weeklyViews: 0, weeklyClicks: 0 };
+    
+    const report = `Olá ${billing.company_name}, Notícias da semana sobre o seu anúncio na CompreCarrosBr! 🚀 O seu anúncio continua atraindo interessados! 📊 Relatório Rápido: Visualizações: ${metrics.weeklyViews} pessoas viram sua empresa. Interessados: ${metrics.weeklyClicks} cliques diretos no seu anúncio. Nossa plataforma está trabalhando para gerar visibilidade e novos clientes para você! Atenciosamente, Equipe CompreCarrosBr`;
+
+    return report;
+  }
+
+  async function copyReportToClipboard(billing: BillingRecord) {
+    const report = generateWeeklyReport(billing);
+    
+    try {
+      await navigator.clipboard.writeText(report);
+      toast.success("Relatório copiado para a área de transferência!");
+    } catch (error) {
+      console.error("Failed to copy:", error);
+      toast.error("Erro ao copiar relatório");
     }
   }
 
@@ -363,8 +453,38 @@ export default function AdminPlanilha() {
                     <TableRow>
                       <TableHead>Anúncio</TableHead>
                       <TableHead>Empresa</TableHead>
-                      <TableHead>Vencimento (Dia)</TableHead>
+                      <TableHead>Vencimento</TableHead>
                       <TableHead>Mensalidade</TableHead>
+                      <TableHead className="text-center">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center gap-1">
+                                <Eye className="h-4 w-4" />
+                                Views
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Total / Esta semana
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </TableHead>
+                      <TableHead className="text-center">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center gap-1">
+                                <MousePointerClick className="h-4 w-4" />
+                                Cliques
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Total / Esta semana
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
@@ -377,6 +497,8 @@ export default function AdminPlanilha() {
                         billing.id
                       );
                       const isOverdue = status === "pending" && isPastDue;
+                      const metrics = adMetrics[billing.ad_id] || { views: 0, clicks: 0, weeklyViews: 0, weeklyClicks: 0 };
+                      const isPaid = status === "paid";
 
                       return (
                         <TableRow
@@ -393,6 +515,16 @@ export default function AdminPlanilha() {
                           <TableCell>
                             R$ {billing.monthly_fee.toFixed(2).replace(".", ",")}
                           </TableCell>
+                          <TableCell className="text-center">
+                            <span className="text-muted-foreground text-sm">
+                              {metrics.views} / <span className="text-primary font-medium">{metrics.weeklyViews}</span>
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span className="text-muted-foreground text-sm">
+                              {metrics.clicks} / <span className="text-primary font-medium">{metrics.weeklyClicks}</span>
+                            </span>
+                          </TableCell>
                           <TableCell>
                             {status === "paid" ? (
                               <Badge className="bg-green-500/20 text-green-600 hover:bg-green-500/30">
@@ -404,25 +536,49 @@ export default function AdminPlanilha() {
                               <Badge variant="secondary">Aguardando</Badge>
                             )}
                           </TableCell>
-                          <TableCell className="text-right space-x-2">
-                            {status === "pending" && (
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              {/* Weekly Report Button - Only for paid companies */}
+                              {isPaid && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="text-green-600 border-green-600/30 hover:bg-green-600/10"
+                                        onClick={() => copyReportToClipboard(billing)}
+                                      >
+                                        <Copy className="h-4 w-4 mr-1" />
+                                        Relatório
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      Copiar relatório semanal para WhatsApp
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                              
+                              {status === "pending" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => markAsPaid(billing)}
+                                >
+                                  <Check className="h-4 w-4 mr-1" />
+                                  Pago
+                                </Button>
+                              )}
                               <Button
                                 size="sm"
-                                variant="outline"
-                                onClick={() => markAsPaid(billing)}
+                                variant="ghost"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => setDeleteId(billing.id)}
                               >
-                                <Check className="h-4 w-4 mr-1" />
-                                Marcar como Pago
+                                <Trash2 className="h-4 w-4" />
                               </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => setDeleteId(billing.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );

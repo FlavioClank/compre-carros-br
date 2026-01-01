@@ -1,8 +1,8 @@
-import { memo } from "react";
+import { memo, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 import { generateWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/constants";
-import { trackClick } from "@/lib/analytics";
+import { trackClick, trackView } from "@/lib/analytics";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface Ad {
@@ -22,6 +22,20 @@ interface AdCardSingleProps {
 }
 
 export const AdCardSingle = memo(function AdCardSingle({ ad }: AdCardSingleProps) {
+  const hasTrackedView = useRef(false);
+
+  // Track view when ad is rendered (once per mount)
+  useEffect(() => {
+    if (!hasTrackedView.current) {
+      trackView("ad", ad.id, {
+        placement: "home",
+        category: ad.category,
+        title: ad.title,
+      });
+      hasTrackedView.current = true;
+    }
+  }, [ad.id, ad.category, ad.title]);
+
   const href = getAdHref(ad);
   const CardWrapper = href ? "a" : "div";
   const wrapperProps = href
