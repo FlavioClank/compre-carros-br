@@ -114,16 +114,12 @@ export const CarCardSingle = memo(function CarCardSingle({ car }: CarCardSingleP
                     {brandName} {car.model}
                   </h3>
                 </Link>
-                {car.version && (
+              {car.version && (
                   <p className="text-[10px] md:text-sm text-muted-foreground line-clamp-1">
                     {car.version}
                   </p>
                 )}
               </div>
-              {/* Code Badge */}
-              <Badge variant="secondary" className="bg-muted text-[9px] md:text-xs font-mono px-1.5 py-0.5 flex-shrink-0">
-                {car.code}
-              </Badge>
             </div>
 
             {/* Specs Grid */}

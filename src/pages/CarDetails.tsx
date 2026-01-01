@@ -268,33 +268,34 @@ export default function CarDetails() {
         <meta name="twitter:image" content={mainPhoto} />
         <link rel="canonical" href={canonicalUrl} />
       </Helmet>
-      <div className="container py-8 md:py-12">
-        {/* Breadcrumb */}
-        <div className="mb-6">
-          <Link
-            to="/carros"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar para veículos
-          </Link>
-        </div>
+      <div className="w-full max-w-[100vw] overflow-x-hidden">
+        <div className="container mx-auto px-4 md:px-6 py-8 md:py-12">
+          {/* Breadcrumb */}
+          <div className="mb-6">
+            <Link
+              to="/carros"
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar para veículos
+            </Link>
+          </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 w-full max-w-screen-lg mx-auto">
-          {/* Gallery */}
-          <div className="space-y-4 min-h-0 w-full">
-            {/* Main Image */}
-            <div className="relative w-full max-h-[70vh] md:max-h-none md:aspect-[4/3] bg-muted rounded-2xl overflow-hidden">
-              <OptimizedImage
-                src={photos[currentPhotoIndex]}
-                alt={`${brandName} ${car.model}`}
-                width={800}
-                height={600}
-                quality={85}
-                eager={currentPhotoIndex === 0}
-                className="w-full h-auto object-contain md:object-cover"
-                containerClassName="w-full h-auto max-h-[70vh] md:max-h-none md:h-full flex items-center justify-center"
-              />
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 w-full">
+            {/* Gallery */}
+            <div className="space-y-4 min-h-0 w-full">
+              {/* Main Image */}
+              <div className="relative w-full max-h-[70vh] md:max-h-none md:aspect-[4/3] bg-muted rounded-2xl overflow-hidden">
+                <OptimizedImage
+                  src={photos[currentPhotoIndex]}
+                  alt={`${brandName} ${car.model}`}
+                  width={800}
+                  height={600}
+                  quality={85}
+                  eager={currentPhotoIndex === 0}
+                  className="w-full h-auto max-h-[70vh] md:max-h-none object-contain md:object-cover"
+                  containerClassName="w-full h-full flex items-center justify-center"
+                />
 
               {/* Status Badge */}
               {car.status === "sold" && (
@@ -408,19 +409,19 @@ export default function CarDetails() {
             </div>
 
             {/* Specs Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full">
               {specs.map((spec) => {
                 const Icon = spec.icon;
                 return (
                   <div
                     key={spec.label}
-                    className="bg-muted/50 rounded-xl p-3 md:p-4 border border-border"
+                    className="bg-muted/50 rounded-xl p-3 md:p-4 border border-border w-full"
                   >
                     <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                      <Icon className="h-4 w-4" />
-                      <span className="text-sm md:text-sm">{spec.label}</span>
+                      <Icon className="h-4 w-4 flex-shrink-0" />
+                      <span className="text-sm">{spec.label}</span>
                     </div>
-                    <p className="font-semibold text-foreground text-base md:text-sm">{spec.value}</p>
+                    <p className="font-semibold text-foreground text-base md:text-sm break-words">{spec.value}</p>
                   </div>
                 );
               })}
@@ -428,11 +429,11 @@ export default function CarDetails() {
 
             {/* Description */}
             {car.description && (
-              <div>
+              <div className="max-w-full">
                 <h3 className="font-display font-semibold text-foreground mb-2 text-lg md:text-base">
                   Descrição
                 </h3>
-                <p className="text-muted-foreground whitespace-pre-line text-base md:text-sm leading-relaxed">
+                <p className="text-muted-foreground whitespace-pre-wrap break-words text-base md:text-sm leading-relaxed max-w-full">
                   {car.description}
                 </p>
               </div>
@@ -470,6 +471,7 @@ export default function CarDetails() {
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     </PublicLayout>
