@@ -398,13 +398,16 @@ Atenciosamente,
   }
 
   function getWhatsAppReportUrl(billing: BillingRecord): string | null {
-    const whatsappNumber = billing.ad_whatsapp;
+    // Prioriza o WhatsApp da cobrança, senão usa o do anúncio
+    const whatsappNumber = billing.whatsapp_number || billing.ad_whatsapp;
     if (!whatsappNumber) return null;
     
     const report = generateWeeklyReport(billing);
     const cleanNumber = whatsappNumber.replace(/\D/g, "");
     
-    return generateWhatsAppUrl(cleanNumber, report);
+    // Gera a URL manualmente para garantir encoding correto
+    const encodedMessage = encodeURIComponent(report);
+    return `https://wa.me/${cleanNumber}?text=${encodedMessage}`;
   }
 
   const pendingCount = useMemo(() => {
