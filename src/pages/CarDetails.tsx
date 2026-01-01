@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/layout/PublicLayout";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -284,14 +285,15 @@ export default function CarDetails() {
           <div className="space-y-4">
             {/* Main Image */}
             <div className="relative aspect-[4/3] bg-muted rounded-2xl overflow-hidden">
-              <img
+              <OptimizedImage
                 src={photos[currentPhotoIndex]}
                 alt={`${brandName} ${car.model}`}
+                width={800}
+                height={600}
+                quality={85}
+                eager={currentPhotoIndex === 0}
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/placeholder.svg";
-                }}
+                containerClassName="w-full h-full"
               />
 
               {/* Status Badge */}
@@ -361,14 +363,14 @@ export default function CarDetails() {
                         : "border-transparent hover:border-border"
                     }`}
                   >
-                    <img
+                    <OptimizedImage
                       src={photo}
                       alt={`Foto ${index + 1}`}
+                      width={100}
+                      height={100}
+                      quality={60}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = "/placeholder.svg";
-                      }}
+                      containerClassName="w-full h-full"
                     />
                   </button>
                 ))}
