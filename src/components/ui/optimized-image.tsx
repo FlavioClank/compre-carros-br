@@ -2,6 +2,19 @@ import React, { useEffect, useState, useCallback, memo, useMemo, forwardRef } fr
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { cn } from "@/lib/utils";
 
+/**
+ * IMAGE TRANSFORMATION CONFIGURATION
+ * 
+ * Set to `true` when you have Supabase Pro plan with Image Transformation enabled.
+ * This enables automatic WebP conversion, resizing, and quality optimization.
+ * 
+ * To enable:
+ * 1. Upgrade to Supabase Pro ($25/month)
+ * 2. Enable Image Transformation in Supabase Dashboard
+ * 3. Set IMAGE_TRANSFORMATION_ENABLED = true below
+ */
+const IMAGE_TRANSFORMATION_ENABLED = false;
+
 interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
   alt: string;
@@ -14,6 +27,7 @@ interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> 
   containerClassName?: string;
   showSkeleton?: boolean;
 }
+
 // Supabase Storage URL pattern
 const SUPABASE_STORAGE_REGEX =
   /^https:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\//;
@@ -22,11 +36,8 @@ const SUPABASE_STORAGE_REGEX =
 // This persists across component remounts and scroll events
 const imageLoadCache = new Map<string, boolean>();
 
-// Preload check - mark URLs as loaded if browser has them cached
-function markAsLoadedIfCached(url: string, cacheKey: string): boolean {
-  if (imageLoadCache.has(cacheKey)) return true;
-  return false;
-}
+// Track failed transformations to auto-fallback
+const transformationFailedCache = new Set<string>();
 
 /**
  * Checks if a URL is valid for image loading
@@ -38,25 +49,22 @@ function isValidSrc(src: string | null | undefined): src is string {
 }
 
 /**
- * NOTE: Supabase Image Transformation requires Pro plan and is currently disabled.
- * This function returns the original URL for now.
- * When Image Transformation is enabled, uncomment the transformation logic below.
+ * Generates optimized image URL using Supabase Image Transformation
+ * Automatically falls back to original URL if transformation is disabled or fails
  */
 function getOptimizedUrl(
   src: string,
-  _options: { width?: number; height?: number; quality?: number }
+  options: { width?: number; height?: number; quality?: number }
 ): string {
   // Return as-is if not a valid URL or placeholder
   if (!isValidSrc(src) || src === "/placeholder.svg") return src;
 
-  // Return original URL - Supabase Image Transformation not enabled
-  return src;
-
-  /* 
-  // UNCOMMENT BELOW WHEN SUPABASE IMAGE TRANSFORMATION IS ENABLED:
-  
-  // Only transform Supabase storage URLs that are object URLs
+  // Skip transformation if disabled or not a Supabase storage URL
+  if (!IMAGE_TRANSFORMATION_ENABLED) return src;
   if (!SUPABASE_STORAGE_REGEX.test(src)) return src;
+
+  // Skip if this URL previously failed transformation
+  if (transformationFailedCache.has(src)) return src;
 
   // Check if this is already a render/image URL (avoid double transformation)
   if (src.includes("/storage/v1/render/image/")) return src;
@@ -76,7 +84,15 @@ function getOptimizedUrl(
   );
 
   return `${transformed}?${params.join("&")}`;
-  */
+}
+
+/**
+ * Mark a URL as having failed transformation (for auto-fallback)
+ */
+function markTransformationFailed(originalSrc: string): void {
+  if (IMAGE_TRANSFORMATION_ENABLED && SUPABASE_STORAGE_REGEX.test(originalSrc)) {
+    transformationFailedCache.add(originalSrc);
+  }
 }
 
 /**
@@ -141,11 +157,18 @@ const OptimizedImageInner = forwardRef<HTMLDivElement, OptimizedImageProps>(func
 
   const handleError = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
+      // If transformation failed, mark it and retry with original URL
+      if (IMAGE_TRANSFORMATION_ENABLED && !hasError) {
+        markTransformationFailed(safeSrc);
+        setHasError(true);
+        // Don't mark as loaded yet - let it retry with original URL
+        return;
+      }
       setHasError(true);
       setIsLoaded(true);
       onError?.(e);
     },
-    [onError]
+    [onError, safeSrc, hasError]
   );
 
   // Container styles for aspect ratio
