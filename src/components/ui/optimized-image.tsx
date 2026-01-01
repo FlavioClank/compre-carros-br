@@ -23,17 +23,37 @@ const SUPABASE_STORAGE_REGEX =
 const imageLoadCache = new Set<string>();
 
 /**
- * Generates optimized image URL using Supabase Image Transformation
- * Converts to WebP and applies quality/resize
+ * Checks if a URL is valid for image loading
+ */
+function isValidSrc(src: string | null | undefined): src is string {
+  if (!src || typeof src !== "string") return false;
+  if (src.trim() === "") return false;
+  return src.startsWith("http://") || src.startsWith("https://") || src.startsWith("/");
+}
+
+/**
+ * NOTE: Supabase Image Transformation requires Pro plan and is currently disabled.
+ * This function returns the original URL for now.
+ * When Image Transformation is enabled, uncomment the transformation logic below.
  */
 function getOptimizedUrl(
   src: string,
-  options: { width?: number; height?: number; quality?: number }
+  _options: { width?: number; height?: number; quality?: number }
 ): string {
-  if (!src || src === "/placeholder.svg") return src;
+  // Return as-is if not a valid URL or placeholder
+  if (!isValidSrc(src) || src === "/placeholder.svg") return src;
 
-  // Only transform Supabase storage URLs
+  // Return original URL - Supabase Image Transformation not enabled
+  return src;
+
+  /* 
+  // UNCOMMENT BELOW WHEN SUPABASE IMAGE TRANSFORMATION IS ENABLED:
+  
+  // Only transform Supabase storage URLs that are object URLs
   if (!SUPABASE_STORAGE_REGEX.test(src)) return src;
+
+  // Check if this is already a render/image URL (avoid double transformation)
+  if (src.includes("/storage/v1/render/image/")) return src;
 
   const { width, height, quality = 75 } = options;
 
@@ -44,15 +64,13 @@ function getOptimizedUrl(
   params.push(`quality=${quality}`);
   params.push("format=webp");
 
-  // Insert /render/image/ after /storage/v1/object/
-  // From: .../storage/v1/object/public/bucket/file.jpg
-  // To: .../storage/v1/render/image/public/bucket/file.jpg?...
   const transformed = src.replace(
     "/storage/v1/object/public/",
     "/storage/v1/render/image/public/"
   );
 
   return `${transformed}?${params.join("&")}`;
+  */
 }
 
 /**
@@ -81,24 +99,28 @@ export const OptimizedImage = memo(function OptimizedImage({
   onError,
   ...props
 }: OptimizedImageProps) {
-  const cacheKey = `${src}|w:${width ?? ""}|h:${height ?? ""}|q:${quality}`;
+  // Validate src early - use fallback if invalid
+  const safeSrc = isValidSrc(src) ? src : fallback;
+  const cacheKey = `${safeSrc}|w:${width ?? ""}|h:${height ?? ""}|q:${quality}`;
 
   const [isLoaded, setIsLoaded] = useState(() => imageLoadCache.has(cacheKey));
   const [hasError, setHasError] = useState(false);
 
   // Use lazy loading unless eager is true
+  // When eager, skip intersection observer entirely
   const { ref, isIntersecting } = useIntersectionObserver({
     rootMargin: "200px",
     triggerOnce: true,
   });
 
-  const shouldLoad = eager || isIntersecting;
+  // Always load if eager, otherwise wait for intersection
+  const shouldLoad = eager ? true : isIntersecting;
 
   // Memoize the optimized URL
   const optimizedSrc = useMemo(() => {
     if (hasError) return fallback;
-    return getOptimizedUrl(src, { width, height, quality });
-  }, [src, width, height, quality, hasError, fallback]);
+    return getOptimizedUrl(safeSrc, { width, height, quality });
+  }, [safeSrc, width, height, quality, hasError, fallback]);
 
   // If the same image is re-mounted later in the session, keep it as loaded
   useEffect(() => {
@@ -132,7 +154,7 @@ export const OptimizedImage = memo(function OptimizedImage({
 
   return (
     <div
-      ref={ref as React.RefCallback<HTMLDivElement>}
+      ref={eager ? undefined : ref as React.RefCallback<HTMLDivElement>}
       className={cn("relative overflow-hidden", containerClassName)}
       style={containerStyle}
     >
