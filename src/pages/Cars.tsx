@@ -1,10 +1,12 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback, memo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { CarCard } from "@/components/public/CarCard";
 import { AdCard } from "@/components/public/AdCard";
 import { useAdsRotation } from "@/hooks/useAdsRotation";
+import { useVehiclesInfiniteQuery, VehicleFilters, VehicleData } from "@/hooks/useVehiclesInfiniteQuery";
+import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +23,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Search, SlidersHorizontal, X, Car, Bike } from "lucide-react";
+import { Search, SlidersHorizontal, X, Car, Bike, Loader2 } from "lucide-react";
 import { 
   FUEL_LABELS, 
   TRANSMISSION_LABELS, 
@@ -44,31 +46,21 @@ interface BrandDisplay {
   displayName: string;
 }
 
-interface CarData {
+interface Ad {
   id: string;
-  slug?: string | null;
-  code: string;
-  model: string;
-  year: number;
-  version: string | null;
-  mileage: number;
-  transmission: string;
-  fuel: string;
-  color: string;
-  price: number;
-  photos: string[];
-  status: string;
-  doors: number | null;
-  condition: string | null;
+  title: string;
   category: string;
-  engine_cc: number | null;
-  cooling_type: string | null;
-  motorcycle_category: string | null;
-  brands: {
-    name: string;
-    logo_url: string | null;
-  } | null;
+  image_url_home: string | null;
+  image_url_search: string | null;
+  link: string | null;
+  click_type?: string | null;
+  click_target?: string | null;
+  whatsapp_number?: string | null;
 }
+
+type ListItem = 
+  | { type: "car"; data: VehicleData }
+  | { type: "ad"; data: Ad };
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 30 }, (_, i) => currentYear - i);
@@ -108,16 +100,58 @@ const CONDITION_OPTIONS = [
   { value: "used", label: "Usado" },
 ];
 
+// Memoized card wrapper
+const CardItem = memo(function CardItem({ item }: { item: ListItem }) {
+  if (item.type === "car") {
+    return <CarCard car={item.data} />;
+  }
+  return <AdCard ad={item.data} />;
+});
+
+// Load more trigger component
+function LoadMoreTrigger({ 
+  onVisible, 
+  hasNextPage,
+  isFetchingNextPage,
+}: { 
+  onVisible: () => void; 
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+}) {
+  const { ref, isIntersecting } = useIntersectionObserver({
+    threshold: 0.1,
+    rootMargin: "300px",
+    triggerOnce: false,
+  });
+
+  useEffect(() => {
+    if (isIntersecting && hasNextPage && !isFetchingNextPage) {
+      onVisible();
+    }
+  }, [isIntersecting, hasNextPage, isFetchingNextPage, onVisible]);
+
+  if (!hasNextPage) return null;
+
+  return (
+    <div ref={ref as (el: HTMLDivElement | null) => void} className="col-span-full flex justify-center py-6">
+      {isFetchingNextPage && (
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span className="text-sm">Carregando mais veículos...</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Cars() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [cars, setCars] = useState<CarData[]>([]);
   const [carBrands, setCarBrands] = useState<Brand[]>([]);
   const [motorcycleBrands, setMotorcycleBrands] = useState<Brand[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const { hasAds, getNextAd } = useAdsRotation();
+  const { ads, hasAds } = useAdsRotation();
 
-  // Filters - brandId is the brand UUID, not the name
+  // Filters state
   const [search, setSearch] = useState(searchParams.get("busca") || "");
   const [brandId, setBrandId] = useState(searchParams.get("brandId") || "");
   const [yearFrom, setYearFrom] = useState(searchParams.get("ano_de") || "");
@@ -132,8 +166,80 @@ export default function Cars() {
   const [coolingType, setCoolingType] = useState(searchParams.get("refrigeracao") || "");
   const [motorcycleCategory, setMotorcycleCategory] = useState(searchParams.get("categoria_moto") || "");
 
-  // Get brands based on selected category - COMPLETE SEPARATION
-  // Returns BrandDisplay with displayName to distinguish duplicates
+  // Build filters object for query
+  const filters = useMemo((): VehicleFilters => {
+    const priceRangeObj = priceRange 
+      ? priceRanges.find((r) => r.label === priceRange) 
+      : undefined;
+    
+    return {
+      search: search || undefined,
+      brandId: brandId || undefined,
+      yearFrom: yearFrom || undefined,
+      yearTo: yearTo || undefined,
+      priceRange: priceRangeObj ? { min: priceRangeObj.min, max: priceRangeObj.max } : undefined,
+      transmission: transmission || undefined,
+      fuel: fuel || undefined,
+      color: color || undefined,
+      doors: doors || undefined,
+      condition: condition || undefined,
+      category: category || undefined,
+      coolingType: coolingType || undefined,
+      motorcycleCategory: motorcycleCategory || undefined,
+    };
+  }, [search, brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category, coolingType, motorcycleCategory]);
+
+  // Infinite query for vehicles
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+  } = useVehiclesInfiniteQuery(filters);
+
+  // Flatten all pages into a single array
+  const allVehicles = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flatMap((page) => page.vehicles);
+  }, [data?.pages]);
+
+  // Build list items with intercalated ads
+  const listItems = useMemo((): ListItem[] => {
+    if (allVehicles.length === 0) return [];
+
+    const items: ListItem[] = [];
+    let adIndex = 0;
+
+    allVehicles.forEach((vehicle, index) => {
+      items.push({ type: "car" as const, data: vehicle });
+
+      // Insert ad after every 5 cars
+      if (hasAds && (index + 1) % 5 === 0 && adIndex < ads.length) {
+        items.push({ type: "ad" as const, data: ads[adIndex] });
+        adIndex++;
+      }
+    });
+
+    // Add remaining ads at the end
+    if (hasAds && !hasNextPage) {
+      while (adIndex < ads.length) {
+        items.push({ type: "ad" as const, data: ads[adIndex] });
+        adIndex++;
+      }
+    }
+
+    return items;
+  }, [allVehicles, ads, hasAds, hasNextPage]);
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Get brands based on selected category
   const filteredBrands = useMemo((): BrandDisplay[] => {
     if (category === 'motorcycle') {
       return motorcycleBrands.map(b => ({ id: b.id, name: b.name, displayName: b.name }));
@@ -141,27 +247,19 @@ export default function Cars() {
     if (category === 'car') {
       return carBrands.map(b => ({ id: b.id, name: b.name, displayName: b.name }));
     }
-    // "Todos" - combine both arrays with displayName to distinguish duplicates
-    // Find brand names that exist in both categories
+    // "Todos" - combine both arrays
     const carBrandNames = new Set(carBrands.map(b => b.name.toLowerCase()));
     const motorcycleBrandNames = new Set(motorcycleBrands.map(b => b.name.toLowerCase()));
     const duplicateNames = new Set(
       [...carBrandNames].filter(name => motorcycleBrandNames.has(name))
     );
     
-    // Build combined list with displayName
     const allBrands: BrandDisplay[] = [];
     
-    // Add car brands
     carBrands.forEach(b => {
-      allBrands.push({
-        id: b.id,
-        name: b.name,
-        displayName: b.name // Car brands keep original name
-      });
+      allBrands.push({ id: b.id, name: b.name, displayName: b.name });
     });
     
-    // Add motorcycle brands with suffix if name is duplicated
     motorcycleBrands.forEach(b => {
       const isDuplicate = duplicateNames.has(b.name.toLowerCase());
       allBrands.push({
@@ -174,15 +272,13 @@ export default function Cars() {
     return allBrands.sort((a, b) => a.displayName.localeCompare(b.displayName));
   }, [category, carBrands, motorcycleBrands]);
 
-  // Sync category and brandId from URL on mount and URL changes
+  // Sync category and brandId from URL on mount
   useEffect(() => {
     const urlType = searchParams.get("type") || searchParams.get("categoria") || "";
     const urlBrandId = searchParams.get("brandId") || "";
     
-    // Update category if different
     if (urlType !== category) {
       setCategory(urlType);
-      // Only clear filters if changing category without brandId (manual category change)
       if (!urlBrandId) {
         setBrandId("");
         setTransmission("");
@@ -193,15 +289,14 @@ export default function Cars() {
       }
     }
     
-    // Update brandId if different
     if (urlBrandId !== brandId) {
       setBrandId(urlBrandId);
     }
   }, [searchParams]);
 
+  // Fetch brands
   useEffect(() => {
     const fetchBrandsData = async () => {
-      // Fetch car brands (category = 'car') - SEPARATE ARRAY
       const { data: carBrandsData } = await supabase
         .from("brands")
         .select("id, name, category")
@@ -209,7 +304,6 @@ export default function Cars() {
         .eq("category", "car")
         .order("name");
       
-      // Fetch motorcycle brands (category = 'motorcycle') - SEPARATE ARRAY
       const { data: motorcycleBrandsData } = await supabase
         .from("brands")
         .select("id, name, category")
@@ -223,158 +317,7 @@ export default function Cars() {
     fetchBrandsData();
   }, []);
 
-  useEffect(() => {
-    const fetchCars = async () => {
-      setIsLoading(true);
-      
-      let query = supabase
-        .from("cars")
-        .select(`
-          id,
-          slug,
-          code,
-          brand_id,
-          model,
-          year,
-          version,
-          mileage,
-          transmission,
-          fuel,
-          color,
-          price,
-          photos,
-          doors,
-          condition,
-          category,
-          engine_cc,
-          cooling_type,
-          motorcycle_category,
-          created_at,
-          brands:brand_id (
-            name,
-            logo_url
-          )
-        `)
-        .order("created_at", { ascending: false });
-
-      // Apply category filter first (car or motorcycle)
-      if (category) {
-        query = query.eq("category", category);
-      }
-
-      // Apply filters
-      if (search) {
-        query = query.or(`model.ilike.%${search}%,code.ilike.%${search}%`);
-      }
-
-      if (yearFrom) {
-        query = query.gte("year", parseInt(yearFrom));
-      }
-
-      if (yearTo) {
-        query = query.lte("year", parseInt(yearTo));
-      }
-
-      if (priceRange) {
-        const range = priceRanges.find((r) => r.label === priceRange);
-        if (range) {
-          query = query.gte("price", range.min).lte("price", range.max);
-        }
-      }
-
-      // CAR-SPECIFIC FILTERS
-      if (category === "car" || !category) {
-        if (transmission) {
-          query = query.eq("transmission", transmission as "manual" | "automatic" | "cvt" | "semi_automatic");
-        }
-      }
-
-      if (fuel) {
-        query = query.eq("fuel", fuel as "gasoline" | "ethanol" | "flex" | "diesel" | "electric" | "hybrid");
-      }
-
-      if (color) {
-        query = query.eq("color", color);
-      }
-
-      // CAR-SPECIFIC: doors filter
-      if ((category === "car" || !category) && doors) {
-        query = query.eq("doors", parseInt(doors));
-      }
-
-      if (condition) {
-        query = query.eq("condition", condition);
-      }
-
-      // MOTORCYCLE-SPECIFIC FILTERS
-      if (category === "motorcycle") {
-        if (coolingType) {
-          query = query.eq("cooling_type", coolingType);
-        }
-        if (motorcycleCategory) {
-          query = query.eq("motorcycle_category", motorcycleCategory);
-        }
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching cars:", error);
-        setCars([]);
-      } else {
-        // Filter by brand_id if selected
-        let filteredData = data || [];
-        if (brandId) {
-          // brandId is the UUID, match against the brand relationship
-          filteredData = filteredData.filter((car) => {
-            // Get brand_id from the car (it's in the query as brand_id)
-            const carBrandId = (car as any).brand_id;
-            return carBrandId === brandId;
-          });
-        }
-
-        // Transform data to match component expected format
-        const transformedCars: CarData[] = filteredData.map((car) => ({
-          id: car.id,
-          slug: car.slug,
-          code: car.code,
-          model: car.model,
-          year: car.year,
-          version: car.version,
-          mileage: car.mileage,
-          transmission: car.transmission,
-          fuel: car.fuel,
-          color: car.color,
-          price: car.price,
-          photos: car.photos || [],
-          status: "available",
-          doors: car.doors,
-          condition: car.condition,
-          category: car.category,
-          engine_cc: car.engine_cc,
-          cooling_type: car.cooling_type,
-          motorcycle_category: car.motorcycle_category,
-          brands: car.brands,
-        }));
-        
-        // When no category filter (all vehicles), randomize the order
-        if (!category) {
-          for (let i = transformedCars.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [transformedCars[i], transformedCars[j]] = [transformedCars[j], transformedCars[i]];
-          }
-        }
-        
-        setCars(transformedCars);
-      }
-      setIsLoading(false);
-    };
-
-    fetchCars();
-  }, [search, brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category, coolingType, motorcycleCategory]);
-
   const handleCategoryChange = (newCategory: string) => {
-    // Clear category-specific filters when changing
     setBrandId("");
     setTransmission("");
     setFuel("");
@@ -383,7 +326,6 @@ export default function Cars() {
     setMotorcycleCategory("");
     setCategory(newCategory);
     
-    // Update URL with type param
     if (newCategory) {
       setSearchParams({ type: newCategory });
     } else {
@@ -409,12 +351,11 @@ export default function Cars() {
   };
 
   const hasFilters = search || brandId || yearFrom || yearTo || priceRange || transmission || fuel || color || doors || condition || category || coolingType || motorcycleCategory;
-
   const activeFiltersCount = [brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, coolingType, motorcycleCategory].filter(Boolean).length;
 
   const FilterContent = () => (
     <div className="space-y-4">
-      {/* Category Selector - TOP OF FILTERS */}
+      {/* Category Selector */}
       <div>
         <label className="text-sm font-medium text-foreground mb-2 block">
           Tipo de Veículo
@@ -458,7 +399,7 @@ export default function Cars() {
         </div>
       </div>
 
-      {/* Brand - Filtered by category, using brandId */}
+      {/* Brand */}
       <div>
         <label className="text-sm font-medium text-foreground mb-2 block">
           Marca
@@ -541,7 +482,7 @@ export default function Cars() {
       {/* CAR-SPECIFIC FILTERS */}
       {(category === "car" || !category) && (
         <>
-          {/* Transmission - Only for cars */}
+          {/* Transmission */}
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">
               Câmbio
@@ -561,7 +502,7 @@ export default function Cars() {
             </Select>
           </div>
 
-          {/* Doors - Only for cars */}
+          {/* Doors */}
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">
               Portas
@@ -583,7 +524,7 @@ export default function Cars() {
         </>
       )}
 
-      {/* Fuel - Different options based on category */}
+      {/* Fuel */}
       <div>
         <label className="text-sm font-medium text-foreground mb-2 block">
           Combustível
@@ -606,7 +547,7 @@ export default function Cars() {
       {/* MOTORCYCLE-SPECIFIC FILTERS */}
       {category === "motorcycle" && (
         <>
-          {/* Cooling Type - Only for motorcycles */}
+          {/* Cooling Type */}
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">
               Refrigeração
@@ -626,7 +567,7 @@ export default function Cars() {
             </Select>
           </div>
 
-          {/* Motorcycle Category - Only for motorcycles */}
+          {/* Motorcycle Category */}
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">
               Categoria da Moto
@@ -747,13 +688,10 @@ export default function Cars() {
                 </Button>
               </div>
               
-              {/* Filter Button with Sheet for Mobile/All */}
+              {/* Filter Button */}
               <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
                 <SheetTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="h-12 gap-2 shrink-0"
-                  >
+                  <Button variant="outline" className="h-12 gap-2 shrink-0">
                     <SlidersHorizontal className="h-4 w-4" />
                     Filtros
                     {activeFiltersCount > 0 && (
@@ -778,58 +716,43 @@ export default function Cars() {
             <p className="text-sm text-muted-foreground mt-3">
               {isLoading ? "Carregando..." : (
                 <span className="font-medium">
-                  Resultados encontrados ({cars.length})
+                  Resultados encontrados ({allVehicles.length}{hasNextPage ? "+" : ""})
                 </span>
               )}
             </p>
           </div>
 
-          {/* Cars Grid with Ads Intercalation */}
+          {/* Cars Grid - Natural page scroll, no internal overflow */}
           {isLoading ? (
             <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="aspect-[4/5] rounded-xl bg-card" />
               ))}
             </div>
-          ) : cars.length > 0 ? (
+          ) : isError ? (
+            <div className="text-center py-16 bg-card/50 rounded-xl border border-border/50">
+              <p className="text-muted-foreground text-lg font-medium">
+                Erro ao carregar veículos
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Tente novamente mais tarde
+              </p>
+            </div>
+          ) : listItems.length > 0 ? (
             <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {(() => {
-                const items: React.ReactNode[] = [];
-
-                cars.forEach((car, index) => {
-                  items.push(<CarCard key={car.id} car={car} />);
-
-                  // Insert ad after every 5 cars, but never as the first item
-                  if (
-                    hasAds &&
-                    cars.length >= 5 &&
-                    (index + 1) % 5 === 0 &&
-                    index + 1 < cars.length
-                  ) {
-                    const ad = getNextAd();
-                    if (ad) {
-                      items.push(
-                        <AdCard key={`cars-ad-${ad.id}-${index}`} ad={ad} />
-                      );
-                    }
-                  }
-                });
-
-                // Always ensure a final ad at the end of the list
-                if (hasAds) {
-                  const finalAd = getNextAd();
-                  if (finalAd) {
-                    items.push(
-                      <AdCard
-                        key={`cars-ad-final-${finalAd.id}`}
-                        ad={finalAd}
-                      />
-                    );
-                  }
-                }
-
-                return items;
-              })()}
+              {listItems.map((item) => (
+                <CardItem
+                  key={item.type === 'car' ? `car-${item.data.id}` : `ad-${item.data.id}`}
+                  item={item}
+                />
+              ))}
+              
+              {/* Load more trigger */}
+              <LoadMoreTrigger
+                onVisible={handleLoadMore}
+                hasNextPage={!!hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+              />
             </div>
           ) : (
             <div className="text-center py-16 bg-card/50 rounded-xl border border-border/50">
