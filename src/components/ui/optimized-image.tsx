@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, memo, useMemo } from "react";
+import React, { useEffect, useState, useCallback, memo, useMemo, forwardRef } from "react";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,6 @@ interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> 
   containerClassName?: string;
   showSkeleton?: boolean;
 }
-
 // Supabase Storage URL pattern
 const SUPABASE_STORAGE_REGEX =
   /^https:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\//;
@@ -84,7 +83,7 @@ function getOptimizedUrl(
  * - Fallback for broken images
  * - No re-renders on scroll
  */
-export const OptimizedImage = memo(function OptimizedImage({
+const OptimizedImageInner = forwardRef<HTMLDivElement, OptimizedImageProps>(function OptimizedImage({
   src,
   alt,
   width,
@@ -98,7 +97,7 @@ export const OptimizedImage = memo(function OptimizedImage({
   showSkeleton = true,
   onError,
   ...props
-}: OptimizedImageProps) {
+}, forwardedRef) {
   // Validate src early - use fallback if invalid
   const safeSrc = isValidSrc(src) ? src : fallback;
   const cacheKey = `${safeSrc}|w:${width ?? ""}|h:${height ?? ""}|q:${quality}`;
@@ -152,9 +151,23 @@ export const OptimizedImage = memo(function OptimizedImage({
     return undefined;
   }, [aspectRatio, width, height]);
 
+  // Combine forwarded ref with intersection observer ref
+  const combinedRef = useCallback((node: HTMLDivElement | null) => {
+    // Set the intersection observer ref if not eager
+    if (!eager) {
+      (ref as React.RefCallback<HTMLDivElement>)(node);
+    }
+    // Forward ref
+    if (typeof forwardedRef === 'function') {
+      forwardedRef(node);
+    } else if (forwardedRef) {
+      forwardedRef.current = node;
+    }
+  }, [eager, ref, forwardedRef]);
+
   return (
     <div
-      ref={eager ? undefined : ref as React.RefCallback<HTMLDivElement>}
+      ref={combinedRef}
       className={cn("relative overflow-hidden", containerClassName)}
       style={containerStyle}
     >
@@ -185,6 +198,8 @@ export const OptimizedImage = memo(function OptimizedImage({
     </div>
   );
 });
+
+export const OptimizedImage = memo(OptimizedImageInner);
 
 /**
  * Get srcset for responsive images
