@@ -5,6 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -45,10 +51,11 @@ import {
 } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Check, Calendar, AlertCircle, Trash2, Eye, MousePointerClick, Send } from "lucide-react";
+import { Plus, Check, Calendar, AlertCircle, Trash2, Eye, MousePointerClick, Send, CalendarIcon } from "lucide-react";
 import { format, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { generateWhatsAppUrl } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 interface Ad {
   id: string;
@@ -128,6 +135,7 @@ export default function AdminPlanilha() {
     monthly_fee: "",
     whatsapp_number: "",
   });
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   useEffect(() => {
     fetchData();
@@ -258,6 +266,7 @@ export default function AdminPlanilha() {
       monthly_fee: "",
       whatsapp_number: "",
     });
+    setSelectedDate(new Date());
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -271,20 +280,37 @@ export default function AdminPlanilha() {
     setIsSubmitting(true);
 
     try {
-      // Use today's day as billing_day (fixed due date)
-      const billingDay = new Date().getDate();
+      // Use selected date's day as billing_day (fixed due date)
+      const billingDay = selectedDate.getDate();
+      const referenceMonth = selectedDate.getMonth() + 1;
+      const referenceYear = selectedDate.getFullYear();
 
-      const { error } = await supabase.from("ad_billing").insert({
+      // Insert the billing record with the selected date as created_at
+      const { data: newBilling, error: billingError } = await supabase.from("ad_billing").insert({
         ad_id: formData.ad_id,
         company_name: formData.company_name,
         monthly_fee: parseFloat(formData.monthly_fee),
         billing_day: billingDay,
         whatsapp_number: formData.whatsapp_number || null,
+        created_at: selectedDate.toISOString(),
+      }).select().single();
+
+      if (billingError) throw billingError;
+
+      // Automatically mark the first month as paid
+      const { error: paymentError } = await supabase.from("ad_billing_payments").insert({
+        billing_id: newBilling.id,
+        reference_month: referenceMonth,
+        reference_year: referenceYear,
+        paid_at: selectedDate.toISOString(),
       });
 
-      if (error) throw error;
+      if (paymentError) {
+        console.error("Error creating initial payment:", paymentError);
+        // Don't throw - billing was created successfully
+      }
 
-      toast.success("Cobrança cadastrada com sucesso");
+      toast.success("Cobrança cadastrada com primeiro mês já pago");
       setIsDialogOpen(false);
       resetForm();
       fetchData();
@@ -456,10 +482,36 @@ export default function AdminPlanilha() {
                   />
                 </div>
 
-                <p className="text-sm text-muted-foreground">
-                  <Calendar className="inline h-4 w-4 mr-1" />
-                  O vencimento será fixado no dia de hoje ({new Date().getDate()}) de cada mês.
-                </p>
+                <div className="space-y-2">
+                  <Label>Data de Cadastro (Vencimento Fixo) *</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !selectedDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : <span>Selecione a data</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-50" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => date && setSelectedDate(date)}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                        locale={ptBR}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-xs text-muted-foreground">
+                    O vencimento será fixado no dia {selectedDate.getDate()} de cada mês. O primeiro mês será marcado como pago automaticamente.
+                  </p>
+                </div>
 
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? "Salvando..." : "Cadastrar"}
