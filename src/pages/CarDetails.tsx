@@ -280,9 +280,9 @@ export default function CarDetails() {
           </Link>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 w-full max-w-screen-lg mx-auto">
           {/* Gallery */}
-          <div className="space-y-4">
+          <div className="space-y-4 min-h-0 w-full">
             {/* Main Image */}
             <div className="relative w-full max-h-[70vh] md:max-h-none md:aspect-[4/3] bg-muted rounded-2xl overflow-hidden">
               <OptimizedImage
@@ -292,8 +292,8 @@ export default function CarDetails() {
                 height={600}
                 quality={85}
                 eager={currentPhotoIndex === 0}
-                className="w-full h-auto max-h-[70vh] md:max-h-none md:h-full object-contain md:object-cover"
-                containerClassName="w-full h-auto md:h-full flex items-center justify-center"
+                className="w-full h-auto object-contain md:object-cover"
+                containerClassName="w-full h-auto max-h-[70vh] md:max-h-none md:h-full flex items-center justify-center"
               />
 
               {/* Status Badge */}
@@ -379,7 +379,7 @@ export default function CarDetails() {
           </div>
 
           {/* Details */}
-          <div className="space-y-6 text-base md:text-sm leading-relaxed md:leading-normal">
+          <div className="space-y-6 min-h-0 text-base md:text-sm leading-relaxed md:leading-normal">
             {/* Title & Price */}
             <div>
               <div className="flex items-start justify-between gap-4">
