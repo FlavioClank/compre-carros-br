@@ -1,20 +1,15 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ALLOWED_ORIGINS = [
-  "https://kgtscjvgipowuvuindxt.lovable.app",
-  "https://lovable.dev",
-  "http://localhost:5173",
-  "http://localhost:8080",
-];
-
 function getCorsHeaders(origin: string | null): Record<string, string> {
-  const isPreviewOrigin = origin?.endsWith(".lovableproject.com");
-  const allowedOrigin = origin && (ALLOWED_ORIGINS.includes(origin) || isPreviewOrigin)
-    ? origin
-    : ALLOWED_ORIGINS[0];
+  // Accept all Lovable domains dynamically
+  const isAllowed = origin && (
+    origin.endsWith(".lovable.app") ||
+    origin.endsWith(".lovableproject.com") ||
+    origin.startsWith("http://localhost:")
+  );
 
   return {
-    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Origin": isAllowed ? origin : "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
