@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo, useMemo } from "react";
+import React, { useEffect, useState, useCallback, memo, useMemo } from "react";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +16,11 @@ interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> 
 }
 
 // Supabase Storage URL pattern
-const SUPABASE_STORAGE_REGEX = /^https:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\//;
+const SUPABASE_STORAGE_REGEX =
+  /^https:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\//;
+
+// In-memory cache: prevents re-showing skeleton/fade for images already loaded in this session
+const imageLoadCache = new Set<string>();
 
 /**
  * Generates optimized image URL using Supabase Image Transformation
@@ -53,7 +57,7 @@ function getOptimizedUrl(
 
 /**
  * OptimizedImage - Performance-optimized image component
- * 
+ *
  * Features:
  * - Lazy loading with IntersectionObserver (200px rootMargin)
  * - WebP conversion via Supabase Image Transformation
@@ -77,7 +81,9 @@ export const OptimizedImage = memo(function OptimizedImage({
   onError,
   ...props
 }: OptimizedImageProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const cacheKey = `${src}|w:${width ?? ""}|h:${height ?? ""}|q:${quality}`;
+
+  const [isLoaded, setIsLoaded] = useState(() => imageLoadCache.has(cacheKey));
   const [hasError, setHasError] = useState(false);
 
   // Use lazy loading unless eager is true
@@ -94,9 +100,15 @@ export const OptimizedImage = memo(function OptimizedImage({
     return getOptimizedUrl(src, { width, height, quality });
   }, [src, width, height, quality, hasError, fallback]);
 
+  // If the same image is re-mounted later in the session, keep it as loaded
+  useEffect(() => {
+    if (imageLoadCache.has(cacheKey)) setIsLoaded(true);
+  }, [cacheKey]);
+
   const handleLoad = useCallback(() => {
+    imageLoadCache.add(cacheKey);
     setIsLoaded(true);
-  }, []);
+  }, [cacheKey]);
 
   const handleError = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -166,3 +178,4 @@ export function getResponsiveSrcSet(
     .map((w) => `${getOptimizedUrl(src, { width: w, quality })} ${w}w`)
     .join(", ");
 }
+

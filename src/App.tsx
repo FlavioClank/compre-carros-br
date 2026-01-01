@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Public Pages
 import Index from "./pages/Index";
@@ -35,98 +36,140 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToTop />
-          <Routes>
-            {/* PUBLIC ROUTES - No auth required */}
-            <Route path="/" element={<Index />} />
-            <Route path="/home" element={<Index />} />
-            <Route path="/carros" element={<Cars />} />
-            {/* Vehicle detail page by slug (SEO-friendly) or UUID (fallback) */}
-            <Route path="/carro/:slug" element={<CarDetails />} />
-            <Route path="/marcas" element={<Brands />} />
-            <Route path="/login" element={<Login />} />
+    <ErrorBoundary>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <Routes>
+              {/* PUBLIC ROUTES - No auth required */}
+              <Route path="/" element={<Index />} />
+              <Route path="/home" element={<Index />} />
+              <Route path="/carros" element={<Cars />} />
+              {/* Vehicle detail page by slug (SEO-friendly) or UUID (fallback) */}
+              <Route path="/carro/:slug" element={<CarDetails />} />
+              <Route path="/marcas" element={<Brands />} />
+              <Route path="/login" element={<Login />} />
 
-            {/* ADMIN ROUTES - Super Admin only */}
-            <Route path="/admin/dashboard" element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/garages" element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <AdminGarages />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/cars" element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <AdminCars />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/brands" element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <AdminBrands />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/history" element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <AdminHistory />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/logs" element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <AdminLogs />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/ads" element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <AdminAds />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/banners" element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <AdminBanners />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/stats" element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <AdminStats />
-              </ProtectedRoute>
-            } />
+              {/* ADMIN ROUTES - Super Admin only */}
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["super_admin"]}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/garages"
+                element={
+                  <ProtectedRoute allowedRoles={["super_admin"]}>
+                    <AdminGarages />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/cars"
+                element={
+                  <ProtectedRoute allowedRoles={["super_admin"]}>
+                    <AdminCars />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/brands"
+                element={
+                  <ProtectedRoute allowedRoles={["super_admin"]}>
+                    <AdminBrands />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/history"
+                element={
+                  <ProtectedRoute allowedRoles={["super_admin"]}>
+                    <AdminHistory />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/logs"
+                element={
+                  <ProtectedRoute allowedRoles={["super_admin"]}>
+                    <AdminLogs />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/ads"
+                element={
+                  <ProtectedRoute allowedRoles={["super_admin"]}>
+                    <AdminAds />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/banners"
+                element={
+                  <ProtectedRoute allowedRoles={["super_admin"]}>
+                    <AdminBanners />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/stats"
+                element={
+                  <ProtectedRoute allowedRoles={["super_admin"]}>
+                    <AdminStats />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* GARAGE ROUTES - Garage only */}
-            <Route path="/garage/dashboard" element={
-              <ProtectedRoute allowedRoles={["garage"]}>
-                <GarageDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/garage/cars" element={
-              <ProtectedRoute allowedRoles={["garage"]}>
-                <GarageCars />
-              </ProtectedRoute>
-            } />
-            <Route path="/garage/cars/new" element={
-              <ProtectedRoute allowedRoles={["garage"]}>
-                <GarageCars />
-              </ProtectedRoute>
-            } />
-            <Route path="/garage/history" element={
-              <ProtectedRoute allowedRoles={["garage"]}>
-                <GarageHistory />
-              </ProtectedRoute>
-            } />
+              {/* GARAGE ROUTES - Garage only */}
+              <Route
+                path="/garage/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["garage"]}>
+                    <GarageDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/garage/cars"
+                element={
+                  <ProtectedRoute allowedRoles={["garage"]}>
+                    <GarageCars />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/garage/cars/new"
+                element={
+                  <ProtectedRoute allowedRoles={["garage"]}>
+                    <GarageCars />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/garage/history"
+                element={
+                  <ProtectedRoute allowedRoles={["garage"]}>
+                    <GarageHistory />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* CATCH-ALL */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+              {/* CATCH-ALL */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   </QueryClientProvider>
 );
 
 export default App;
+
