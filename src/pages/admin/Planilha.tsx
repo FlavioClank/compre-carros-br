@@ -380,7 +380,19 @@ export default function AdminPlanilha() {
   function generateWeeklyReport(billing: BillingRecord) {
     const metrics = adMetrics[billing.ad_id] || { weeklyViews: 0, weeklyClicks: 0 };
     
-    const report = `Olá ${billing.company_name}, Notícias da semana sobre o seu anúncio na CompreCarrosBr! 🚀 O seu anúncio continua atraindo interessados! 📊 Relatório Rápido: Visualizações: ${metrics.weeklyViews} pessoas viram sua empresa. Interessados: ${metrics.weeklyClicks} cliques diretos no seu anúncio. Nossa plataforma está trabalhando para gerar visibilidade e novos clientes para você! Atenciosamente, Equipe CompreCarrosBr`;
+    const report = `Olá, *${billing.company_name}*! 👋
+
+Notícias da semana sobre o seu anúncio na *CompreCarrosBr*! 🚀
+O seu anúncio continua atraindo interessados!
+
+📊 *RELATÓRIO RÁPIDO:*
+👀 *Visualizações:* ${metrics.weeklyViews} pessoas viram sua empresa.
+🖱️ *Interessados:* ${metrics.weeklyClicks} cliques diretos no seu anúncio.
+
+Nossa plataforma está trabalhando para gerar visibilidade e novos clientes para você!
+
+Atenciosamente,
+*Equipe CompreCarrosBr* 🚗💨`;
 
     return report;
   }
