@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import useEmblaCarousel from "embla-carousel-react";
 import { generateWhatsAppUrl } from "@/lib/constants";
 import { trackClick } from "@/lib/analytics";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface Banner {
   id: string;
@@ -84,15 +85,20 @@ export function HomeBannerCarousel() {
 
   if (isLoading || banners.length === 0) return null;
 
-  const renderImage = (banner: Banner) => {
+  const renderImage = useCallback((banner: Banner, eager: boolean = false) => {
     const href = getBannerHref(banner);
 
     const image = (
-      <img
+      <OptimizedImage
         src={banner.image_url}
         alt="Banner promocional"
+        width={1200}
+        height={600}
+        quality={80}
+        eager={eager}
         className="w-full h-auto"
-        style={{ display: "block" }}
+        containerClassName="w-full"
+        showSkeleton={true}
       />
     );
 
@@ -108,14 +114,14 @@ export function HomeBannerCarousel() {
         {image}
       </a>
     );
-  };
+  }, []);
 
   // Single banner - no carousel needed
   if (banners.length === 1) {
     return (
       <section className="w-full flex justify-center">
         <div className="relative w-full md:w-[70%]">
-          {renderImage(banners[0])}
+          {renderImage(banners[0], true)}
 
           {/* Mobile controls */}
           <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-2 md:hidden pointer-events-none">
@@ -166,9 +172,9 @@ export function HomeBannerCarousel() {
     <section className="w-full overflow-hidden flex justify-center">
       <div className="relative w-full md:w-[70%] overflow-hidden" ref={emblaRef}>
         <div className="flex">
-          {banners.map((banner) => (
+          {banners.map((banner, index) => (
             <div key={banner.id} className="flex-[0_0_100%] min-w-0">
-              {renderImage(banner)}
+              {renderImage(banner, index === 0)}
             </div>
           ))}
         </div>

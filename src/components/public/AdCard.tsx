@@ -1,7 +1,9 @@
+import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 import { generateWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/constants";
 import { trackClick } from "@/lib/analytics";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface Ad {
   id: string;
@@ -19,7 +21,7 @@ interface AdCardProps {
   ad: Ad;
 }
 
-export function AdCard({ ad }: AdCardProps) {
+export const AdCard = memo(function AdCard({ ad }: AdCardProps) {
   const href = getAdHref(ad);
   const CardWrapper = href ? "a" : "div";
   const wrapperProps = href
@@ -49,15 +51,14 @@ export function AdCard({ ad }: AdCardProps) {
     >
       <VehicleCardShell>
         <div className="relative block aspect-[16/10] overflow-hidden">
-          <img
+          <OptimizedImage
             src={imageUrl}
             alt={`Publicidade: ${ad.title}`}
-            loading="lazy"
+            width={400}
+            height={250}
+            quality={75}
             className="w-full h-full object-cover"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = "/placeholder.svg";
-            }}
+            containerClassName="w-full h-full"
           />
 
           <Badge
@@ -70,7 +71,7 @@ export function AdCard({ ad }: AdCardProps) {
       </VehicleCardShell>
     </CardWrapper>
   );
-}
+});
 
 function getAdHref(ad: Ad): string | undefined {
   const type = ad.click_type || (ad.link ? "link" : null);

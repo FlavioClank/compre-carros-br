@@ -1,7 +1,9 @@
+import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 import { generateWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/constants";
 import { trackClick } from "@/lib/analytics";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface Ad {
   id: string;
@@ -19,7 +21,7 @@ interface AdCardSingleProps {
   ad: Ad;
 }
 
-export function AdCardSingle({ ad }: AdCardSingleProps) {
+export const AdCardSingle = memo(function AdCardSingle({ ad }: AdCardSingleProps) {
   const href = getAdHref(ad);
   const CardWrapper = href ? "a" : "div";
   const wrapperProps = href
@@ -52,23 +54,27 @@ export function AdCardSingle({ ad }: AdCardSingleProps) {
         <div className="relative w-full h-28 md:h-40 lg:h-44 overflow-hidden">
           {/* Blur background layer - DESKTOP ONLY - soft fill for empty space */}
           <div className="hidden md:block absolute inset-0">
-            <img
+            <OptimizedImage
               src={imageUrl}
-              aria-hidden="true"
+              alt=""
+              width={200}
+              height={150}
+              quality={30}
               className="w-full h-full object-cover blur-md scale-105 opacity-25"
+              containerClassName="w-full h-full"
+              showSkeleton={false}
             />
           </div>
           
           {/* Main image - cover on mobile (no white bands), contain on desktop */}
-          <img
+          <OptimizedImage
             src={imageUrl}
             alt={`Publicidade: ${ad.title}`}
-            loading="lazy"
+            width={640}
+            height={360}
+            quality={75}
             className="relative z-10 w-full h-full object-cover object-center md:object-contain bg-transparent"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = "/placeholder.svg";
-            }}
+            containerClassName="w-full h-full"
           />
 
           <Badge
@@ -81,7 +87,7 @@ export function AdCardSingle({ ad }: AdCardSingleProps) {
       </VehicleCardShell>
     </CardWrapper>
   );
-}
+});
 
 function getAdHref(ad: Ad): string | undefined {
   const type = ad.click_type || (ad.link ? "link" : null);

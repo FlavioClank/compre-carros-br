@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import { Car, Fuel, Gauge, Calendar, Bike } from "lucide-react";
 import {
@@ -17,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { generateCarUrl } from "@/lib/utils";
 import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 import { trackClick } from "@/lib/analytics";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface CarCardProps {
   car: {
@@ -44,7 +46,7 @@ interface CarCardProps {
   };
 }
 
-export function CarCard({ car }: CarCardProps) {
+export const CarCard = memo(function CarCard({ car }: CarCardProps) {
   const brandName = car.brands?.name || "";
   const mainPhoto = car.photos?.[0] || "/placeholder.svg";
   const invertBrandLogo = ["toyota", "nissan", "audi", "volkswagen"].includes(brandName.toLowerCase());
@@ -69,14 +71,14 @@ export function CarCard({ car }: CarCardProps) {
     <VehicleCardShell>
       {/* Image */}
       <Link to={carUrl} className="relative block aspect-[16/10] overflow-hidden">
-        <img
+        <OptimizedImage
           src={mainPhoto}
           alt={`${brandName} ${car.model}`}
+          width={400}
+          height={250}
+          quality={70}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = "/placeholder.svg";
-          }}
+          containerClassName="w-full h-full"
         />
         
         {/* Status Badge */}
@@ -189,4 +191,4 @@ export function CarCard({ car }: CarCardProps) {
       </div>
     </VehicleCardShell>
   );
-}
+});
