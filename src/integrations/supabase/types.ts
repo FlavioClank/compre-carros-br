@@ -44,6 +44,82 @@ export type Database = {
         }
         Relationships: []
       }
+      ad_billing: {
+        Row: {
+          ad_id: string
+          billing_day: number
+          company_name: string
+          created_at: string
+          id: string
+          monthly_fee: number
+          updated_at: string
+        }
+        Insert: {
+          ad_id: string
+          billing_day: number
+          company_name: string
+          created_at?: string
+          id?: string
+          monthly_fee?: number
+          updated_at?: string
+        }
+        Update: {
+          ad_id?: string
+          billing_day?: number
+          company_name?: string
+          created_at?: string
+          id?: string
+          monthly_fee?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_billing_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: true
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_billing_payments: {
+        Row: {
+          billing_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          paid_at: string
+          reference_month: number
+          reference_year: number
+        }
+        Insert: {
+          billing_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          reference_month: number
+          reference_year: number
+        }
+        Update: {
+          billing_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          reference_month?: number
+          reference_year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_billing_payments_billing_id_fkey"
+            columns: ["billing_id"]
+            isOneToOne: false
+            referencedRelation: "ad_billing"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ads: {
         Row: {
           category: string

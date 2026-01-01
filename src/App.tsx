@@ -26,6 +26,7 @@ import AdminLogs from "./pages/admin/Logs";
 import AdminAds from "./pages/admin/Ads";
 import AdminBanners from "./pages/admin/Banners";
 import AdminStats from "./pages/admin/Stats";
+import AdminPlanilha from "./pages/admin/Planilha";
 
 // Garage Pages
 import GarageDashboard from "./pages/garage/Dashboard";
@@ -134,6 +135,14 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={["super_admin"]}>
                     <AdminStats />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/planilha"
+                element={
+                  <ProtectedRoute allowedRoles={["super_admin"]}>
+                    <AdminPlanilha />
                   </ProtectedRoute>
                 }
               />

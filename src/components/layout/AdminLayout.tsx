@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { SITE_NAME } from "@/lib/constants";
+import { usePendingBillings } from "@/hooks/usePendingBillings";
 import {
   Car,
   LayoutDashboard,
@@ -10,14 +11,14 @@ import {
   Package,
   History,
   FileText,
-  Settings,
   LogOut,
   Menu,
   X,
-  ChevronDown,
   Tags,
   Megaphone,
   BarChart3,
+  Bell,
+  CreditCard,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -31,6 +32,7 @@ const menuItems = [
   { icon: Tags, label: "Marcas", href: "/admin/brands" },
   { icon: Megaphone, label: "Anúncios", href: "/admin/ads" },
   { icon: Megaphone, label: "Banners", href: "/admin/banners" },
+  { icon: CreditCard, label: "Planilha", href: "/admin/planilha" },
   { icon: BarChart3, label: "Estatísticas", href: "/admin/stats" },
   { icon: History, label: "Histórico", href: "/admin/history" },
   { icon: FileText, label: "Logs", href: "/admin/logs" },
@@ -41,6 +43,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { pendingCount } = usePendingBillings();
 
   const handleSignOut = async () => {
     await signOut();
@@ -51,8 +54,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Pending Billings Notification */}
+      {pendingCount > 0 && (
+        <Link
+          to="/admin/planilha"
+          className="fixed top-0 left-0 right-0 z-50 bg-destructive text-destructive-foreground py-2 px-4 flex items-center justify-center gap-2 text-sm font-medium hover:bg-destructive/90 transition-colors lg:left-64"
+        >
+          <Bell className="h-4 w-4" />
+          <span>
+            Notificação: {pendingCount} recebimento{pendingCount > 1 ? "s" : ""} pendente{pendingCount > 1 ? "s" : ""}. Atualize sua planilha.
+          </span>
+        </Link>
+      )}
       {/* Mobile Header */}
-      <header className="lg:hidden sticky top-0 z-50 h-16 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4">
+      <header className={`lg:hidden sticky z-40 h-16 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4 ${pendingCount > 0 ? "top-9" : "top-0"}`}>
         <Link to="/admin/dashboard" className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
             <Car className="h-4 w-4 text-sidebar-primary-foreground" />
@@ -151,7 +166,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       )}
 
       {/* Main Content */}
-      <main className="lg:pl-64 min-h-screen">
+      <main className={`lg:pl-64 min-h-screen ${pendingCount > 0 ? "pt-9" : ""}`}>
         <div className="p-6 lg:p-8">{children}</div>
       </main>
     </div>
