@@ -129,6 +129,8 @@ export default function AdminPlanilha() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [previewBilling, setPreviewBilling] = useState<BillingRecord | null>(null);
+  const [reportMonth, setReportMonth] = useState<number>(new Date().getMonth() + 1);
+  const [reportYear, setReportYear] = useState<number>(new Date().getFullYear());
   const [formData, setFormData] = useState({
     ad_id: "",
     company_name: "",
@@ -377,16 +379,16 @@ export default function AdminPlanilha() {
     }
   }
 
-  function generateWeeklyReport(billing: BillingRecord) {
-    const metrics = adMetrics[billing.ad_id] || { weeklyViews: 0, weeklyClicks: 0 };
+  function generateMonthlyReport(billing: BillingRecord, month: number, year: number) {
+    const metrics = adMetrics[billing.ad_id] || { views: 0, clicks: 0 };
+    const monthName = format(new Date(year, month - 1, 1), "MMMM 'de' yyyy", { locale: ptBR });
 
-    // Mantém o texto com emojis nativos e quebras de linha via \n; a URL deve sempre usar encodeURIComponent.
     const mensagem = `Olá, *${billing.company_name}*! 👋\n\n` +
-      `Notícias da semana sobre o seu anúncio na *CompreCarrosBr*! 🚀\n` +
+      `Notícias do mês sobre o seu anúncio na *CompreCarrosBr*! 🚀\n` +
       `O seu anúncio continua atraindo interessados!\n\n` +
-      `📊 *RELATÓRIO RÁPIDO:*\n` +
-      `👀 *Visualizações:* ${metrics.weeklyViews} pessoas viram sua empresa.\n` +
-      `🖱️ *Interessados:* ${metrics.weeklyClicks} cliques diretos no seu anúncio.\n\n` +
+      `📊 *RELATÓRIO DE ${monthName.toUpperCase()}:*\n` +
+      `👀 *Visualizações:* ${metrics.views} pessoas viram sua empresa.\n` +
+      `🖱️ *Interessados:* ${metrics.clicks} cliques diretos no seu anúncio.\n\n` +
       `Nossa plataforma está trabalhando para gerar visibilidade e novos clientes para você!\n\n` +
       `Atenciosamente,\n` +
       `*Equipe CompreCarrosBr* 🚗💨`;
@@ -394,12 +396,12 @@ export default function AdminPlanilha() {
     return mensagem;
   }
 
-  function getWhatsAppReportUrl(billing: BillingRecord): string | null {
+  function getWhatsAppReportUrl(billing: BillingRecord, month: number, year: number): string | null {
     // Prioriza o WhatsApp da cobrança, senão usa o do anúncio
     const whatsappNumber = billing.whatsapp_number || billing.ad_whatsapp;
     if (!whatsappNumber) return null;
 
-    const mensagem = generateWeeklyReport(billing);
+    const mensagem = generateMonthlyReport(billing, month, year);
     const telefone = whatsappNumber.replace(/\D/g, "");
 
     // Padrão exigido: https://wa.me/55.../?text= + encodeURIComponent(mensagem)
@@ -610,7 +612,7 @@ export default function AdminPlanilha() {
                       const isOverdue = status === "pending" && isPastDue;
                       const metrics = adMetrics[billing.ad_id] || { views: 0, clicks: 0, weeklyViews: 0, weeklyClicks: 0 };
                       const isPaid = status === "paid";
-                      const whatsappUrl = getWhatsAppReportUrl(billing);
+                      // whatsappUrl not used directly anymore - modal handles it
 
                       return (
                         <TableRow
@@ -724,19 +726,60 @@ export default function AdminPlanilha() {
           </CardContent>
         </Card>
 
-        {/* Preview Report Dialog */}
+        {/* Preview Monthly Report Dialog */}
         <Dialog open={!!previewBilling} onOpenChange={() => setPreviewBilling(null)}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Pré-visualização do Relatório
+                Gerar Relatório Mensal
               </DialogTitle>
             </DialogHeader>
             {previewBilling && (
               <div className="space-y-4">
+                {/* Month/Year Selector */}
+                <div className="flex gap-3">
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">Mês</Label>
+                    <Select
+                      value={String(reportMonth)}
+                      onValueChange={(v) => setReportMonth(Number(v))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                          <SelectItem key={m} value={String(m)}>
+                            {format(new Date(2024, m - 1, 1), "MMMM", { locale: ptBR })}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-24 space-y-1">
+                    <Label className="text-xs">Ano</Label>
+                    <Select
+                      value={String(reportYear)}
+                      onValueChange={(v) => setReportYear(Number(v))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[2024, 2025, 2026].map((y) => (
+                          <SelectItem key={y} value={String(y)}>
+                            {y}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Report Preview */}
                 <div className="bg-muted rounded-lg p-4 whitespace-pre-wrap text-sm leading-relaxed border border-border/50 shadow-inner">
-                  {generateWeeklyReport(previewBilling)}
+                  {generateMonthlyReport(previewBilling, reportMonth, reportYear)}
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
                   O texto acima será copiado para a área de transferência. Cole no WhatsApp com Ctrl+V.
@@ -748,7 +791,7 @@ export default function AdminPlanilha() {
                   <Button
                     className="bg-green-600 hover:bg-green-700 text-white"
                     onClick={async () => {
-                      const texto = generateWeeklyReport(previewBilling);
+                      const texto = generateMonthlyReport(previewBilling, reportMonth, reportYear);
                       const whatsappNumber = previewBilling.whatsapp_number || previewBilling.ad_whatsapp;
                       
                       // Copiar texto para clipboard

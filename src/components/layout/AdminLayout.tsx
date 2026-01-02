@@ -19,6 +19,7 @@ import {
   BarChart3,
   Bell,
   CreditCard,
+  Wallet,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -33,6 +34,7 @@ const menuItems = [
   { icon: Megaphone, label: "Anúncios", href: "/admin/ads" },
   { icon: Megaphone, label: "Banners", href: "/admin/banners" },
   { icon: CreditCard, label: "Planilha", href: "/admin/planilha" },
+  { icon: Wallet, label: "Gastos", href: "/admin/gastos" },
   { icon: BarChart3, label: "Estatísticas", href: "/admin/stats" },
   { icon: History, label: "Histórico", href: "/admin/history" },
   { icon: FileText, label: "Logs", href: "/admin/logs" },

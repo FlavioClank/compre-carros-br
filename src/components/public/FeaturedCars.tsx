@@ -189,7 +189,7 @@ export function FeaturedCars() {
     return data.pages.flatMap((page) => page.cars);
   }, [data?.pages]);
 
-  // Build list items with intercalated ads
+  // Build list items with intercalated ads - 1 ad every 5 cars
   const listItems = useMemo((): ListItem[] => {
     if (allCars.length === 0 && hasAds) {
       return ads.map((ad) => ({ type: "ad" as const, data: ad }));
@@ -201,12 +201,25 @@ export function FeaturedCars() {
     allCars.forEach((car, index) => {
       items.push({ type: "car" as const, data: car });
 
-      // Insert ad after every 5 cars
+      // Insert ad after every 5 cars (positions 5, 10, 15, etc.)
       if (hasAds && (index + 1) % 5 === 0 && adIndex < ads.length) {
         items.push({ type: "ad" as const, data: ads[adIndex] });
         adIndex++;
       }
     });
+
+    // If there are remaining ads and we have cars that didn't complete a group of 5,
+    // add remaining ads at the end
+    if (hasAds && adIndex < ads.length && allCars.length > 0) {
+      // Only add if we have leftover cars after last ad position
+      const remainingCars = allCars.length % 5;
+      if (remainingCars > 0) {
+        while (adIndex < ads.length) {
+          items.push({ type: "ad" as const, data: ads[adIndex] });
+          adIndex++;
+        }
+      }
+    }
 
     return items;
   }, [allCars, ads, hasAds]);
@@ -252,7 +265,7 @@ export function FeaturedCars() {
             <p className="text-xs text-muted-foreground mt-1">Tente novamente mais tarde</p>
           </div>
         ) : listItems.length > 0 ? (
-          <div className="space-y-3 md:space-y-4">
+          <div className="space-y-3 md:space-y-4 [&>*:first-child]:mt-0">
             {listItems.map((item) => (
               <CardItem
                 key={item.type === 'car' ? `car-${item.data.id}` : `ad-${item.data.id}`}
