@@ -1,6 +1,6 @@
 // WhatsApp do Admin - FIXO E OBRIGATÓRIO
-export const WHATSAPP_NUMBER = "5565998031761";
-export const WHATSAPP_FORMATTED = "+55 65 99803-1761";
+export const WHATSAPP_NUMBER = "5565922230000";
+export const WHATSAPP_FORMATTED = "+55 65 9223-0000";
 
 export const SITE_NAME = "CompreCarrosBr";
 export const SITE_DESCRIPTION = "Seu próximo carro está aqui. Encontre os melhores veículos com total segurança e transparência.";

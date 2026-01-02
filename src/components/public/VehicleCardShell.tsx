@@ -15,7 +15,10 @@ export const VehicleCardShell = React.forwardRef<HTMLDivElement, VehicleCardShel
       <div
         ref={ref}
         className={cn(
+          // Uniform styling for all cards - no first-child differences
           "group bg-card rounded-xl overflow-hidden border border-border shadow-card card-hover",
+          // Ensure consistent spacing and no margin collapse issues
+          "first:mt-0",
           className,
         )}
         {...props}
