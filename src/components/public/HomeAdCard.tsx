@@ -22,7 +22,7 @@ interface HomeAdCardProps {
 
 /**
  * HomeAdCard - Ad card specifically for the Home page
- * Matches the exact visual structure of CarCardSingle on mobile
+ * Matches the exact visual structure of CarCardSingle (horizontal layout)
  * Uses VehicleCardShell for consistent styling with vehicle cards
  */
 export const HomeAdCard = memo(function HomeAdCard({ ad }: HomeAdCardProps) {
@@ -40,38 +40,24 @@ export const HomeAdCard = memo(function HomeAdCard({ ad }: HomeAdCardProps) {
   }, [ad.id, ad.category, ad.title]);
 
   const href = getAdHref(ad);
-  const CardWrapper = href ? "a" : "div";
-  const wrapperProps = href
-    ? {
-        href,
-        target: "_blank",
-        rel: "noopener noreferrer",
-      }
-    : {};
-
   const imageUrl = ad.image_url_home || "/placeholder.svg";
 
-  return (
-    <CardWrapper
-      {...wrapperProps}
-      className="block"
-      {...(href
-        ? {
-            onClick: () =>
-              trackClick("ad", ad.id, {
-                placement: "home",
-                category: ad.category,
-                title: ad.title,
-              }),
-          }
-        : {})}
-    >
-      <VehicleCardShell>
-        {/* Image - Mobile: aspect-[16/10] matching CarCardSingle | Desktop: banner aspect ratio */}
-        <div className="relative block overflow-hidden aspect-[16/10] md:aspect-[1200/310]">
+  const handleClick = () => {
+    trackClick("ad", ad.id, {
+      placement: "home",
+      category: ad.category,
+      title: ad.title,
+    });
+  };
+
+  const content = (
+    <VehicleCardShell>
+      <div className="flex flex-row">
+        {/* Image Section - Same dimensions as CarCardSingle */}
+        <div className="relative w-32 h-28 md:w-56 lg:w-64 md:h-40 lg:h-44 overflow-hidden flex-shrink-0">
           <Badge
             variant="secondary"
-            className="absolute top-2 left-2 z-20 rounded-full px-2 py-0.5 text-[10px] md:text-[11px] font-bold bg-foreground/80 text-background uppercase"
+            className="absolute top-1.5 left-1.5 z-20 flex items-center gap-0.5 bg-foreground/80 text-background px-1.5 py-0.5 rounded-full text-[10px] md:text-xs font-semibold"
           >
             Publicidade
           </Badge>
@@ -82,20 +68,51 @@ export const HomeAdCard = memo(function HomeAdCard({ ad }: HomeAdCardProps) {
           />
         </div>
 
-        {/* Content spacer - Mobile only: simulates CarCardSingle content height */}
-        <div className="p-3 md:hidden">
-          {/* Title spacer (h3 font-bold text-sm) */}
-          <div className="h-4 mb-0.5" />
-          {/* Version spacer (text-xs) */}
-          <div className="h-3 mb-2" />
-          {/* Specs grid spacer (grid with 4 items) */}
-          <div className="h-[52px] mb-3" />
-          {/* Price & action row spacer */}
-          <div className="h-7 pt-2 border-t border-border" />
+        {/* Content Section - Mirrors CarCardSingle structure */}
+        <div className="flex-1 p-3 md:p-4 flex flex-col justify-between min-w-0">
+          <div>
+            {/* Title area - mirrors brand logo + title */}
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-display text-sm md:text-lg lg:text-xl font-bold text-card-foreground line-clamp-1">
+                  {ad.title}
+                </h3>
+                <p className="text-[10px] md:text-sm text-muted-foreground line-clamp-1">
+                  Anúncio patrocinado
+                </p>
+              </div>
+            </div>
+
+            {/* Specs area spacer - mirrors specs grid height */}
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] md:text-sm text-muted-foreground">
+              <span className="text-accent">Clique para saber mais</span>
+            </div>
+          </div>
+
+          {/* Bottom area - mirrors price & actions */}
+          <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-border">
+            <p className="text-xs md:text-sm text-muted-foreground">Saiba mais →</p>
+          </div>
         </div>
-      </VehicleCardShell>
-    </CardWrapper>
+      </div>
+    </VehicleCardShell>
   );
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={handleClick}
+        className="block"
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return <div className="block">{content}</div>;
 });
 
 function getAdHref(ad: Ad): string | undefined {
