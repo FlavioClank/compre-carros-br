@@ -51,12 +51,6 @@ export const HomeAdCard = memo(function HomeAdCard({ ad }: HomeAdCardProps) {
 
   const content = (
     <div className="relative w-full overflow-hidden rounded-xl border bg-card shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-      <Badge
-        variant="secondary"
-        className="absolute top-2 left-2 z-20 bg-foreground/80 text-background px-2 py-0.5 rounded-full text-[10px] md:text-xs font-semibold"
-      >
-        Publicidade
-      </Badge>
       <div className="relative w-full aspect-[1200/393] md:aspect-[1200/200]">
         <img
           src={imageUrl}
