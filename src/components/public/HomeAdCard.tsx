@@ -57,11 +57,11 @@ export const HomeAdCard = memo(function HomeAdCard({ ad }: HomeAdCardProps) {
       >
         Publicidade
       </Badge>
-      <div className="relative w-full aspect-[1200/393] md:aspect-[1200/286]">
+      <div className="relative w-full aspect-[1200/393] md:aspect-[1200/229]">
         <img
           src={imageUrl}
           alt="Publicidade"
-          className="absolute inset-0 w-full h-full object-contain"
+          className="absolute inset-0 w-full h-full object-cover"
         />
       </div>
     </div>
