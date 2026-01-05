@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -381,6 +382,9 @@ export default function AdminGarages() {
                 <DialogTitle>
                   {editingGarage ? "Editar Garagem" : "Nova Garagem"}
                 </DialogTitle>
+                <DialogDescription>
+                  {editingGarage ? "Atualize os dados da garagem." : "Preencha os dados para cadastrar uma nova garagem."}
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
@@ -580,6 +584,9 @@ export default function AdminGarages() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Redefinir Senha</DialogTitle>
+              <DialogDescription>
+                Defina uma nova senha para o usuário da garagem.
+              </DialogDescription>
             </DialogHeader>
             {resetPasswordGarage && (
               <div className="space-y-4">
@@ -619,6 +626,9 @@ export default function AdminGarages() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Alterar email de login</DialogTitle>
+              <DialogDescription>
+                Atualize o email de acesso da garagem.
+              </DialogDescription>
             </DialogHeader>
             {changeEmailGarage && (
               <div className="space-y-4">

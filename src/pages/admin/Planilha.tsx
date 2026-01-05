@@ -14,6 +14,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -436,6 +437,9 @@ export default function AdminPlanilha() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Nova Cobrança</DialogTitle>
+                <DialogDescription>
+                  Vincule um anúncio a uma cobrança mensal.
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
@@ -734,6 +738,9 @@ export default function AdminPlanilha() {
                 <FileText className="h-5 w-5" />
                 Gerar Relatório Mensal
               </DialogTitle>
+              <DialogDescription>
+                Selecione o período e copie o relatório para enviar via WhatsApp.
+              </DialogDescription>
             </DialogHeader>
             {previewBilling && (
               <div className="space-y-4">

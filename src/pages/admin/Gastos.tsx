@@ -15,6 +15,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -259,6 +260,9 @@ export default function AdminGastos() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{editingExpense ? "Editar Gasto" : "Novo Gasto"}</DialogTitle>
+                <DialogDescription>
+                  {editingExpense ? "Atualize os dados do gasto." : "Preencha os campos para registrar um novo gasto."}
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
