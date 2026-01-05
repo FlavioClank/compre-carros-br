@@ -64,8 +64,8 @@ export const AdCardSingle = memo(function AdCardSingle({ ad }: AdCardSingleProps
         : {})}
     >
       <VehicleCardShell>
-        {/* EXACT same height as CarCardSingle image section: h-28 md:h-40 lg:h-44 */}
-        <div className="relative w-full h-28 md:h-40 lg:h-44 overflow-hidden">
+        {/* Mobile: aspect-ratio container for full image display | Desktop: fixed height */}
+        <div className="relative w-full md:h-40 lg:h-44 overflow-hidden">
           {/* Blur background layer - DESKTOP ONLY - soft fill for empty space */}
           <div className="hidden md:block absolute inset-0">
             <OptimizedImage
@@ -80,15 +80,11 @@ export const AdCardSingle = memo(function AdCardSingle({ ad }: AdCardSingleProps
             />
           </div>
           
-          {/* Main image - cover on mobile (no white bands), contain on desktop */}
-          <OptimizedImage
+          {/* Main image - Mobile: full image with aspect-ratio | Desktop: contain with blur bg */}
+          <img
             src={imageUrl}
             alt={`Publicidade: ${ad.title}`}
-            width={640}
-            height={360}
-            quality={75}
-            className="relative z-10 w-full h-full object-cover object-center md:object-contain bg-transparent"
-            containerClassName="w-full h-full"
+            className="relative z-10 w-full h-auto max-w-full aspect-[1200/260] object-contain rounded-xl md:aspect-auto md:h-full md:object-contain"
           />
 
           <Badge
