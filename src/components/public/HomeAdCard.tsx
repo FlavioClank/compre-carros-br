@@ -61,7 +61,7 @@ export const HomeAdCard = memo(function HomeAdCard({ ad }: HomeAdCardProps) {
         <img
           src={imageUrl}
           alt="Publicidade"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-contain md:object-cover"
         />
       </div>
     </div>
