@@ -38,8 +38,8 @@ async function sendEvent(payload: TrackEventPayload) {
       body,
       keepalive: true,
     });
-  } catch (error) {
-    console.error("Failed to send analytics event", error);
+  } catch {
+    // Silently ignore - may be blocked by AdBlocker or network issues
   }
 }
 

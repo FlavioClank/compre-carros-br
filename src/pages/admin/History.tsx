@@ -16,6 +16,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -170,6 +171,9 @@ export default function AdminHistory() {
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Detalhes da Venda</DialogTitle>
+              <DialogDescription>
+                Informações completas sobre a venda registrada.
+              </DialogDescription>
             </DialogHeader>
             {selectedSale && (
               <div className="space-y-4">

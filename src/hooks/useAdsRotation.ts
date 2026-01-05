@@ -29,21 +29,27 @@ export function useAdsRotation() {
 
   useEffect(() => {
     async function fetchAds() {
-      const { data, error } = await supabase
-        .from("ads")
-        .select("id, title, category, image_url_home, image_url_search, link, click_type, click_target, whatsapp_number")
-        .eq("is_active", true)
-        .order("created_at", { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from("ads")
+          .select("id, title, category, image_url_home, image_url_search, link, click_type, click_target, whatsapp_number")
+          .eq("is_active", true)
+          .order("created_at", { ascending: true });
 
-      if (error) {
-        console.error("Error fetching ads:", error);
+        if (error) {
+          // Silently handle errors (may be blocked by AdBlocker)
+          setAds([]);
+          setOrder([]);
+        } else {
+          const safeData = data || [];
+          setAds(safeData);
+          setOrder(safeData.length > 0 ? createShuffledOrder(safeData.length) : []);
+          currentIndexRef.current = 0;
+        }
+      } catch {
+        // Network error or AdBlock - silently fail
         setAds([]);
         setOrder([]);
-      } else {
-        const safeData = data || [];
-        setAds(safeData);
-        setOrder(safeData.length > 0 ? createShuffledOrder(safeData.length) : []);
-        currentIndexRef.current = 0;
       }
       setIsLoading(false);
     }
