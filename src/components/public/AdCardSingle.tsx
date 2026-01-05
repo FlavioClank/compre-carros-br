@@ -1,9 +1,8 @@
 import { memo, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { VehicleCardShell } from "@/components/public/VehicleCardShell";
-import { generateWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/constants";
+import { generateWhatsAppUrl } from "@/lib/constants";
 import { trackClick, trackView } from "@/lib/analytics";
-import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface Ad {
   id: string;
@@ -64,35 +63,22 @@ export const AdCardSingle = memo(function AdCardSingle({ ad }: AdCardSingleProps
         : {})}
     >
       <VehicleCardShell>
-        {/* Mobile: aspect-ratio container for full image display | Desktop: fixed height */}
-        <div className="relative w-full md:h-40 lg:h-44 overflow-hidden">
-          {/* Blur background layer - DESKTOP ONLY - soft fill for empty space */}
-          <div className="hidden md:block absolute inset-0">
-            <OptimizedImage
-              src={imageUrl}
-              alt=""
-              width={200}
-              height={150}
-              quality={30}
-              className="w-full h-full object-cover blur-md scale-105 opacity-25"
-              containerClassName="w-full h-full"
-              showSkeleton={false}
-            />
-          </div>
-          
-          {/* Main image - Mobile: full image with aspect-ratio | Desktop: contain with blur bg */}
-          <img
-            src={imageUrl}
-            alt={`Publicidade: ${ad.title}`}
-            className="relative z-10 w-full h-auto max-w-full aspect-[1200/260] object-contain rounded-xl md:aspect-auto md:h-full md:object-contain"
-          />
-
+        {/* Ad image container with fixed aspect-ratio matching 1200x260 banner */}
+        <div className="relative w-full overflow-hidden">
           <Badge
             variant="secondary"
-            className="absolute top-1.5 left-1.5 z-20 rounded-full px-1.5 py-0.5 text-[9px] md:text-[11px] font-semibold bg-foreground/80 text-background"
+            className="absolute top-2 left-2 z-20 rounded-full px-2 py-0.5 text-[10px] md:text-[11px] font-bold bg-foreground/80 text-background uppercase"
           >
             Publicidade
           </Badge>
+
+          <div className="relative w-full aspect-[1200/260]">
+            <img
+              src={imageUrl}
+              alt={`Publicidade: ${ad.title}`}
+              className="absolute inset-0 w-full h-full object-contain md:object-cover"
+            />
+          </div>
         </div>
       </VehicleCardShell>
     </CardWrapper>
