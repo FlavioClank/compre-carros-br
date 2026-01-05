@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { CarCardSingle } from "@/components/public/CarCardSingle";
-import { AdCardSingle } from "@/components/public/AdCardSingle";
+import { HomeAdCard } from "@/components/public/HomeAdCard";
 import { useAdsRotation } from "@/hooks/useAdsRotation";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Sparkles, Loader2 } from "lucide-react";
@@ -55,7 +55,7 @@ const CardItem = memo(function CardItem({ item }: { item: ListItem }) {
   if (item.type === "car") {
     return <CarCardSingle car={item.data} />;
   }
-  return <AdCardSingle ad={item.data} />;
+  return <HomeAdCard ad={item.data} />;
 });
 
 // Load more trigger component with forwardRef
