@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
+import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 import { generateWhatsAppUrl } from "@/lib/constants";
 import { trackClick, trackView } from "@/lib/analytics";
 
@@ -61,23 +62,34 @@ export const AdCardSingle = memo(function AdCardSingle({ ad }: AdCardSingleProps
           }
         : {})}
     >
-      <div className="relative w-full overflow-hidden rounded-xl border bg-white shadow-sm">
-        <Badge
-          variant="secondary"
-          className="absolute top-2 left-2 z-20 rounded-full px-2 py-0.5 text-[10px] md:text-[11px] font-bold bg-foreground/80 text-background uppercase"
-        >
-          Publicidade
-        </Badge>
-
-        {/* Mobile: slimmer (aspect-[1200/210]) | Desktop: taller (aspect-[1200/310]) */}
-        <div className="relative w-full aspect-[1200/210] md:aspect-[1200/310]">
+      <VehicleCardShell>
+        {/* Image - Mobile: fixed height matching CarCard | Desktop: aspect ratio for banner */}
+        <div className="relative block overflow-hidden aspect-[16/10] md:aspect-[1200/310]">
+          <Badge
+            variant="secondary"
+            className="absolute top-2 left-2 z-20 rounded-full px-2 py-0.5 text-[10px] md:text-[11px] font-bold bg-foreground/80 text-background uppercase"
+          >
+            Publicidade
+          </Badge>
           <img
             src={imageUrl}
             alt={`Publicidade: ${ad.title}`}
-            className="absolute inset-0 w-full h-full object-contain p-2 md:p-0"
+            className="w-full h-full object-cover"
           />
         </div>
-      </div>
+
+        {/* Content - Mobile: spacer divs to match CarCard height | Desktop: hidden */}
+        <div className="p-3 md:hidden">
+          {/* Title spacer */}
+          <div className="h-4 mb-0.5" />
+          {/* Version spacer */}
+          <div className="h-3 mb-2" />
+          {/* Specs grid spacer */}
+          <div className="h-[52px] mb-3" />
+          {/* Price & action spacer */}
+          <div className="h-7 pt-2 border-t border-border" />
+        </div>
+      </VehicleCardShell>
     </CardWrapper>
   );
 });
