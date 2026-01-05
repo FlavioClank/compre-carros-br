@@ -1,5 +1,5 @@
 // WhatsApp do Admin - FIXO E OBRIGATÓRIO
-export const WHATSAPP_NUMBER = "5565922230000";
+export const WHATSAPP_NUMBER = "556592230000";
 export const WHATSAPP_FORMATTED = "+55 65 9223-0000";
 
 export const SITE_NAME = "CompreCarrosBr";
