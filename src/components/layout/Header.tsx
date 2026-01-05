@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Car, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SITE_NAME } from "@/lib/constants";
 import { useAuth } from "@/lib/auth";
 
@@ -10,6 +11,16 @@ const navLinks = [
   { href: "/carros", label: "Veículos" },
   { href: "/marcas", label: "Marcas" },
 ];
+
+// Get initials from email
+const getInitials = (email: string) => {
+  const name = email.split("@")[0];
+  const parts = name.split(/[._-]/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -58,15 +69,29 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            className="hidden md:flex items-center gap-2 border-border/50 hover:border-primary/50 hover:bg-primary/5"
-            onClick={handleLoginClick}
-          >
-            <User className="h-4 w-4" />
-            {user ? "Painel" : "Entrar"}
-          </Button>
+          {user ? (
+            <button
+              onClick={handleLoginClick}
+              className="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-full border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-colors"
+            >
+              <Avatar className="h-7 w-7">
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+                  {getInitials(user.email || "")}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium text-foreground">Painel</span>
+            </button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden md:flex items-center gap-2 border-border/50 hover:border-primary/50 hover:bg-primary/5"
+              onClick={handleLoginClick}
+            >
+              <User className="h-4 w-4" />
+              Entrar
+            </Button>
+          )}
 
           <Button
             variant="ghost"
@@ -96,17 +121,29 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
-            <Button
-              variant="outline"
-              className="mt-2 w-full flex items-center gap-2"
+            <button
+              className="mt-2 w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-border/50 hover:bg-card transition-colors"
               onClick={() => {
                 setIsMenuOpen(false);
                 handleLoginClick();
               }}
             >
-              <User className="h-4 w-4" />
-              {user ? "Painel" : "Entrar"}
-            </Button>
+              {user ? (
+                <>
+                  <Avatar className="h-7 w-7">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+                      {getInitials(user.email || "")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium">Painel</span>
+                </>
+              ) : (
+                <>
+                  <User className="h-4 w-4" />
+                  <span className="text-sm font-medium">Entrar</span>
+                </>
+              )}
+            </button>
           </nav>
         </div>
       )}
