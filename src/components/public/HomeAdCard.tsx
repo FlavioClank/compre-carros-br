@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
+import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 import { generateWhatsAppUrl } from "@/lib/constants";
 import { trackClick, trackView } from "@/lib/analytics";
 
@@ -15,14 +16,18 @@ interface Ad {
   whatsapp_number?: string | null;
 }
 
-interface AdCardSingleProps {
+interface HomeAdCardProps {
   ad: Ad;
 }
 
-export const AdCardSingle = memo(function AdCardSingle({ ad }: AdCardSingleProps) {
+/**
+ * HomeAdCard - Ad card specifically for the Home page
+ * Matches the exact visual structure of CarCardSingle on mobile
+ * Uses VehicleCardShell for consistent styling with vehicle cards
+ */
+export const HomeAdCard = memo(function HomeAdCard({ ad }: HomeAdCardProps) {
   const hasTrackedView = useRef(false);
 
-  // Track view when ad is rendered (once per mount)
   useEffect(() => {
     if (!hasTrackedView.current) {
       trackView("ad", ad.id, {
@@ -61,23 +66,34 @@ export const AdCardSingle = memo(function AdCardSingle({ ad }: AdCardSingleProps
           }
         : {})}
     >
-      <div className="relative w-full overflow-hidden rounded-xl border bg-white shadow-sm">
-        <Badge
-          variant="secondary"
-          className="absolute top-2 left-2 z-20 rounded-full px-2 py-0.5 text-[10px] md:text-[11px] font-bold bg-foreground/80 text-background uppercase"
-        >
-          Publicidade
-        </Badge>
-
-        {/* Mobile: slimmer (aspect-[1200/210]) | Desktop: taller (aspect-[1200/310]) */}
-        <div className="relative w-full aspect-[1200/210] md:aspect-[1200/310]">
+      <VehicleCardShell>
+        {/* Image - Mobile: aspect-[16/10] matching CarCardSingle | Desktop: banner aspect ratio */}
+        <div className="relative block overflow-hidden aspect-[16/10] md:aspect-[1200/310]">
+          <Badge
+            variant="secondary"
+            className="absolute top-2 left-2 z-20 rounded-full px-2 py-0.5 text-[10px] md:text-[11px] font-bold bg-foreground/80 text-background uppercase"
+          >
+            Publicidade
+          </Badge>
           <img
             src={imageUrl}
             alt={`Publicidade: ${ad.title}`}
-            className="absolute inset-0 w-full h-full object-contain p-2 md:p-0"
+            className="w-full h-full object-cover"
           />
         </div>
-      </div>
+
+        {/* Content spacer - Mobile only: simulates CarCardSingle content height */}
+        <div className="p-3 md:hidden">
+          {/* Title spacer (h3 font-bold text-sm) */}
+          <div className="h-4 mb-0.5" />
+          {/* Version spacer (text-xs) */}
+          <div className="h-3 mb-2" />
+          {/* Specs grid spacer (grid with 4 items) */}
+          <div className="h-[52px] mb-3" />
+          {/* Price & action row spacer */}
+          <div className="h-7 pt-2 border-t border-border" />
+        </div>
+      </VehicleCardShell>
     </CardWrapper>
   );
 });
