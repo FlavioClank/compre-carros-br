@@ -63,8 +63,8 @@ export const AdCardSingle = memo(function AdCardSingle({ ad }: AdCardSingleProps
         : {})}
     >
       <VehicleCardShell>
-        {/* Ad image container with fixed aspect-ratio matching 1200x260 banner */}
-        <div className="relative w-full overflow-hidden">
+        {/* Ad image container with responsive aspect-ratios: mobile slim, desktop tall */}
+        <div className="relative w-full overflow-hidden bg-card">
           <Badge
             variant="secondary"
             className="absolute top-2 left-2 z-20 rounded-full px-2 py-0.5 text-[10px] md:text-[11px] font-bold bg-foreground/80 text-background uppercase"
@@ -72,7 +72,8 @@ export const AdCardSingle = memo(function AdCardSingle({ ad }: AdCardSingleProps
             Publicidade
           </Badge>
 
-          <div className="relative w-full aspect-[1200/260]">
+          {/* Mobile: slimmer card (aspect-[1200/210]) | Desktop: taller card (aspect-[1200/310]) */}
+          <div className="relative w-full aspect-[1200/210] md:aspect-[1200/310]">
             <img
               src={imageUrl}
               alt={`Publicidade: ${ad.title}`}
