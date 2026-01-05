@@ -11,6 +11,7 @@ import {
   LogOut,
   Menu,
   X,
+  Globe,
 } from "lucide-react";
 
 interface GarageLayoutProps {
@@ -80,6 +81,16 @@ export function GarageLayout({ children }: GarageLayoutProps) {
 
           {/* Navigation */}
           <nav className="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
+            {/* Voltar ao Site */}
+            <Link
+              to="/"
+              onClick={() => setIsSidebarOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground mb-4 border border-sidebar-border"
+            >
+              <Globe className="h-5 w-5" />
+              Voltar ao Site
+            </Link>
+
             {menuItems.map((item) => {
               const Icon = item.icon;
               return (
