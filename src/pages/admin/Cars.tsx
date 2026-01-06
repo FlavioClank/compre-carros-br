@@ -50,6 +50,8 @@ import {
   Upload,
   X,
   ImagePlus,
+  Copy,
+  Link,
 } from "lucide-react";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import {
@@ -506,6 +508,18 @@ export default function AdminCars() {
     toast({ title: "Texto copiado!", description: "Cole no TikTok para publicar." });
   };
 
+  const SITE_URL = "https://comprecarrosbr.com.br";
+
+  const getCarPublicUrl = (car: any) => {
+    return `${SITE_URL}/carro/${car.slug || car.id}`;
+  };
+
+  const copyCarLink = (car: any) => {
+    const url = getCarPublicUrl(car);
+    navigator.clipboard.writeText(url);
+    toast({ title: "Link copiado!", description: url });
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -949,6 +963,7 @@ export default function AdminCars() {
                     <TableRow>
                       <TableHead>Código</TableHead>
                       <TableHead>Veículo</TableHead>
+                      <TableHead>Slug/URL</TableHead>
                       <TableHead>Ano</TableHead>
                       <TableHead>Preço</TableHead>
                       <TableHead>Garagem</TableHead>
@@ -983,6 +998,27 @@ export default function AdminCars() {
                               <p className="font-medium">{car.brands?.name}</p>
                               <p className="text-sm text-muted-foreground">{car.model}</p>
                             </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground font-mono max-w-[150px] truncate" title={car.slug || car.id}>
+                              {car.slug || car.id.slice(0, 8) + "..."}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => copyCarLink(car)}
+                              title="Copiar link"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                            <a href={getCarPublicUrl(car)} target="_blank" rel="noopener noreferrer">
+                              <Button variant="ghost" size="icon" className="h-6 w-6" title="Abrir página">
+                                <Link className="h-3 w-3" />
+                              </Button>
+                            </a>
                           </div>
                         </TableCell>
                         <TableCell>{car.year}</TableCell>
