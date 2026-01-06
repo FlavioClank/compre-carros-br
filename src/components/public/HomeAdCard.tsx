@@ -50,8 +50,8 @@ export const HomeAdCard = memo(function HomeAdCard({ ad }: HomeAdCardProps) {
   };
 
   const content = (
-    <div className="relative w-full overflow-hidden rounded-xl border bg-card md:bg-gray-100 shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-      <div className="relative w-full aspect-[1200/393] md:aspect-[1200/200] bg-gray-100">
+    <div className="relative w-full overflow-hidden rounded-xl border bg-card md:bg-gray-200 shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+      <div className="relative w-full aspect-[1200/393] md:aspect-[1200/200] bg-gray-200">
         <img
           src={imageUrl}
           alt="Publicidade"
