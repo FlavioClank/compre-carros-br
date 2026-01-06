@@ -1,4 +1,4 @@
-import { useMemo, memo, forwardRef, useEffect, useCallback } from "react";
+import { useMemo, memo, useEffect, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight, Sparkles, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import { shuffleSeeded, getHalfHourSeed, getMsUntilNextWindow } from "@/lib/shuffle";
 
 const PAGE_SIZE = 12;
 
@@ -152,7 +153,25 @@ async function fetchCars({ pageParam = 0 }: { pageParam?: number }) {
 }
 
 export function FeaturedCars() {
-  const { ads, hasAds } = useAdsRotation();
+  const { ads, hasAds, seed } = useAdsRotation();
+  const [carSeed, setCarSeed] = useState<number>(getHalfHourSeed);
+
+  // Sync car seed with 30-minute windows
+  useEffect(() => {
+    const msUntilNext = getMsUntilNextWindow();
+    
+    const timeout = setTimeout(() => {
+      setCarSeed(getHalfHourSeed());
+      
+      const interval = setInterval(() => {
+        setCarSeed(getHalfHourSeed());
+      }, 1800000);
+      
+      return () => clearInterval(interval);
+    }, msUntilNext);
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   // Infinite query for cars
   const {
@@ -183,11 +202,13 @@ export function FeaturedCars() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Flatten all pages into a single array
+  // Flatten all pages and shuffle deterministically
   const allCars = useMemo(() => {
     if (!data?.pages) return [];
-    return data.pages.flatMap((page) => page.cars);
-  }, [data?.pages]);
+    const cars = data.pages.flatMap((page) => page.cars);
+    // Shuffle cars deterministically using the same 30-min seed
+    return shuffleSeeded(cars, carSeed);
+  }, [data?.pages, carSeed]);
 
   // Build list items with intercalated ads - 1 ad every 5 cars
   const listItems = useMemo((): ListItem[] => {

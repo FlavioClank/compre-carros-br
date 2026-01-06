@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { shuffleSeeded, getHalfHourSeed, getMsUntilNextWindow } from "@/lib/shuffle";
 
 interface Ad {
   id: string;
@@ -8,25 +9,18 @@ interface Ad {
   image_url_home: string | null;
   image_url_search: string | null;
   link: string | null;
+  click_type?: string | null;
+  click_target?: string | null;
+  whatsapp_number?: string | null;
 }
 
 export function useAdsRotation() {
-  const [ads, setAds] = useState<Ad[]>([]);
+  const [rawAds, setRawAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [order, setOrder] = useState<number[]>([]);
+  const [seed, setSeed] = useState<number>(getHalfHourSeed);
   const currentIndexRef = useRef(0);
-  const shuffleSeedRef = useRef<number>(Date.now());
 
-  // Helper to create a non-repeating permutation of ad indices
-  const createShuffledOrder = (length: number): number[] => {
-    const indices = Array.from({ length }, (_, i) => i);
-    for (let i = indices.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [indices[i], indices[j]] = [indices[j], indices[i]];
-    }
-    return indices;
-  };
-
+  // Fetch ads on mount
   useEffect(() => {
     async function fetchAds() {
       try {
@@ -37,19 +31,12 @@ export function useAdsRotation() {
           .order("created_at", { ascending: true });
 
         if (error) {
-          // Silently handle errors (may be blocked by AdBlocker)
-          setAds([]);
-          setOrder([]);
+          setRawAds([]);
         } else {
-          const safeData = data || [];
-          setAds(safeData);
-          setOrder(safeData.length > 0 ? createShuffledOrder(safeData.length) : []);
-          currentIndexRef.current = 0;
+          setRawAds(data || []);
         }
       } catch {
-        // Network error or AdBlock - silently fail
-        setAds([]);
-        setOrder([]);
+        setRawAds([]);
       }
       setIsLoading(false);
     }
@@ -57,38 +44,49 @@ export function useAdsRotation() {
     fetchAds();
   }, []);
 
-  // Re-shuffle ads order every 30 minutes to avoid fixed positions
+  // Update seed every 30 minutes
   useEffect(() => {
-    if (ads.length === 0) return;
-
-    const interval = setInterval(() => {
-      shuffleSeedRef.current = Date.now();
-      setOrder(createShuffledOrder(ads.length));
+    // Set timeout until next 30-min window
+    const msUntilNext = getMsUntilNextWindow();
+    
+    const timeout = setTimeout(() => {
+      setSeed(getHalfHourSeed());
       currentIndexRef.current = 0;
-    }, 30 * 60 * 1000);
+      
+      // Then set interval for subsequent updates
+      const interval = setInterval(() => {
+        setSeed(getHalfHourSeed());
+        currentIndexRef.current = 0;
+      }, 1800000); // 30 minutes
+      
+      return () => clearInterval(interval);
+    }, msUntilNext);
 
-    return () => clearInterval(interval);
-  }, [ads.length]);
+    return () => clearTimeout(timeout);
+  }, []);
 
-  // Get next ad in round-robin fashion, without repetition inside a cycle
+  // Deterministically shuffled ads based on current seed
+  const ads = useMemo(() => {
+    if (rawAds.length === 0) return [];
+    return shuffleSeeded(rawAds, seed);
+  }, [rawAds, seed]);
+
+  // Get next ad in round-robin fashion
   const getNextAd = useCallback((): Ad | null => {
-    if (ads.length === 0 || order.length === 0) return null;
+    if (ads.length === 0) return null;
 
-    const index = order[currentIndexRef.current];
-    const ad = ads[index];
-
-    currentIndexRef.current = (currentIndexRef.current + 1) % order.length;
+    const ad = ads[currentIndexRef.current];
+    currentIndexRef.current = (currentIndexRef.current + 1) % ads.length;
     return ad;
-  }, [ads, order]);
+  }, [ads]);
 
-  // Get ad for a specific position (kept for backward compatibility)
+  // Get ad at specific position
   const getAdAtPosition = useCallback(
     (position: number): Ad | null => {
-      if (ads.length === 0 || order.length === 0) return null;
-      const safeIndex = order[position % order.length];
-      return ads[safeIndex];
+      if (ads.length === 0) return null;
+      return ads[position % ads.length];
     },
-    [ads, order]
+    [ads]
   );
 
   const resetRotation = useCallback(() => {
@@ -102,5 +100,6 @@ export function useAdsRotation() {
     getNextAd,
     getAdAtPosition,
     resetRotation,
+    seed, // Expose seed for FeaturedCars to use same seed for car shuffling
   };
 }
