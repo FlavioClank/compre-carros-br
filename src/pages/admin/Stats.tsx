@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { format, formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { RefreshCw, Clock, MousePointer, TrendingUp, Eye } from "lucide-react";
 
 type Period = "daily" | "weekly" | "monthly";
 
@@ -17,11 +20,19 @@ interface ActionLog {
   entity_id: string | null;
   entity_type: string;
   action: string;
+  details: Record<string, any> | null;
 }
 
 interface AggregatedPoint {
   label: string;
   count: number;
+}
+
+interface AdInfo {
+  id: string;
+  title: string;
+  category: string;
+  is_active: boolean;
 }
 
 const currentYear = new Date().getFullYear();
@@ -58,6 +69,328 @@ function aggregateByPeriod(logs: ActionLog[], period: Period): AggregatedPoint[]
   return Array.from(buckets.entries())
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([label, count]) => ({ label, count }));
+}
+
+// Real-time ad clicks component
+function RecentAdClicks() {
+  const [recentClicks, setRecentClicks] = useState<ActionLog[]>([]);
+  const [adsMap, setAdsMap] = useState<Map<string, AdInfo>>(new Map());
+
+  // Fetch ads info
+  const { data: ads } = useQuery({
+    queryKey: ["stats-ads-info"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ads")
+        .select("id, title, category, is_active");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Build ads map when data changes
+  useEffect(() => {
+    if (ads) {
+      const map = new Map<string, AdInfo>();
+      ads.forEach((ad: AdInfo) => map.set(ad.id, ad));
+      setAdsMap(map);
+    }
+  }, [ads]);
+
+  // Fetch recent clicks
+  const { refetch, isFetching } = useQuery({
+    queryKey: ["recent-ad-clicks"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("action_logs")
+        .select("id, created_at, entity_id, entity_type, action, details")
+        .eq("action", "click")
+        .eq("entity_type", "ad")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      setRecentClicks((data || []) as ActionLog[]);
+      return data;
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Subscribe to realtime updates
+  useEffect(() => {
+    const channel = supabase
+      .channel("ad-clicks-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "action_logs",
+          filter: "entity_type=eq.ad",
+        },
+        (payload) => {
+          const newClick = payload.new as ActionLog;
+          if (newClick.action === "click") {
+            setRecentClicks((prev) => [newClick, ...prev.slice(0, 49)]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const getAdTitle = (entityId: string | null) => {
+    if (!entityId) return "Desconhecido";
+    const ad = adsMap.get(entityId);
+    return ad?.title || entityId.slice(0, 8);
+  };
+
+  const getPlacement = (details: Record<string, any> | null) => {
+    if (!details) return "-";
+    return details.placement || "-";
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" />
+            Últimos Cliques em Anúncios
+          </CardTitle>
+          <CardDescription>
+            Atualização em tempo real (últimos 50 cliques)
+          </CardDescription>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => refetch()}
+          disabled={isFetching}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
+          Atualizar
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <div className="max-h-[400px] overflow-y-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Horário</TableHead>
+                <TableHead>Anúncio</TableHead>
+                <TableHead>Origem</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recentClicks.length > 0 ? (
+                recentClicks.map((click) => (
+                  <TableRow key={click.id}>
+                    <TableCell className="text-muted-foreground text-sm">
+                      <span title={format(new Date(click.created_at), "dd/MM/yyyy HH:mm:ss")}>
+                        {formatDistanceToNow(new Date(click.created_at), {
+                          addSuffix: true,
+                          locale: ptBR,
+                        })}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {getAdTitle(click.entity_id)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="capitalize">
+                        {getPlacement(click.details as Record<string, any> | null)}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-muted-foreground">
+                    Nenhum clique registrado ainda.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Summary of clicks per ad
+function AdClicksSummary() {
+  const { data: summary, isLoading } = useQuery({
+    queryKey: ["ad-clicks-summary"],
+    queryFn: async () => {
+      // Get all ads
+      const { data: ads, error: adsError } = await supabase
+        .from("ads")
+        .select("id, title, category, is_active")
+        .order("created_at", { ascending: false });
+
+      if (adsError) throw adsError;
+
+      // Get click counts for each ad
+      const today = new Date();
+      const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const startOfWeek = new Date(startOfToday);
+      startOfWeek.setDate(startOfWeek.getDate() - 7);
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+      const results = await Promise.all(
+        (ads || []).map(async (ad: AdInfo) => {
+          // Total clicks
+          const { count: totalClicks } = await supabase
+            .from("action_logs")
+            .select("*", { count: "exact", head: true })
+            .eq("action", "click")
+            .eq("entity_type", "ad")
+            .eq("entity_id", ad.id);
+
+          // Today clicks
+          const { count: todayClicks } = await supabase
+            .from("action_logs")
+            .select("*", { count: "exact", head: true })
+            .eq("action", "click")
+            .eq("entity_type", "ad")
+            .eq("entity_id", ad.id)
+            .gte("created_at", startOfToday.toISOString());
+
+          // Week clicks
+          const { count: weekClicks } = await supabase
+            .from("action_logs")
+            .select("*", { count: "exact", head: true })
+            .eq("action", "click")
+            .eq("entity_type", "ad")
+            .eq("entity_id", ad.id)
+            .gte("created_at", startOfWeek.toISOString());
+
+          // Month clicks
+          const { count: monthClicks } = await supabase
+            .from("action_logs")
+            .select("*", { count: "exact", head: true })
+            .eq("action", "click")
+            .eq("entity_type", "ad")
+            .eq("entity_id", ad.id)
+            .gte("created_at", startOfMonth.toISOString());
+
+          // Total views
+          const { count: totalViews } = await supabase
+            .from("action_logs")
+            .select("*", { count: "exact", head: true })
+            .eq("action", "visit")
+            .eq("entity_type", "ad")
+            .eq("entity_id", ad.id);
+
+          return {
+            ...ad,
+            totalClicks: totalClicks || 0,
+            todayClicks: todayClicks || 0,
+            weekClicks: weekClicks || 0,
+            monthClicks: monthClicks || 0,
+            totalViews: totalViews || 0,
+          };
+        })
+      );
+
+      return results;
+    },
+    refetchInterval: 60000, // Refresh every minute
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            Resumo por Anúncio
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-12 bg-muted rounded" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          Resumo por Anúncio
+        </CardTitle>
+        <CardDescription>
+          Cliques e visualizações de todos os anúncios
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Anúncio</TableHead>
+              <TableHead className="text-center">Status</TableHead>
+              <TableHead className="text-right">Hoje</TableHead>
+              <TableHead className="text-right">7 dias</TableHead>
+              <TableHead className="text-right">Mês</TableHead>
+              <TableHead className="text-right">Total</TableHead>
+              <TableHead className="text-right">Views</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {summary && summary.length > 0 ? (
+              summary.map((ad) => (
+                <TableRow key={ad.id}>
+                  <TableCell className="font-medium max-w-[200px] truncate">
+                    {ad.title}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant={ad.is_active ? "default" : "secondary"}>
+                      {ad.is_active ? "Ativo" : "Inativo"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {ad.todayClicks}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {ad.weekClicks}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {ad.monthClicks}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold text-primary">
+                    {ad.totalClicks}
+                  </TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    <span className="flex items-center justify-end gap-1">
+                      <Eye className="h-3 w-3" />
+                      {ad.totalViews}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  Nenhum anúncio encontrado.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
 }
 
 function StatsAdsTab() {
@@ -106,114 +439,126 @@ function StatsAdsTab() {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Estatísticas de Anúncios</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">Ano</p>
-            <Select
-              value={String(year)}
-              onValueChange={(value) => setYear(Number(value))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o ano" />
-              </SelectTrigger>
-              <SelectContent>
-                {AVAILABLE_YEARS.map((y) => (
-                  <SelectItem key={y} value={String(y)}>
-                    {y}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <div className="space-y-6">
+      {/* Summary and Recent clicks cards */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <AdClicksSummary />
+        <RecentAdClicks />
+      </div>
+
+      {/* Detailed report card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MousePointer className="h-5 w-5 text-primary" />
+            Relatório Detalhado por Anúncio
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Ano</p>
+              <Select
+                value={String(year)}
+                onValueChange={(value) => setYear(Number(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AVAILABLE_YEARS.map((y) => (
+                    <SelectItem key={y} value={String(y)}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Período</p>
+              <Select
+                value={period}
+                onValueChange={(value: Period) => setPeriod(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Diário</SelectItem>
+                  <SelectItem value="weekly">Semanal</SelectItem>
+                  <SelectItem value="monthly">Mensal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Anúncio</p>
+              <Select
+                value={selectedAdId}
+                onValueChange={(value) => setSelectedAdId(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o anúncio" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ads?.map((ad: any) => (
+                    <SelectItem key={ad.id} value={ad.id}>
+                      {ad.title}
+                      {ad.is_active ? "" : " (inativo)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">Período</p>
-            <Select
-              value={period}
-              onValueChange={(value: Period) => setPeriod(value)}
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              onClick={() => refetch()}
+              disabled={!selectedAdId || isFetching}
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="daily">Diário</SelectItem>
-                <SelectItem value="weekly">Semanal</SelectItem>
-                <SelectItem value="monthly">Mensal</SelectItem>
-              </SelectContent>
-            </Select>
+              Gerar relatório
+            </Button>
           </div>
 
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">Anúncio</p>
-            <Select
-              value={selectedAdId}
-              onValueChange={(value) => setSelectedAdId(value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o anúncio" />
-              </SelectTrigger>
-              <SelectContent>
-                {ads?.map((ad: any) => (
-                  <SelectItem key={ad.id} value={ad.id}>
-                    {ad.title}
-                    {ad.is_active ? "" : " (inativo)"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="flex justify-end">
-          <Button
-            size="sm"
-            onClick={() => refetch()}
-            disabled={!selectedAdId || isFetching}
-          >
-            Gerar relatório
-          </Button>
-        </div>
-
-        {selectedAdId && (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Total de cliques no período selecionado: {aggregated?.total ?? 0}
-            </p>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Período</TableHead>
-                  <TableHead className="text-right">Cliques</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {aggregated?.points.length ? (
-                  aggregated.points.map((point) => (
-                    <TableRow key={point.label}>
-                      <TableCell>{point.label}</TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {point.count}
+          {selectedAdId && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Total de cliques no período selecionado: {aggregated?.total ?? 0}
+              </p>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Período</TableHead>
+                    <TableHead className="text-right">Cliques</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {aggregated?.points.length ? (
+                    aggregated.points.map((point) => (
+                      <TableRow key={point.label}>
+                        <TableCell>{point.label}</TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {point.count}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={2} className="text-center text-muted-foreground">
+                        Nenhum clique registrado para o filtro selecionado.
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={2} className="text-center text-muted-foreground">
-                      Nenhum clique registrado para o filtro selecionado.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -507,7 +852,7 @@ export default function AdminStats() {
         <div>
           <h1 className="font-display text-3xl font-bold text-foreground">Estatísticas</h1>
           <p className="text-muted-foreground mt-1">
-            Acompanhe o desempenho de anúncios, garagens e do site para apresentações comerciais.
+            Acompanhe o desempenho de anúncios, garagens e do site em tempo real.
           </p>
         </div>
 

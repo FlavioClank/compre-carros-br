@@ -1,14 +1,45 @@
+# CompreCarrosBr - Robots.txt
+# Generated for SEO optimization
+
 User-agent: Googlebot
 Allow: /
+Allow: /carro/
+Allow: /carros
+Allow: /anuncio/
+Allow: /marcas
+Disallow: /admin/
+Disallow: /garage/
+Disallow: /login
 
 User-agent: Bingbot
 Allow: /
+Allow: /carro/
+Allow: /carros
+Allow: /anuncio/
+Allow: /marcas
+Disallow: /admin/
+Disallow: /garage/
+Disallow: /login
 
 User-agent: Twitterbot
 Allow: /
+Allow: /carro/
+Allow: /anuncio/
 
 User-agent: facebookexternalhit
 Allow: /
+Allow: /carro/
+Allow: /anuncio/
 
 User-agent: *
 Allow: /
+Allow: /carro/
+Allow: /carros
+Allow: /anuncio/
+Allow: /marcas
+Disallow: /admin/
+Disallow: /garage/
+Disallow: /login
+
+# Sitemap location
+Sitemap: https://kgtscjvgipowuvuindxt.supabase.co/functions/v1/sitemap

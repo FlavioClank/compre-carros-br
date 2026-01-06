@@ -12,6 +12,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Cars from "./pages/Cars";
 import CarDetails from "./pages/CarDetails";
+import AdDetails from "./pages/AdDetails";
 import Brands from "./pages/Brands";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
@@ -63,6 +64,8 @@ const App = () => (
               <Route path="/carros" element={<Cars />} />
               {/* Vehicle detail page by slug (SEO-friendly) or UUID (fallback) */}
               <Route path="/carro/:slug" element={<CarDetails />} />
+              {/* Ad detail page for SEO and tracking */}
+              <Route path="/anuncio/:id" element={<AdDetails />} />
               <Route path="/marcas" element={<Brands />} />
               <Route path="/login" element={<Login />} />
 
