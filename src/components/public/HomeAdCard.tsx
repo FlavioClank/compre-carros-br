@@ -51,11 +51,11 @@ export const HomeAdCard = memo(function HomeAdCard({ ad }: HomeAdCardProps) {
 
   const content = (
     <div className="relative w-full overflow-hidden rounded-xl border bg-card shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-      <div className="relative w-full aspect-[1200/393] md:aspect-[1200/200]">
+      <div className="relative w-full aspect-[1200/393] md:aspect-[1200/200] bg-muted/30">
         <img
           src={imageUrl}
           alt="Publicidade"
-          className="absolute inset-0 w-full h-full object-contain md:object-cover"
+          className="absolute inset-0 w-full h-full object-contain"
         />
       </div>
     </div>
