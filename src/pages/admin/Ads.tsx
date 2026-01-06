@@ -32,7 +32,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, ExternalLink, Image as ImageIcon, Home, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, Image as ImageIcon, Home, Search, Copy, Link } from "lucide-react";
+
+const SITE_URL = "https://comprecarrosbr.com.br";
 
 const AD_CATEGORIES = [
   { value: "mecanica", label: "Mecânica" },
@@ -343,6 +345,16 @@ export default function AdminAds() {
 
   function getCategoryLabel(value: string) {
     return AD_CATEGORIES.find((c) => c.value === value)?.label || value;
+  }
+
+  function getAdPublicUrl(ad: Ad) {
+    return `${SITE_URL}/anuncio/${ad.id}`;
+  }
+
+  function copyAdLink(ad: Ad) {
+    const url = getAdPublicUrl(ad);
+    navigator.clipboard.writeText(url);
+    toast.success("Link copiado: " + url);
   }
 
   return (
@@ -673,6 +685,26 @@ export default function AdminAds() {
                       {ad.is_active ? "Ativo" : "Inativo"}
                     </Badge>
                   </div>
+                  {/* Slug/URL section */}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="font-mono truncate max-w-[180px]" title={ad.id}>
+                      ID: {ad.id.slice(0, 12)}...
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => copyAdLink(ad)}
+                      title="Copiar link"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                    <a href={getAdPublicUrl(ad)} target="_blank" rel="noopener noreferrer">
+                      <Button variant="ghost" size="icon" className="h-6 w-6" title="Abrir página">
+                        <Link className="h-3 w-3" />
+                      </Button>
+                    </a>
+                  </div>
                   {ad.link && (
                     <a
                       href={ad.link}
@@ -681,7 +713,7 @@ export default function AdminAds() {
                       className="inline-flex items-center text-sm text-primary hover:underline"
                     >
                       <ExternalLink className="mr-1 h-3 w-3" />
-                      Ver link
+                      Ver link externo
                     </a>
                   )}
                   <div className="flex items-center gap-2 pt-2 border-t">
