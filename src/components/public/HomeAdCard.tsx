@@ -69,6 +69,10 @@ export const HomeAdCard = memo(function HomeAdCard({ ad }: HomeAdCardProps) {
 
   const content = (
     <div className="relative w-full overflow-hidden rounded-xl border bg-card md:bg-gray-300/50 shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+      {/* Selo PUBLICIDADE */}
+      <span className="absolute top-2 left-2 z-10 bg-black/70 text-white text-[10px] font-medium px-2 py-0.5 rounded">
+        PUBLICIDADE
+      </span>
       <div className="relative w-full aspect-[1200/393] md:aspect-[1200/200] bg-gray-300/50">
         <img
           src={imageUrl}
