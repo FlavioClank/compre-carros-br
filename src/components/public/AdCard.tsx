@@ -4,6 +4,7 @@ import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 import { generateWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/constants";
 import { trackClick, trackView } from "@/lib/analytics";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { format } from "date-fns";
 
 interface Ad {
   id: string;
@@ -19,6 +20,23 @@ interface Ad {
 
 interface AdCardProps {
   ad: Ad;
+}
+
+/**
+ * Builds a WhatsApp message with full identification for tracking
+ */
+function buildAdWhatsAppMessage(ad: Ad, placement: string): string {
+  const timestamp = format(new Date(), "dd/MM/yyyy 'às' HH:mm");
+  const adPageUrl = `${window.location.origin}/anuncio/${ad.id}`;
+  
+  return `Olá! Vi este anúncio no site CompreCarros e tenho interesse.
+
+Anunciante: ${ad.title}
+Categoria: ${ad.category}
+ID do anúncio: ${ad.id}
+Página do anúncio: ${adPageUrl}
+Origem: ${placement}
+Data/hora: ${timestamp}`;
 }
 
 export const AdCard = memo(function AdCard({ ad }: AdCardProps) {
@@ -91,8 +109,7 @@ function getAdHref(ad: Ad): string | undefined {
   const type = ad.click_type || (ad.link ? "link" : null);
 
   if (type === "whatsapp" && ad.whatsapp_number) {
-    const message =
-      "Olá! Vim do CompreCarrosBr 🚗 Seu anúncio apareceu para mim e gostaria de saber mais.";
+    const message = buildAdWhatsAppMessage(ad, "Busca");
     return generateWhatsAppUrl(ad.whatsapp_number.replace(/\D/g, ""), message);
   }
 
