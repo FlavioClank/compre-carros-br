@@ -20,6 +20,7 @@ interface Car {
 
 interface Ad {
   id: string;
+  slug: string | null;
   updated_at: string;
 }
 
@@ -55,10 +56,10 @@ Deno.serve(async (req) => {
       console.error("Error fetching cars:", carsError);
     }
 
-    // Fetch active ads
+    // Fetch active ads with their slugs
     const { data: ads, error: adsError } = await supabaseAdmin
       .from("ads")
-      .select("id, updated_at")
+      .select("id, slug, updated_at")
       .eq("is_active", true)
       .order("updated_at", { ascending: false });
 
@@ -107,12 +108,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Add ad pages
+    // Add ad pages (use slug if available, otherwise id)
     if (ads && ads.length > 0) {
       for (const ad of ads as Ad[]) {
+        const adUrl = ad.slug || ad.id;
         const lastmod = ad.updated_at ? ad.updated_at.split("T")[0] : today;
         sitemap += `  <url>
-    <loc>${SITE_URL}/anuncio/${ad.id}</loc>
+    <loc>${SITE_URL}/anuncio/${adUrl}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
