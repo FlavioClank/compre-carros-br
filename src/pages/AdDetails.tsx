@@ -14,6 +14,7 @@ interface AdDetail {
   id: string;
   title: string;
   category: string;
+  slug: string | null;
   image_url_home: string | null;
   image_url_search: string | null;
   link: string | null;
@@ -40,23 +41,25 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export default function AdDetails() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const [ad, setAd] = useState<AdDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchAd = async () => {
-      if (!id) {
+      if (!slug) {
         setIsLoading(false);
         return;
       }
 
-      const { data, error } = await supabase
+      // Try to find by slug first, then by id (for backwards compatibility)
+      let query = supabase
         .from("ads")
         .select(`
           id,
           title,
           category,
+          slug,
           image_url_home,
           image_url_search,
           link,
@@ -69,9 +72,18 @@ export default function AdDetails() {
             company_name
           )
         `)
-        .eq("id", id)
-        .eq("is_active", true)
-        .maybeSingle();
+        .eq("is_active", true);
+
+      // Check if it's a UUID (for backwards compatibility) or a slug
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+      
+      if (isUuid) {
+        query = query.eq("id", slug);
+      } else {
+        query = query.eq("slug", slug);
+      }
+
+      const { data, error } = await query.maybeSingle();
 
       if (error) {
         console.error("Error fetching ad:", error);
@@ -96,7 +108,7 @@ export default function AdDetails() {
     };
 
     fetchAd();
-  }, [id]);
+  }, [slug]);
 
   if (isLoading) {
     return (
@@ -136,19 +148,18 @@ export default function AdDetails() {
   const companyName = ad.ad_billing?.company_name || ad.title;
   const categoryLabel = CATEGORY_LABELS[ad.category] || ad.category;
   const imageUrl = ad.image_url_home || ad.image_url_search || "/placeholder.svg";
-  const canonicalUrl = `${window.location.origin}/anuncio/${ad.id}`;
+  const adSlug = ad.slug || ad.id;
+  const canonicalUrl = `${window.location.origin}/anuncio/${adSlug}`;
   
   const pageTitle = `${companyName} - ${categoryLabel} | CompreCarrosBr`;
   const metaDescription = `${companyName} - Anúncio de ${categoryLabel} no CompreCarrosBr. Entre em contato e saiba mais sobre os serviços oferecidos.`;
 
-  // Build WhatsApp message with full identification
+  // Build simplified WhatsApp message
   const buildAdWhatsAppMessage = () => {
     const timestamp = format(new Date(), "dd/MM/yyyy 'às' HH:mm");
     return `Olá! Vi este anúncio no site CompreCarros e tenho interesse.
 
 Anunciante: ${companyName}
-Anúncio: ${ad.title}
-ID do anúncio: ${ad.id}
 Página do anúncio: ${canonicalUrl}
 Data/hora: ${timestamp}`;
   };

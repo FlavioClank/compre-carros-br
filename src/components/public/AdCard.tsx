@@ -10,6 +10,7 @@ interface Ad {
   id: string;
   title: string;
   category: string;
+  slug?: string | null;
   image_url_home: string | null;
   image_url_search: string | null;
   link: string | null;
@@ -23,19 +24,17 @@ interface AdCardProps {
 }
 
 /**
- * Builds a WhatsApp message with full identification for tracking
+ * Builds a simplified WhatsApp message for ads
  */
-function buildAdWhatsAppMessage(ad: Ad, placement: string): string {
+function buildAdWhatsAppMessage(ad: Ad): string {
   const timestamp = format(new Date(), "dd/MM/yyyy 'às' HH:mm");
-  const adPageUrl = `${window.location.origin}/anuncio/${ad.id}`;
+  const adSlug = ad.slug || ad.id;
+  const adPageUrl = `${window.location.origin}/anuncio/${adSlug}`;
   
   return `Olá! Vi este anúncio no site CompreCarros e tenho interesse.
 
 Anunciante: ${ad.title}
-Categoria: ${ad.category}
-ID do anúncio: ${ad.id}
 Página do anúncio: ${adPageUrl}
-Origem: ${placement}
 Data/hora: ${timestamp}`;
 }
 
@@ -109,7 +108,7 @@ function getAdHref(ad: Ad): string | undefined {
   const type = ad.click_type || (ad.link ? "link" : null);
 
   if (type === "whatsapp" && ad.whatsapp_number) {
-    const message = buildAdWhatsAppMessage(ad, "Busca");
+    const message = buildAdWhatsAppMessage(ad);
     return generateWhatsAppUrl(ad.whatsapp_number.replace(/\D/g, ""), message);
   }
 

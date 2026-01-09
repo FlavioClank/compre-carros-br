@@ -137,6 +137,7 @@ export type Database = {
           image_url_search: string | null
           is_active: boolean
           link: string | null
+          slug: string | null
           title: string
           updated_at: string
           whatsapp_number: string | null
@@ -151,6 +152,7 @@ export type Database = {
           image_url_search?: string | null
           is_active?: boolean
           link?: string | null
+          slug?: string | null
           title: string
           updated_at?: string
           whatsapp_number?: string | null
@@ -165,6 +167,7 @@ export type Database = {
           image_url_search?: string | null
           is_active?: boolean
           link?: string | null
+          slug?: string | null
           title?: string
           updated_at?: string
           whatsapp_number?: string | null
@@ -557,6 +560,7 @@ export type Database = {
       }
       is_garage: { Args: never; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      normalize_slug: { Args: { input_text: string }; Returns: string }
     }
     Enums: {
       app_role: "super_admin" | "garage"

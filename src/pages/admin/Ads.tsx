@@ -51,6 +51,7 @@ const AD_CATEGORIES = [
 interface Ad {
   id: string;
   title: string;
+  slug: string | null;
   category: string;
   image_url_home: string | null;
   image_url_search: string | null;
@@ -64,6 +65,7 @@ interface Ad {
 
 interface AdFormData {
   title: string;
+  slug: string;
   category: string;
   click_type: "link" | "instagram" | "whatsapp";
   click_target: string;
@@ -89,12 +91,25 @@ export default function AdminAds() {
   
   const [formData, setFormData] = useState<AdFormData>({
     title: "",
+    slug: "",
     category: "",
     click_type: "link",
     click_target: "",
     whatsapp_number: "",
     is_active: true,
   });
+
+  // Helper function to normalize slug
+  function normalizeSlug(input: string): string {
+    return input
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Remove accents
+      .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
+      .replace(/\s+/g, "-") // Replace spaces with hyphens
+      .replace(/-+/g, "-") // Remove multiple consecutive hyphens
+      .replace(/^-|-$/g, ""); // Trim hyphens from start and end
+  }
 
   useEffect(() => {
     fetchAds();
@@ -119,6 +134,7 @@ export default function AdminAds() {
   function resetForm() {
     setFormData({
       title: "",
+      slug: "",
       category: "",
       click_type: "link",
       click_target: "",
@@ -143,6 +159,7 @@ export default function AdminAds() {
     setEditingAd(ad);
     setFormData({
       title: ad.title,
+      slug: ad.slug || "",
       category: ad.category,
       click_type: (ad.click_type as "link" | "instagram" | "whatsapp") || "link",
       click_target: ad.click_target || ad.link || "",
@@ -225,8 +242,15 @@ export default function AdminAds() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     
-    if (!formData.title || !formData.category) {
-      toast.error("Preencha os campos obrigatórios");
+    if (!formData.title || !formData.category || !formData.slug) {
+      toast.error("Preencha os campos obrigatórios (incluindo slug)");
+      return;
+    }
+
+    // Normalize the slug
+    const normalizedSlug = normalizeSlug(formData.slug);
+    if (!normalizedSlug) {
+      toast.error("O slug deve conter pelo menos um caractere válido");
       return;
     }
 
@@ -270,6 +294,7 @@ export default function AdminAds() {
 
       const adData = {
         title: formData.title,
+        slug: normalizedSlug,
         category: formData.category,
         image_url_home: imageUrlHome,
         image_url_search: imageUrlSearch,
@@ -348,7 +373,8 @@ export default function AdminAds() {
   }
 
   function getAdPublicUrl(ad: Ad) {
-    return `${SITE_URL}/anuncio/${ad.id}`;
+    const adSlug = ad.slug || ad.id;
+    return `${SITE_URL}/anuncio/${adSlug}`;
   }
 
   function copyAdLink(ad: Ad) {
@@ -392,6 +418,23 @@ export default function AdminAds() {
                     placeholder="Ex: Auto Mecânica Silva"
                     required
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="slug">Slug do link (URL) *</Label>
+                  <Input
+                    id="slug"
+                    value={formData.slug}
+                    onChange={(e) => {
+                      const normalized = normalizeSlug(e.target.value);
+                      setFormData({ ...formData, slug: normalized });
+                    }}
+                    placeholder="Ex: armazemautolatas"
+                    required
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Usado na URL: comprecarrosbr.com.br/anuncio/<strong>{formData.slug || "slug"}</strong>
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -687,8 +730,8 @@ export default function AdminAds() {
                   </div>
                   {/* Slug/URL section */}
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="font-mono truncate max-w-[180px]" title={ad.id}>
-                      ID: {ad.id.slice(0, 12)}...
+                    <span className="font-mono truncate max-w-[180px]" title={ad.slug || ad.id}>
+                      /{ad.slug || ad.id.slice(0, 8) + "..."}
                     </span>
                     <Button
                       variant="ghost"

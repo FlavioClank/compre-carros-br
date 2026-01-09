@@ -64,8 +64,8 @@ const App = () => (
               <Route path="/carros" element={<Cars />} />
               {/* Vehicle detail page by slug (SEO-friendly) or UUID (fallback) */}
               <Route path="/carro/:slug" element={<CarDetails />} />
-              {/* Ad detail page for SEO and tracking */}
-              <Route path="/anuncio/:id" element={<AdDetails />} />
+              {/* Ad detail page by slug (SEO-friendly) or UUID (fallback) */}
+              <Route path="/anuncio/:slug" element={<AdDetails />} />
               <Route path="/marcas" element={<Brands />} />
               <Route path="/login" element={<Login />} />
 
