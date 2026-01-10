@@ -30,6 +30,7 @@ interface AggregatedPoint {
 
 interface AdInfo {
   id: string;
+  slug: string | null;
   title: string;
   category: string;
   is_active: boolean;
@@ -82,7 +83,7 @@ function RecentAdClicks() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ads")
-        .select("id, title, category, is_active");
+        .select("id, slug, title, category, is_active");
       if (error) throw error;
       return data || [];
     },
@@ -230,7 +231,7 @@ function AdClicksSummary() {
       // Get all ads
       const { data: ads, error: adsError } = await supabase
         .from("ads")
-        .select("id, title, category, is_active")
+        .select("id, slug, title, category, is_active")
         .order("created_at", { ascending: false });
 
       if (adsError) throw adsError;
@@ -403,7 +404,7 @@ function StatsAdsTab() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ads")
-        .select("id, title, category, is_active")
+        .select("id, slug, title, category, is_active")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];

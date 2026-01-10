@@ -4,6 +4,7 @@ import { shuffleSeeded, getHalfHourSeed, getMsUntilNextWindow } from "@/lib/shuf
 
 interface Ad {
   id: string;
+  slug: string | null;
   title: string;
   category: string;
   image_url_home: string | null;
@@ -26,7 +27,7 @@ export function useAdsRotation() {
       try {
         const { data, error } = await supabase
           .from("ads")
-          .select("id, title, category, image_url_home, image_url_search, link, click_type, click_target, whatsapp_number")
+          .select("id, slug, title, category, image_url_home, image_url_search, link, click_type, click_target, whatsapp_number")
           .eq("is_active", true)
           .order("created_at", { ascending: true });
 

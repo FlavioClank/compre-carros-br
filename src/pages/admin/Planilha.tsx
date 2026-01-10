@@ -60,6 +60,7 @@ import { cn } from "@/lib/utils";
 
 interface Ad {
   id: string;
+  slug: string | null;
   title: string;
   whatsapp_number: string | null;
 }
@@ -150,7 +151,7 @@ export default function AdminPlanilha() {
     const [billingsRes, paymentsRes, adsRes] = await Promise.all([
       supabase.from("ad_billing").select("*").order("created_at", { ascending: false }),
       supabase.from("ad_billing_payments").select("*"),
-      supabase.from("ads").select("id, title, whatsapp_number").order("title"),
+      supabase.from("ads").select("id, slug, title, whatsapp_number").order("title"),
     ]);
 
     if (billingsRes.error) {
