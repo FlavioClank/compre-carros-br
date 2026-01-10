@@ -48,6 +48,7 @@ interface BrandDisplay {
 
 interface Ad {
   id: string;
+  slug: string | null;
   title: string;
   category: string;
   image_url_home: string | null;
