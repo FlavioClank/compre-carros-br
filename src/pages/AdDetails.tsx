@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/layout/PublicLayout";
@@ -45,6 +45,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 
 export default function AdDetails() {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
   const [ad, setAd] = useState<AdDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -52,6 +53,8 @@ export default function AdDetails() {
   const [fallbackUrl, setFallbackUrl] = useState<string>("");
   const hasRedirected = useRef(false);
 
+  // Only auto-redirect when ?go=1 is in URL (for campaign links)
+  const shouldAutoRedirect = searchParams.get("go") === "1";
   const isUuidParam = !!slug && UUID_REGEX.test(slug);
 
   // Build WhatsApp message - extracted so it can be used before redirect
@@ -152,9 +155,9 @@ Data/hora: ${timestamp}`;
     }
   };
 
-  // Auto-redirect based on click_type after ad is loaded
+  // Auto-redirect ONLY when ?go=1 is in URL (campaign/lead links)
   useEffect(() => {
-    if (!ad || hasRedirected.current || isLoading) return;
+    if (!ad || hasRedirected.current || isLoading || !shouldAutoRedirect) return;
 
     // Prevent double redirect
     hasRedirected.current = true;
@@ -198,7 +201,7 @@ Data/hora: ${timestamp}`;
       clearTimeout(redirectTimer);
       clearTimeout(fallbackTimer);
     };
-  }, [ad, isLoading]);
+  }, [ad, isLoading, shouldAutoRedirect]);
 
   if (isLoading) {
     return (
