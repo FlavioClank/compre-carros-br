@@ -9,6 +9,7 @@ import { ArrowLeft, MessageCircle, ExternalLink, Loader2 } from "lucide-react";
 import { generateWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/constants";
 import { trackClick, trackView } from "@/lib/analytics";
 import { format } from "date-fns";
+import { getAdPublicUrl } from "@/lib/ad-utils";
 
 interface AdDetail {
   id: string;
@@ -153,8 +154,7 @@ Data/hora: ${timestamp}`;
     setIsRedirecting(true);
 
     // Always use slug for canonical URL (never UUID)
-    const adSlug = ad.slug || ad.id;
-    const canonicalUrl = `${window.location.origin}/anuncio/${adSlug}`;
+    const canonicalUrl = getAdPublicUrl(ad);
     
     // Get redirect URL based on click_type
     const redirectUrl = getRedirectUrl(ad, canonicalUrl);
@@ -276,8 +276,7 @@ Data/hora: ${timestamp}`;
   const companyName = ad.ad_billing?.company_name || ad.title;
   const categoryLabel = CATEGORY_LABELS[ad.category] || ad.category;
   const imageUrl = ad.image_url_home || ad.image_url_search || "/placeholder.svg";
-  const adSlug = ad.slug || ad.id;
-  const canonicalUrl = `${window.location.origin}/anuncio/${adSlug}`;
+  const canonicalUrl = getAdPublicUrl(ad);
   
   const pageTitle = `${companyName} - ${categoryLabel} | CompreCarrosBr`;
   const metaDescription = `${companyName} - Anúncio de ${categoryLabel} no CompreCarrosBr. Entre em contato e saiba mais sobre os serviços oferecidos.`;
