@@ -45,6 +45,8 @@ export default function AdDetails() {
   const [ad, setAd] = useState<AdDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
+  const [fallbackUrl, setFallbackUrl] = useState<string>("");
   const hasRedirected = useRef(false);
 
   // Build WhatsApp message - extracted so it can be used before redirect
@@ -136,6 +138,9 @@ Data/hora: ${timestamp}`;
     const phone = ad.whatsapp_number?.replace(/\D/g, "") || WHATSAPP_NUMBER;
     const whatsAppUrl = generateWhatsAppUrl(phone, buildAdWhatsAppMessage(companyName, canonicalUrl));
 
+    // Store URL for fallback button
+    setFallbackUrl(whatsAppUrl);
+
     // Track click before redirect
     trackClick("ad", ad.id, {
       placement: "ad_page",
@@ -144,12 +149,20 @@ Data/hora: ${timestamp}`;
       action: "auto_redirect_whatsapp",
     });
 
+    // Show fallback button after 1.5s
+    const fallbackTimer = setTimeout(() => {
+      setShowFallback(true);
+    }, 1500);
+
     // Small delay to ensure tracking is sent and page renders for SEO
     const redirectTimer = setTimeout(() => {
       window.location.href = whatsAppUrl;
     }, 500);
 
-    return () => clearTimeout(redirectTimer);
+    return () => {
+      clearTimeout(redirectTimer);
+      clearTimeout(fallbackTimer);
+    };
   }, [ad, isLoading]);
 
   if (isLoading) {
@@ -183,6 +196,18 @@ Data/hora: ${timestamp}`;
           Você será direcionado para conversar com o anunciante...
         </p>
         <Loader2 className="h-6 w-6 animate-spin text-green-600 mx-auto" />
+        
+        {/* Fallback button - appears after 1.5s */}
+        {showFallback && fallbackUrl && (
+          <a
+            href={fallbackUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block mt-4 text-sm text-muted-foreground hover:text-foreground underline transition-colors"
+          >
+            Se não redirecionar, clique aqui
+          </a>
+        )}
       </div>
     </div>
   );
