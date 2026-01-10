@@ -60,7 +60,7 @@ const CardItem = memo(function CardItem({ item }: { item: ListItem }) {
   return <HomeAdCard ad={item.data} />;
 });
 
-// Load more trigger component with forwardRef
+// Load more trigger component - simplified without needing forwardRef
 function LoadMoreTrigger({ 
   onVisible, 
   hasNextPage,
@@ -85,7 +85,7 @@ function LoadMoreTrigger({
   if (!hasNextPage) return null;
 
   return (
-    <div ref={ref as (el: HTMLDivElement | null) => void} className="flex justify-center py-6">
+    <div ref={ref} className="flex justify-center py-6">
       {isFetchingNextPage && (
         <div className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
