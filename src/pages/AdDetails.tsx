@@ -41,6 +41,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   outros: "Outros",
 };
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default function AdDetails() {
   const { slug } = useParams<{ slug: string }>();
   const [ad, setAd] = useState<AdDetail | null>(null);
@@ -49,6 +51,8 @@ export default function AdDetails() {
   const [showFallback, setShowFallback] = useState(false);
   const [fallbackUrl, setFallbackUrl] = useState<string>("");
   const hasRedirected = useRef(false);
+
+  const isUuidParam = !!slug && UUID_REGEX.test(slug);
 
   // Build WhatsApp message - extracted so it can be used before redirect
   const buildAdWhatsAppMessage = (companyName: string, canonicalUrl: string) => {
@@ -67,36 +71,33 @@ Data/hora: ${timestamp}`;
         return;
       }
 
-      // Try to find by slug first, then by id (for backwards compatibility)
-      let query = supabase
-        .from("ads")
-        .select(`
-          id,
-          title,
-          category,
-          slug,
-          image_url_home,
-          image_url_search,
-          link,
-          click_type,
-          click_target,
-          whatsapp_number,
-          is_active,
-          created_at,
-          ad_billing (
-            company_name
-          )
-        `)
-        .eq("is_active", true);
+       // Try to find by slug first, then by id (for backwards compatibility)
+       let query = supabase
+         .from("ads")
+         .select(`
+           id,
+           title,
+           category,
+           slug,
+           image_url_home,
+           image_url_search,
+           link,
+           click_type,
+           click_target,
+           whatsapp_number,
+           is_active,
+           created_at,
+           ad_billing (
+             company_name
+           )
+         `)
+         .eq("is_active", true);
 
-      // Check if it's a UUID (for backwards compatibility) or a slug
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
-      
-      if (isUuid) {
-        query = query.eq("id", slug);
-      } else {
-        query = query.eq("slug", slug);
-      }
+       if (isUuidParam) {
+         query = query.eq("id", slug);
+       } else {
+         query = query.eq("slug", slug);
+       }
 
       const { data, error } = await query.maybeSingle();
 
@@ -107,15 +108,21 @@ Data/hora: ${timestamp}`;
         return;
       }
 
-      if (data) {
-        setAd(data as AdDetail);
-        // Track view
-        trackView("ad", data.id, {
-          placement: "ad_page",
-          category: data.category,
-          title: data.title,
-        });
-      } else {
+       if (data) {
+         setAd(data as AdDetail);
+
+         // If accessed via legacy UUID URL, upgrade the address bar to the slug URL
+         if (isUuidParam && data.slug && data.slug.trim() !== "") {
+           window.history.replaceState(null, "", `/anuncio/${data.slug}`);
+         }
+
+         // Track view
+         trackView("ad", data.id, {
+           placement: "ad_page",
+           category: data.category,
+           title: data.title,
+         });
+       } else {
         setAd(null);
       }
 

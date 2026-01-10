@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { generateWhatsAppUrl } from "@/lib/constants";
 import { trackClick, trackView } from "@/lib/analytics";
 import { format } from "date-fns";
+import { getAdPublicUrl } from "@/lib/ad-utils";
 
 interface Ad {
   id: string;
@@ -26,9 +27,8 @@ interface AdCardSingleProps {
  */
 function buildAdWhatsAppMessage(ad: Ad): string {
   const timestamp = format(new Date(), "dd/MM/yyyy 'às' HH:mm");
-  const adSlug = ad.slug || ad.id;
-  const adPageUrl = `${window.location.origin}/anuncio/${adSlug}`;
-  
+  const adPageUrl = getAdPublicUrl(ad);
+
   return `Olá! Vi este anúncio no site CompreCarros e tenho interesse.
 
 Anunciante: ${ad.title}

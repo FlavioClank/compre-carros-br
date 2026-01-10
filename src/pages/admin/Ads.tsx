@@ -33,8 +33,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, ExternalLink, Image as ImageIcon, Home, Search, Copy, Link } from "lucide-react";
-
-const SITE_URL = "https://comprecarrosbr.com.br";
+import { getAdPublicUrl } from "@/lib/ad-utils";
 
 const AD_CATEGORIES = [
   { value: "mecanica", label: "Mecânica" },
@@ -372,11 +371,6 @@ export default function AdminAds() {
     return AD_CATEGORIES.find((c) => c.value === value)?.label || value;
   }
 
-  function getAdPublicUrl(ad: Ad) {
-    const adSlug = ad.slug || ad.id;
-    return `${SITE_URL}/anuncio/${adSlug}`;
-  }
-
   function copyAdLink(ad: Ad) {
     const url = getAdPublicUrl(ad);
     navigator.clipboard.writeText(url);
@@ -433,7 +427,7 @@ export default function AdminAds() {
                     required
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Usado na URL: comprecarrosbr.com.br/anuncio/<strong>{formData.slug || "slug"}</strong>
+                    Usado na URL: {window.location.origin}/anuncio/<strong>{formData.slug || "slug"}</strong>
                   </p>
                 </div>
 
@@ -730,8 +724,8 @@ export default function AdminAds() {
                   </div>
                   {/* Slug/URL section */}
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="font-mono truncate max-w-[180px]" title={ad.slug || ad.id}>
-                      /{ad.slug || ad.id.slice(0, 8) + "..."}
+                    <span className="font-mono truncate max-w-[180px]" title={ad.slug || ""}>
+                      /{ad.slug || "sem-slug"}
                     </span>
                     <Button
                       variant="ghost"
