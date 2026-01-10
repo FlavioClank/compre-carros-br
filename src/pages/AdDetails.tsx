@@ -124,7 +124,27 @@ Data/hora: ${timestamp}`;
     fetchAd();
   }, [slug]);
 
-  // Auto-redirect to WhatsApp after ad is loaded
+  // Build redirect URL based on click_type
+  const getRedirectUrl = (ad: AdDetail, canonicalUrl: string): string => {
+    const companyName = ad.ad_billing?.company_name || ad.title;
+    
+    switch (ad.click_type) {
+      case "whatsapp": {
+        const phone = ad.whatsapp_number?.replace(/\D/g, "") || WHATSAPP_NUMBER;
+        return generateWhatsAppUrl(phone, buildAdWhatsAppMessage(companyName, canonicalUrl));
+      }
+      case "instagram":
+      case "link":
+        return ad.click_target || ad.link || "";
+      default: {
+        // Fallback to WhatsApp if no click_type defined
+        const phone = ad.whatsapp_number?.replace(/\D/g, "") || WHATSAPP_NUMBER;
+        return generateWhatsAppUrl(phone, buildAdWhatsAppMessage(companyName, canonicalUrl));
+      }
+    }
+  };
+
+  // Auto-redirect based on click_type after ad is loaded
   useEffect(() => {
     if (!ad || hasRedirected.current || isLoading) return;
 
@@ -132,21 +152,29 @@ Data/hora: ${timestamp}`;
     hasRedirected.current = true;
     setIsRedirecting(true);
 
+    // Always use slug for canonical URL (never UUID)
     const adSlug = ad.slug || ad.id;
     const canonicalUrl = `${window.location.origin}/anuncio/${adSlug}`;
-    const companyName = ad.ad_billing?.company_name || ad.title;
-    const phone = ad.whatsapp_number?.replace(/\D/g, "") || WHATSAPP_NUMBER;
-    const whatsAppUrl = generateWhatsAppUrl(phone, buildAdWhatsAppMessage(companyName, canonicalUrl));
+    
+    // Get redirect URL based on click_type
+    const redirectUrl = getRedirectUrl(ad, canonicalUrl);
+    
+    if (!redirectUrl) {
+      // No valid redirect URL, just show the page
+      setIsRedirecting(false);
+      hasRedirected.current = false;
+      return;
+    }
 
     // Store URL for fallback button
-    setFallbackUrl(whatsAppUrl);
+    setFallbackUrl(redirectUrl);
 
     // Track click before redirect
     trackClick("ad", ad.id, {
       placement: "ad_page",
       category: ad.category,
       title: ad.title,
-      action: "auto_redirect_whatsapp",
+      action: `auto_redirect_${ad.click_type || "whatsapp"}`,
     });
 
     // Show fallback button after 1.5s
@@ -156,7 +184,7 @@ Data/hora: ${timestamp}`;
 
     // Small delay to ensure tracking is sent and page renders for SEO
     const redirectTimer = setTimeout(() => {
-      window.location.href = whatsAppUrl;
+      window.location.href = redirectUrl;
     }, 500);
 
     return () => {
@@ -182,35 +210,50 @@ Data/hora: ${timestamp}`;
     );
   }
 
-  // Show redirecting overlay when auto-redirecting to WhatsApp
-  const RedirectingOverlay = () => (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div className="bg-card rounded-2xl p-8 shadow-xl text-center max-w-sm mx-4">
-        <div className="w-16 h-16 rounded-full bg-green-600 flex items-center justify-center mx-auto mb-4">
-          <MessageCircle className="h-8 w-8 text-white" />
+  // Get overlay text based on click_type
+  const getOverlayText = () => {
+    switch (ad?.click_type) {
+      case "instagram":
+        return { title: "Redirecionando para Instagram", description: "Você será direcionado para o perfil do anunciante..." };
+      case "link":
+        return { title: "Redirecionando para o site", description: "Você será direcionado para o site do anunciante..." };
+      default:
+        return { title: "Redirecionando para WhatsApp", description: "Você será direcionado para conversar com o anunciante..." };
+    }
+  };
+
+  // Show redirecting overlay
+  const RedirectingOverlay = () => {
+    const overlayText = getOverlayText();
+    return (
+      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div className="bg-card rounded-2xl p-8 shadow-xl text-center max-w-sm mx-4">
+          <div className="w-16 h-16 rounded-full bg-green-600 flex items-center justify-center mx-auto mb-4">
+            <MessageCircle className="h-8 w-8 text-white" />
+          </div>
+          <h2 className="font-display text-xl font-bold text-foreground mb-2">
+            {overlayText.title}
+          </h2>
+          <p className="text-muted-foreground text-sm mb-4">
+            {overlayText.description}
+          </p>
+          <Loader2 className="h-6 w-6 animate-spin text-green-600 mx-auto" />
+          
+          {/* Fallback button - appears after 1.5s */}
+          {showFallback && fallbackUrl && (
+            <a
+              href={fallbackUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block mt-4 text-sm text-muted-foreground hover:text-foreground underline transition-colors"
+            >
+              Se não redirecionar, clique aqui
+            </a>
+          )}
         </div>
-        <h2 className="font-display text-xl font-bold text-foreground mb-2">
-          Redirecionando para WhatsApp
-        </h2>
-        <p className="text-muted-foreground text-sm mb-4">
-          Você será direcionado para conversar com o anunciante...
-        </p>
-        <Loader2 className="h-6 w-6 animate-spin text-green-600 mx-auto" />
-        
-        {/* Fallback button - appears after 1.5s */}
-        {showFallback && fallbackUrl && (
-          <a
-            href={fallbackUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block mt-4 text-sm text-muted-foreground hover:text-foreground underline transition-colors"
-          >
-            Se não redirecionar, clique aqui
-          </a>
-        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   if (!ad) {
     return (
