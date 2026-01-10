@@ -1,5 +1,4 @@
-import { memo, useEffect, useRef } from "react";
-import { Badge } from "@/components/ui/badge";
+import { memo, useEffect, useRef, forwardRef } from "react";
 import { generateWhatsAppUrl } from "@/lib/constants";
 import { trackClick, trackView } from "@/lib/analytics";
 import { format } from "date-fns";
@@ -41,63 +40,68 @@ Data/hora: ${timestamp}`;
  * Matches the exact visual structure of CarCardSingle (horizontal layout)
  * Uses VehicleCardShell for consistent styling with vehicle cards
  */
-export const HomeAdCard = memo(function HomeAdCard({ ad }: HomeAdCardProps) {
-  const hasTrackedView = useRef(false);
+export const HomeAdCard = memo(
+  forwardRef<HTMLDivElement, HomeAdCardProps>(function HomeAdCard({ ad }, ref) {
+    const hasTrackedView = useRef(false);
 
-  useEffect(() => {
-    if (!hasTrackedView.current) {
-      trackView("ad", ad.id, {
+    useEffect(() => {
+      if (!hasTrackedView.current) {
+        trackView("ad", ad.id, {
+          placement: "home",
+          category: ad.category,
+          title: ad.title,
+        });
+        hasTrackedView.current = true;
+      }
+    }, [ad.id, ad.category, ad.title]);
+
+    const href = getAdHref(ad);
+    const imageUrl = ad.image_url_home || "/placeholder.svg";
+
+    const handleClick = () => {
+      trackClick("ad", ad.id, {
         placement: "home",
         category: ad.category,
         title: ad.title,
       });
-      hasTrackedView.current = true;
-    }
-  }, [ad.id, ad.category, ad.title]);
+    };
 
-  const href = getAdHref(ad);
-  const imageUrl = ad.image_url_home || "/placeholder.svg";
-
-  const handleClick = () => {
-    trackClick("ad", ad.id, {
-      placement: "home",
-      category: ad.category,
-      title: ad.title,
-    });
-  };
-
-  const content = (
-    <div className="relative w-full overflow-hidden rounded-xl border bg-card md:bg-gray-300/50 shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-      {/* Selo PUBLICIDADE - visível apenas no desktop */}
-      <span className="absolute top-2 left-2 z-10 hidden rounded-md bg-black/70 px-2 py-1 text-xs font-semibold text-white md:block">
-        PUBLICIDADE
-      </span>
-      <div className="relative w-full aspect-[1200/393] md:aspect-[1200/200] bg-gray-300/50">
-        <img
-          src={imageUrl}
-          alt="Publicidade"
-          className="absolute inset-0 w-full h-full object-contain"
-        />
-      </div>
-    </div>
-  );
-
-  if (href) {
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={handleClick}
-        className="block"
+    const content = (
+      <div
+        ref={ref}
+        className="relative w-full overflow-hidden rounded-xl border bg-card md:bg-gray-300/50 shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
       >
-        {content}
-      </a>
+        {/* Selo PUBLICIDADE - visível apenas no desktop */}
+        <span className="absolute top-2 left-2 z-10 hidden rounded-md bg-black/70 px-2 py-1 text-xs font-semibold text-white md:block">
+          PUBLICIDADE
+        </span>
+        <div className="relative w-full aspect-[1200/393] md:aspect-[1200/200] bg-gray-300/50">
+          <img
+            src={imageUrl}
+            alt="Publicidade"
+            className="absolute inset-0 w-full h-full object-contain"
+          />
+        </div>
+      </div>
     );
-  }
 
-  return <div className="block">{content}</div>;
-});
+    if (href) {
+      return (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={handleClick}
+          className="block"
+        >
+          {content}
+        </a>
+      );
+    }
+
+    return <div className="block">{content}</div>;
+  })
+);
 
 function getAdHref(ad: Ad): string | undefined {
   const type = ad.click_type || (ad.link ? "link" : null);
