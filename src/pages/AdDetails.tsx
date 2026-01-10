@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MessageCircle, ExternalLink } from "lucide-react";
+import { ArrowLeft, MessageCircle, ExternalLink, Loader2 } from "lucide-react";
 import { generateWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/constants";
 import { trackClick, trackView } from "@/lib/analytics";
 import { format } from "date-fns";
@@ -44,6 +44,18 @@ export default function AdDetails() {
   const { slug } = useParams<{ slug: string }>();
   const [ad, setAd] = useState<AdDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const hasRedirected = useRef(false);
+
+  // Build WhatsApp message - extracted so it can be used before redirect
+  const buildAdWhatsAppMessage = (companyName: string, canonicalUrl: string) => {
+    const timestamp = format(new Date(), "dd/MM/yyyy 'às' HH:mm");
+    return `Olá! Vi este anúncio no site CompreCarros e tenho interesse.
+
+Anunciante: ${companyName}
+Página do anúncio: ${canonicalUrl}
+Data/hora: ${timestamp}`;
+  };
 
   useEffect(() => {
     const fetchAd = async () => {
@@ -110,6 +122,36 @@ export default function AdDetails() {
     fetchAd();
   }, [slug]);
 
+  // Auto-redirect to WhatsApp after ad is loaded
+  useEffect(() => {
+    if (!ad || hasRedirected.current || isLoading) return;
+
+    // Prevent double redirect
+    hasRedirected.current = true;
+    setIsRedirecting(true);
+
+    const adSlug = ad.slug || ad.id;
+    const canonicalUrl = `${window.location.origin}/anuncio/${adSlug}`;
+    const companyName = ad.ad_billing?.company_name || ad.title;
+    const phone = ad.whatsapp_number?.replace(/\D/g, "") || WHATSAPP_NUMBER;
+    const whatsAppUrl = generateWhatsAppUrl(phone, buildAdWhatsAppMessage(companyName, canonicalUrl));
+
+    // Track click before redirect
+    trackClick("ad", ad.id, {
+      placement: "ad_page",
+      category: ad.category,
+      title: ad.title,
+      action: "auto_redirect_whatsapp",
+    });
+
+    // Small delay to ensure tracking is sent and page renders for SEO
+    const redirectTimer = setTimeout(() => {
+      window.location.href = whatsAppUrl;
+    }, 500);
+
+    return () => clearTimeout(redirectTimer);
+  }, [ad, isLoading]);
+
   if (isLoading) {
     return (
       <PublicLayout>
@@ -126,6 +168,24 @@ export default function AdDetails() {
       </PublicLayout>
     );
   }
+
+  // Show redirecting overlay when auto-redirecting to WhatsApp
+  const RedirectingOverlay = () => (
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+      <div className="bg-card rounded-2xl p-8 shadow-xl text-center max-w-sm mx-4">
+        <div className="w-16 h-16 rounded-full bg-green-600 flex items-center justify-center mx-auto mb-4">
+          <MessageCircle className="h-8 w-8 text-white" />
+        </div>
+        <h2 className="font-display text-xl font-bold text-foreground mb-2">
+          Redirecionando para WhatsApp
+        </h2>
+        <p className="text-muted-foreground text-sm mb-4">
+          Você será direcionado para conversar com o anunciante...
+        </p>
+        <Loader2 className="h-6 w-6 animate-spin text-green-600 mx-auto" />
+      </div>
+    </div>
+  );
 
   if (!ad) {
     return (
@@ -154,19 +214,9 @@ export default function AdDetails() {
   const pageTitle = `${companyName} - ${categoryLabel} | CompreCarrosBr`;
   const metaDescription = `${companyName} - Anúncio de ${categoryLabel} no CompreCarrosBr. Entre em contato e saiba mais sobre os serviços oferecidos.`;
 
-  // Build simplified WhatsApp message
-  const buildAdWhatsAppMessage = () => {
-    const timestamp = format(new Date(), "dd/MM/yyyy 'às' HH:mm");
-    return `Olá! Vi este anúncio no site CompreCarros e tenho interesse.
-
-Anunciante: ${companyName}
-Página do anúncio: ${canonicalUrl}
-Data/hora: ${timestamp}`;
-  };
-
   const getWhatsAppUrl = () => {
     const phone = ad.whatsapp_number?.replace(/\D/g, "") || WHATSAPP_NUMBER;
-    return generateWhatsAppUrl(phone, buildAdWhatsAppMessage());
+    return generateWhatsAppUrl(phone, buildAdWhatsAppMessage(companyName, canonicalUrl));
   };
 
   const handleWhatsAppClick = () => {
@@ -189,6 +239,7 @@ Data/hora: ${timestamp}`;
 
   return (
     <PublicLayout>
+      {isRedirecting && <RedirectingOverlay />}
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={metaDescription} />
