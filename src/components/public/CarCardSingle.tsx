@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { generateCarUrl } from "@/lib/utils";
 import { VehicleCardShell } from "@/components/public/VehicleCardShell";
-import { trackClick } from "@/lib/analytics";
+import { trackVehicleClick } from "@/lib/analytics";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { getCarCoverImage } from "@/lib/image-utils";
 
@@ -159,8 +159,9 @@ export const CarCardSingle = memo(function CarCardSingle({ car }: CarCardSingleP
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() =>
-                    trackClick("car", car.id, {
+                    trackVehicleClick(car.id, {
                       source: "featured_whatsapp",
+                      slug: car.slug,
                       brand: brandName,
                       model: car.model,
                     })
