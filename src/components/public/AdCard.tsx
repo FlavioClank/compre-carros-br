@@ -1,11 +1,9 @@
 import { memo, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { VehicleCardShell } from "@/components/public/VehicleCardShell";
-import { generateWhatsAppUrl } from "@/lib/constants";
-import { trackClick, trackView } from "@/lib/analytics";
+import { trackView } from "@/lib/analytics";
 import { OptimizedImage } from "@/components/ui/optimized-image";
-import { format } from "date-fns";
-import { getAdPublicUrl } from "@/lib/ad-utils";
 
 interface Ad {
   id: string;
@@ -25,23 +23,14 @@ interface AdCardProps {
 }
 
 /**
- * Builds a simplified WhatsApp message for ads
+ * AdCard component for displaying ads in search results / listings.
+ * Always navigates to /anuncio/:slug page (no direct redirect to WhatsApp).
+ * Click tracking happens on the ad detail page when user clicks CTA button.
  */
-function buildAdWhatsAppMessage(ad: Ad): string {
-  const timestamp = format(new Date(), "dd/MM/yyyy 'às' HH:mm");
-  const adPageUrl = getAdPublicUrl(ad);
-
-  return `Olá! Vi este anúncio no site CompreCarros e tenho interesse.
-
-Anunciante: ${ad.title}
-Página do anúncio: ${adPageUrl}
-Data/hora: ${timestamp}`;
-}
-
 export const AdCard = memo(function AdCard({ ad }: AdCardProps) {
   const hasTrackedView = useRef(false);
 
-  // Track view when ad is rendered (once per mount)
+  // Track view when ad is rendered in list (once per mount)
   useEffect(() => {
     if (!hasTrackedView.current) {
       trackView("ad", ad.id, {
@@ -53,33 +42,11 @@ export const AdCard = memo(function AdCard({ ad }: AdCardProps) {
     }
   }, [ad.id, ad.category, ad.title]);
 
-  const href = getAdHref(ad);
-  const CardWrapper = href ? "a" : "div";
-  const wrapperProps = href
-    ? {
-        href,
-        target: "_blank",
-        rel: "noopener noreferrer",
-      }
-    : {};
-
   const imageUrl = ad.image_url_search || "/placeholder.svg";
+  const adSlug = ad.slug || ad.id;
 
   return (
-    <CardWrapper
-      {...wrapperProps}
-      className="block"
-      {...(href
-        ? {
-            onClick: () =>
-              trackClick("ad", ad.id, {
-                placement: "search",
-                category: ad.category,
-                title: ad.title,
-              }),
-          }
-        : {})}
-    >
+    <Link to={`/anuncio/${adSlug}`} className="block">
       <VehicleCardShell>
         <div className="relative block aspect-[16/10] overflow-hidden">
           <OptimizedImage
@@ -100,22 +67,6 @@ export const AdCard = memo(function AdCard({ ad }: AdCardProps) {
           </Badge>
         </div>
       </VehicleCardShell>
-    </CardWrapper>
+    </Link>
   );
 });
-
-function getAdHref(ad: Ad): string | undefined {
-  const type = ad.click_type || (ad.link ? "link" : null);
-
-  if (type === "whatsapp" && ad.whatsapp_number) {
-    const message = buildAdWhatsAppMessage(ad);
-    return generateWhatsAppUrl(ad.whatsapp_number.replace(/\D/g, ""), message);
-  }
-
-  const target = ad.click_target || ad.link || undefined;
-  if ((type === "link" || type === "instagram") && target) {
-    return target;
-  }
-
-  return undefined;
-}
