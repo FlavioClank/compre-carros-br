@@ -96,7 +96,7 @@ export const generateWhatsAppUrl = (phone: string, message: string): string => {
 
 // Build WhatsApp message for a car inquiry (URL generation must use generateWhatsAppUrl)
 export const buildCarWhatsAppMessage = (car: {
-  id: string;
+  slug?: string | null;
   code: string;
   model: string;
   year: number;
@@ -107,5 +107,7 @@ export const buildCarWhatsAppMessage = (car: {
 }): string => {
   const vehicleEmoji = car.category === 'motorcycle' ? '🏍️' : '🚗';
   const vehicleType = car.category === 'motorcycle' ? 'moto' : 'veículo';
-  return `Olá! Tenho interesse no ${vehicleType}:\n\n${vehicleEmoji} *${car.brand_name || ""} ${car.model}*\n📅 Ano: ${car.year}\n${car.version ? `⚙️ Versão: ${car.version}\n` : ""}💰 Preço: ${formatPrice(car.price)}\n🔖 Código: ${car.code}\n🔗 Link: /carro/${car.id}\n\nPoderia me passar mais informações?`;
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const vehicleUrl = car.slug ? `${origin}/carro/${car.slug}` : '';
+  return `Olá! Tenho interesse no ${vehicleType}:\n\n${vehicleEmoji} *${car.brand_name || ""} ${car.model}*\n📅 Ano: ${car.year}\n${car.version ? `⚙️ Versão: ${car.version}\n` : ""}💰 Preço: ${formatPrice(car.price)}\n🔖 Código: ${car.code}${vehicleUrl ? `\n🔗 Link: ${vehicleUrl}` : ''}\n\nPoderia me passar mais informações?`;
 };
