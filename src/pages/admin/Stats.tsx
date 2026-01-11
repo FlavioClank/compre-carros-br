@@ -567,6 +567,7 @@ function StatsGaragesTab() {
   const [year, setYear] = useState<number>(currentYear);
   const [period, setPeriod] = useState<Period>("monthly");
   const [selectedGarageId, setSelectedGarageId] = useState<string>("");
+  const [reportGenerated, setReportGenerated] = useState(false);
 
   const { data: garages } = useQuery({
     queryKey: ["stats-garages-list"],
@@ -585,8 +586,8 @@ function StatsGaragesTab() {
     isFetching,
     refetch,
   } = useQuery<{ points: AggregatedPoint[]; total: number }>({
-    queryKey: ["stats-garages", selectedGarageId, year, period],
-    enabled: !!selectedGarageId,
+    queryKey: ["stats-garages", selectedGarageId, year, period, reportGenerated],
+    enabled: reportGenerated && !!selectedGarageId,
     queryFn: async () => {
       const from = `${year}-01-01`;
       const to = `${year + 1}-01-01`;
@@ -618,6 +619,12 @@ function StatsGaragesTab() {
     },
   });
 
+  const handleGenerateReport = () => {
+    if (!selectedGarageId) return;
+    setReportGenerated(true);
+    refetch();
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -629,7 +636,10 @@ function StatsGaragesTab() {
             <p className="text-sm font-medium text-muted-foreground">Ano</p>
             <Select
               value={String(year)}
-              onValueChange={(value) => setYear(Number(value))}
+              onValueChange={(value) => {
+                setYear(Number(value));
+                setReportGenerated(false);
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o ano" />
@@ -648,7 +658,10 @@ function StatsGaragesTab() {
             <p className="text-sm font-medium text-muted-foreground">Período</p>
             <Select
               value={period}
-              onValueChange={(value: Period) => setPeriod(value)}
+              onValueChange={(value: Period) => {
+                setPeriod(value);
+                setReportGenerated(false);
+              }}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -665,7 +678,10 @@ function StatsGaragesTab() {
             <p className="text-sm font-medium text-muted-foreground">Garagem</p>
             <Select
               value={selectedGarageId}
-              onValueChange={(value) => setSelectedGarageId(value)}
+              onValueChange={(value) => {
+                setSelectedGarageId(value);
+                setReportGenerated(false);
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione a garagem" />
@@ -685,14 +701,14 @@ function StatsGaragesTab() {
         <div className="flex justify-end">
           <Button
             size="sm"
-            onClick={() => refetch()}
+            onClick={handleGenerateReport}
             disabled={!selectedGarageId || isFetching}
           >
-            Gerar relatório
+            {isFetching ? "Gerando..." : "Gerar relatório"}
           </Button>
         </div>
 
-        {selectedGarageId && (
+        {reportGenerated && selectedGarageId && (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
               Total de cliques em veículos desta garagem no período selecionado: {aggregated?.total ?? 0}
@@ -733,13 +749,15 @@ function StatsGaragesTab() {
 function StatsSiteTab() {
   const [year, setYear] = useState<number>(currentYear);
   const [period, setPeriod] = useState<Period>("monthly");
+  const [reportGenerated, setReportGenerated] = useState(false);
 
   const {
     data: aggregated,
     isFetching,
     refetch,
   } = useQuery<{ points: AggregatedPoint[]; total: number }>({
-    queryKey: ["stats-site", year, period],
+    queryKey: ["stats-site", year, period, reportGenerated],
+    enabled: reportGenerated,
     queryFn: async () => {
       const from = `${year}-01-01`;
       const to = `${year + 1}-01-01`;
@@ -760,18 +778,26 @@ function StatsSiteTab() {
     },
   });
 
+  const handleGenerateReport = () => {
+    setReportGenerated(true);
+    refetch();
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Estatísticas do Site</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1">
             <p className="text-sm font-medium text-muted-foreground">Ano</p>
             <Select
               value={String(year)}
-              onValueChange={(value) => setYear(Number(value))}
+              onValueChange={(value) => {
+                setYear(Number(value));
+                setReportGenerated(false);
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o ano" />
@@ -790,7 +816,10 @@ function StatsSiteTab() {
             <p className="text-sm font-medium text-muted-foreground">Período</p>
             <Select
               value={period}
-              onValueChange={(value: Period) => setPeriod(value)}
+              onValueChange={(value: Period) => {
+                setPeriod(value);
+                setReportGenerated(false);
+              }}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -805,42 +834,44 @@ function StatsSiteTab() {
         </div>
 
         <div className="flex justify-end">
-          <Button size="sm" onClick={() => refetch()} disabled={isFetching}>
-            Gerar relatório
+          <Button size="sm" onClick={handleGenerateReport} disabled={isFetching}>
+            {isFetching ? "Gerando..." : "Gerar relatório"}
           </Button>
         </div>
 
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Total de visitas no período selecionado: {aggregated?.total ?? 0}
-          </p>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Período</TableHead>
-                <TableHead className="text-right">Visitas</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {aggregated?.points.length ? (
-                aggregated.points.map((point) => (
-                  <TableRow key={point.label}>
-                    <TableCell>{point.label}</TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {point.count}
+        {reportGenerated && (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Total de visitas no período selecionado: {aggregated?.total ?? 0}
+            </p>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Período</TableHead>
+                  <TableHead className="text-right">Visitas</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {aggregated?.points.length ? (
+                  aggregated.points.map((point) => (
+                    <TableRow key={point.label}>
+                      <TableCell>{point.label}</TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {point.count}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={2} className="text-center text-muted-foreground">
+                      Nenhuma visita registrada para o filtro selecionado.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={2} className="text-center text-muted-foreground">
-                    Nenhuma visita registrada para o filtro selecionado.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

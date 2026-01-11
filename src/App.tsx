@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/auth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { SiteTracker } from "@/components/SiteTracker";
 
 // Public Pages
 import Index from "./pages/Index";
@@ -57,6 +58,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <ScrollToTop />
+            <SiteTracker />
             <Routes>
               {/* PUBLIC ROUTES - No auth required */}
               <Route path="/" element={<Index />} />
