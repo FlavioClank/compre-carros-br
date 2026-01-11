@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { RefreshCw, Clock, MousePointer, TrendingUp, Eye } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 type Period = "daily" | "weekly" | "monthly";
 
@@ -26,6 +27,12 @@ interface ActionLog {
 interface AggregatedPoint {
   label: string;
   count: number;
+}
+
+interface ChartDataPoint {
+  label: string;
+  views: number;
+  conversions: number;
 }
 
 interface AdInfo {
@@ -605,7 +612,7 @@ function StatsGaragesTab() {
     data: vehicleStats,
     isFetching,
     refetch,
-  } = useQuery<{ vehicles: VehicleStats[]; totalViews: number; totalConversions: number; aggregated: AggregatedPoint[] }>({
+  } = useQuery<{ vehicles: VehicleStats[]; totalViews: number; totalConversions: number; chartData: ChartDataPoint[] }>({
     queryKey: ["stats-garages-vehicles", selectedGarageId, year, period, vehicleFilter, reportGenerated],
     enabled: reportGenerated,
     queryFn: async () => {
@@ -642,7 +649,7 @@ function StatsGaragesTab() {
       if (carsError) throw carsError;
 
       if (!cars?.length) {
-        return { vehicles: [], totalViews: 0, totalConversions: 0, aggregated: [] };
+        return { vehicles: [], totalViews: 0, totalConversions: 0, chartData: [] };
       }
 
       const carIds = cars.map((c: any) => c.id);
@@ -711,11 +718,48 @@ function StatsGaragesTab() {
       const totalViews = vehicles.reduce((sum, v) => sum + v.views, 0);
       const totalConversions = vehicles.reduce((sum, v) => sum + v.conversions, 0);
 
-      // Aggregate by period for chart
-      const allLogs = [...(viewsData || []), ...(clicksData || [])] as ActionLog[];
-      const aggregated = aggregateByPeriod(allLogs, period);
+      // Aggregate views and clicks separately for chart
+      const viewsBuckets = new Map<string, number>();
+      const clicksBuckets = new Map<string, number>();
 
-      return { vehicles, totalViews, totalConversions, aggregated };
+      const getKey = (dateStr: string) => {
+        const date = new Date(dateStr);
+        if (period === "daily") {
+          return format(date, "dd/MM");
+        } else if (period === "monthly") {
+          return format(date, "MMM", { locale: ptBR });
+        } else {
+          const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+          const pastDaysOfYear =
+            (Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) -
+              Date.UTC(firstDayOfYear.getFullYear(), firstDayOfYear.getMonth(), firstDayOfYear.getDate())) /
+            24 / 60 / 60 / 1000;
+          const week = Math.floor((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7) + 1;
+          return `Sem ${week}`;
+        }
+      };
+
+      (viewsData || []).forEach((log: any) => {
+        const key = getKey(log.created_at);
+        viewsBuckets.set(key, (viewsBuckets.get(key) || 0) + 1);
+      });
+
+      (clicksData || []).forEach((log: any) => {
+        const key = getKey(log.created_at);
+        clicksBuckets.set(key, (clicksBuckets.get(key) || 0) + 1);
+      });
+
+      // Combine into chart data
+      const allKeys = new Set([...viewsBuckets.keys(), ...clicksBuckets.keys()]);
+      const chartData: ChartDataPoint[] = Array.from(allKeys)
+        .sort()
+        .map((label) => ({
+          label,
+          views: viewsBuckets.get(label) || 0,
+          conversions: clicksBuckets.get(label) || 0,
+        }));
+
+      return { vehicles, totalViews, totalConversions, chartData };
     },
   });
 
@@ -870,25 +914,80 @@ function StatsGaragesTab() {
               </div>
             </div>
 
-            {/* Period Breakdown */}
-            {vehicleStats?.aggregated && vehicleStats.aggregated.length > 0 && (
+            {/* Line Chart - Views vs Conversions */}
+            {vehicleStats?.chartData && vehicleStats.chartData.length > 0 && (
+              <div className="rounded-xl border bg-card p-4">
+                <h3 className="text-sm font-medium text-muted-foreground mb-4">
+                  Evolução de Views e Conversões
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={vehicleStats.chartData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis 
+                      dataKey="label" 
+                      className="text-xs fill-muted-foreground"
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis 
+                      className="text-xs fill-muted-foreground"
+                      tick={{ fontSize: 12 }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        color: 'hsl(var(--foreground))'
+                      }}
+                      labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="views" 
+                      name="Views" 
+                      stroke="hsl(var(--muted-foreground))" 
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(var(--muted-foreground))', strokeWidth: 2 }}
+                      activeDot={{ r: 6 }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="conversions" 
+                      name="Conversões" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* Period Breakdown Table */}
+            {vehicleStats?.chartData && vehicleStats.chartData.length > 0 && (
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                  Interações por Período
+                  Detalhamento por Período
                 </h3>
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Período</TableHead>
-                      <TableHead className="text-right">Interações</TableHead>
+                      <TableHead className="text-right">Views</TableHead>
+                      <TableHead className="text-right">Conversões</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {vehicleStats.aggregated.map((point) => (
+                    {vehicleStats.chartData.map((point) => (
                       <TableRow key={point.label}>
                         <TableCell>{point.label}</TableCell>
-                        <TableCell className="text-right font-semibold">
-                          {point.count}
+                        <TableCell className="text-right">
+                          {point.views}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-primary">
+                          {point.conversions}
                         </TableCell>
                       </TableRow>
                     ))}
