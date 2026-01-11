@@ -1,6 +1,6 @@
 export type AnalyticsEventType = "click" | "visit";
 
-export type AnalyticsEntityType = "ad" | "banner" | "car" | "site";
+export type AnalyticsEntityType = "ad" | "banner" | "car" | "site" | "vehicle";
 
 interface TrackEventPayload {
   type: AnalyticsEventType;
@@ -65,6 +65,25 @@ export function trackSiteVisit(metadata?: Record<string, any>) {
   void sendEvent({
     type: "visit",
     entityType: "site",
+    metadata,
+  });
+}
+
+// Vehicle-specific tracking functions
+export function trackVehicleView(vehicleId: string, metadata?: Record<string, any>) {
+  void sendEvent({
+    type: "visit",
+    entityType: "vehicle",
+    entityId: vehicleId,
+    metadata,
+  });
+}
+
+export function trackVehicleClick(vehicleId: string, metadata?: Record<string, any>) {
+  void sendEvent({
+    type: "click",
+    entityType: "vehicle",
+    entityId: vehicleId,
     metadata,
   });
 }

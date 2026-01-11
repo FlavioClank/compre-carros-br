@@ -17,7 +17,7 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
 
 interface TrackAnalyticsRequest {
   type: "click" | "visit";
-  entityType: "ad" | "banner" | "car" | "site";
+  entityType: "ad" | "banner" | "car" | "site" | "vehicle";
   entityId?: string;
   metadata?: Record<string, any>;
 }

@@ -563,11 +563,31 @@ function StatsAdsTab() {
   );
 }
 
+interface VehicleStats {
+  id: string;
+  slug: string | null;
+  code: string;
+  model: string;
+  brand_name: string;
+  garage_name: string;
+  views: number;
+  conversions: number;
+  status: string;
+  sold_at: string | null;
+}
+
+interface GarageInfo {
+  id: string;
+  name: string;
+  is_active: boolean;
+}
+
 function StatsGaragesTab() {
   const [year, setYear] = useState<number>(currentYear);
   const [period, setPeriod] = useState<Period>("monthly");
-  const [selectedGarageId, setSelectedGarageId] = useState<string>("");
+  const [selectedGarageId, setSelectedGarageId] = useState<string>("all");
   const [reportGenerated, setReportGenerated] = useState(false);
+  const [vehicleFilter, setVehicleFilter] = useState<"active" | "removed" | "all">("active");
 
   const { data: garages } = useQuery({
     queryKey: ["stats-garages-list"],
@@ -575,52 +595,131 @@ function StatsGaragesTab() {
       const { data, error } = await supabase
         .from("garages")
         .select("id, name, is_active")
-        .order("created_at", { ascending: false });
+        .order("name", { ascending: true });
       if (error) throw error;
       return data || [];
     },
   });
 
   const {
-    data: aggregated,
+    data: vehicleStats,
     isFetching,
     refetch,
-  } = useQuery<{ points: AggregatedPoint[]; total: number }>({
-    queryKey: ["stats-garages", selectedGarageId, year, period, reportGenerated],
-    enabled: reportGenerated && !!selectedGarageId,
+  } = useQuery<{ vehicles: VehicleStats[]; totalViews: number; totalConversions: number; aggregated: AggregatedPoint[] }>({
+    queryKey: ["stats-garages-vehicles", selectedGarageId, year, period, vehicleFilter, reportGenerated],
+    enabled: reportGenerated,
     queryFn: async () => {
       const from = `${year}-01-01`;
       const to = `${year + 1}-01-01`;
 
-      const { data: cars, error: carsError } = await supabase
+      // Get all cars based on filter and garage selection
+      let carsQuery = supabase
         .from("cars")
-        .select("id")
-        .eq("garage_id", selectedGarageId);
-      if (carsError) throw carsError;
-      const carIds = (cars || []).map((c: any) => c.id);
-      if (!carIds.length) {
-        return { points: [], total: 0 };
+        .select(`
+          id,
+          slug,
+          code,
+          model,
+          status,
+          sold_at,
+          garage_id,
+          brands:brand_id (name),
+          garages:garage_id (name)
+        `);
+      
+      if (selectedGarageId !== "all") {
+        carsQuery = carsQuery.eq("garage_id", selectedGarageId);
       }
 
-      const { data, error } = await supabase
+      // Filter by vehicle status
+      if (vehicleFilter === "active") {
+        carsQuery = carsQuery.eq("status", "available");
+      } else if (vehicleFilter === "removed") {
+        carsQuery = carsQuery.eq("status", "sold");
+      }
+
+      const { data: cars, error: carsError } = await carsQuery;
+      if (carsError) throw carsError;
+
+      if (!cars?.length) {
+        return { vehicles: [], totalViews: 0, totalConversions: 0, aggregated: [] };
+      }
+
+      const carIds = cars.map((c: any) => c.id);
+
+      // Get views (visit) for vehicles
+      const { data: viewsData, error: viewsError } = await supabase
         .from("action_logs")
-        .select("id, created_at, entity_id, entity_type, action")
-        .eq("action", "click")
-        .eq("entity_type", "car")
+        .select("id, created_at, entity_id")
+        .eq("action", "visit")
+        .eq("entity_type", "vehicle")
         .in("entity_id", carIds)
         .gte("created_at", from)
         .lt("created_at", to);
 
-      if (error) throw error;
-      const logs = (data || []) as ActionLog[];
-      const points = aggregateByPeriod(logs, period);
-      const total = logs.length;
-      return { points, total };
+      if (viewsError) throw viewsError;
+
+      // Get clicks (conversions) for vehicles
+      const { data: clicksData, error: clicksError } = await supabase
+        .from("action_logs")
+        .select("id, created_at, entity_id")
+        .eq("action", "click")
+        .eq("entity_type", "vehicle")
+        .in("entity_id", carIds)
+        .gte("created_at", from)
+        .lt("created_at", to);
+
+      if (clicksError) throw clicksError;
+
+      // Aggregate views and clicks per vehicle
+      const viewsMap = new Map<string, number>();
+      const clicksMap = new Map<string, number>();
+
+      (viewsData || []).forEach((log: any) => {
+        if (log.entity_id) {
+          viewsMap.set(log.entity_id, (viewsMap.get(log.entity_id) || 0) + 1);
+        }
+      });
+
+      (clicksData || []).forEach((log: any) => {
+        if (log.entity_id) {
+          clicksMap.set(log.entity_id, (clicksMap.get(log.entity_id) || 0) + 1);
+        }
+      });
+
+      // Build vehicle stats
+      const vehicles: VehicleStats[] = cars.map((car: any) => ({
+        id: car.id,
+        slug: car.slug,
+        code: car.code,
+        model: car.model,
+        brand_name: car.brands?.name || "Sem marca",
+        garage_name: car.garages?.name || "Sem garagem",
+        views: viewsMap.get(car.id) || 0,
+        conversions: clicksMap.get(car.id) || 0,
+        status: car.status,
+        sold_at: car.sold_at,
+      }));
+
+      // Sort by conversions (descending), then by views
+      vehicles.sort((a, b) => {
+        if (b.conversions !== a.conversions) return b.conversions - a.conversions;
+        return b.views - a.views;
+      });
+
+      // Calculate totals
+      const totalViews = vehicles.reduce((sum, v) => sum + v.views, 0);
+      const totalConversions = vehicles.reduce((sum, v) => sum + v.conversions, 0);
+
+      // Aggregate by period for chart
+      const allLogs = [...(viewsData || []), ...(clicksData || [])] as ActionLog[];
+      const aggregated = aggregateByPeriod(allLogs, period);
+
+      return { vehicles, totalViews, totalConversions, aggregated };
     },
   });
 
   const handleGenerateReport = () => {
-    if (!selectedGarageId) return;
     setReportGenerated(true);
     refetch();
   };
@@ -628,10 +727,16 @@ function StatsGaragesTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Estatísticas por Garagem</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          Estatísticas por Garagem
+        </CardTitle>
+        <CardDescription>
+          Views = visitas à página do veículo | Conversões = cliques no WhatsApp (leads)
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <div className="space-y-1">
             <p className="text-sm font-medium text-muted-foreground">Ano</p>
             <Select
@@ -687,12 +792,33 @@ function StatsGaragesTab() {
                 <SelectValue placeholder="Selecione a garagem" />
               </SelectTrigger>
               <SelectContent>
-                {garages?.map((garage: any) => (
+                <SelectItem value="all">Todas as garagens</SelectItem>
+                {garages?.map((garage: GarageInfo) => (
                   <SelectItem key={garage.id} value={garage.id}>
                     {garage.name}
                     {garage.is_active ? "" : " (inativa)"}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Veículos</p>
+            <Select
+              value={vehicleFilter}
+              onValueChange={(value: "active" | "removed" | "all") => {
+                setVehicleFilter(value);
+                setReportGenerated(false);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Ativos</SelectItem>
+                <SelectItem value="removed">Removidos (Vendidos)</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -702,43 +828,139 @@ function StatsGaragesTab() {
           <Button
             size="sm"
             onClick={handleGenerateReport}
-            disabled={!selectedGarageId || isFetching}
+            disabled={isFetching}
           >
             {isFetching ? "Gerando..." : "Gerar relatório"}
           </Button>
         </div>
 
-        {reportGenerated && selectedGarageId && (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Total de cliques em veículos desta garagem no período selecionado: {aggregated?.total ?? 0}
-            </p>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Período</TableHead>
-                  <TableHead className="text-right">Cliques</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {aggregated?.points.length ? (
-                  aggregated.points.map((point) => (
-                    <TableRow key={point.label}>
-                      <TableCell>{point.label}</TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {point.count}
+        {reportGenerated && (
+          <div className="space-y-6">
+            {/* Summary Cards */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="rounded-xl border bg-card p-4">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  <Eye className="h-4 w-4" />
+                  <span className="text-sm">Total de Views</span>
+                </div>
+                <p className="text-2xl font-bold text-foreground">
+                  {vehicleStats?.totalViews ?? 0}
+                </p>
+              </div>
+              <div className="rounded-xl border bg-card p-4">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  <MousePointer className="h-4 w-4" />
+                  <span className="text-sm">Total de Conversões</span>
+                </div>
+                <p className="text-2xl font-bold text-primary">
+                  {vehicleStats?.totalConversions ?? 0}
+                </p>
+              </div>
+              <div className="rounded-xl border bg-card p-4">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="text-sm">Taxa de Conversão</span>
+                </div>
+                <p className="text-2xl font-bold text-accent">
+                  {vehicleStats?.totalViews 
+                    ? ((vehicleStats.totalConversions / vehicleStats.totalViews) * 100).toFixed(1) + "%"
+                    : "0%"
+                  }
+                </p>
+              </div>
+            </div>
+
+            {/* Period Breakdown */}
+            {vehicleStats?.aggregated && vehicleStats.aggregated.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                  Interações por Período
+                </h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Período</TableHead>
+                      <TableHead className="text-right">Interações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {vehicleStats.aggregated.map((point) => (
+                      <TableRow key={point.label}>
+                        <TableCell>{point.label}</TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {point.count}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            {/* Vehicle Ranking */}
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                Ranking de Veículos
+                {selectedGarageId === "all" && " (Todas as Garagens)"}
+              </h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Veículo</TableHead>
+                    {selectedGarageId === "all" && <TableHead>Garagem</TableHead>}
+                    <TableHead className="text-center">Status</TableHead>
+                    <TableHead className="text-right">Views</TableHead>
+                    <TableHead className="text-right">Conversões</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {vehicleStats?.vehicles && vehicleStats.vehicles.length > 0 ? (
+                    vehicleStats.vehicles.map((vehicle) => (
+                      <TableRow key={vehicle.id}>
+                        <TableCell className="font-medium">
+                          <div>
+                            <span>{vehicle.brand_name} {vehicle.model}</span>
+                            <span className="text-xs text-muted-foreground ml-2">
+                              ({vehicle.code})
+                            </span>
+                          </div>
+                        </TableCell>
+                        {selectedGarageId === "all" && (
+                          <TableCell className="text-muted-foreground">
+                            {vehicle.garage_name}
+                          </TableCell>
+                        )}
+                        <TableCell className="text-center">
+                          <Badge variant={vehicle.status === "available" ? "default" : "secondary"}>
+                            {vehicle.status === "available" ? "Ativo" : "Vendido"}
+                          </Badge>
+                          {vehicle.sold_at && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {format(new Date(vehicle.sold_at), "dd/MM/yyyy")}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className="flex items-center justify-end gap-1">
+                            <Eye className="h-3 w-3 text-muted-foreground" />
+                            {vehicle.views}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-primary">
+                          {vehicle.conversions}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={selectedGarageId === "all" ? 5 : 4} className="text-center text-muted-foreground">
+                        Nenhum dado no período selecionado.
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={2} className="text-center text-muted-foreground">
-                      Nenhum clique registrado para o filtro selecionado.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         )}
       </CardContent>

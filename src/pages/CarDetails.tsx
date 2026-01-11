@@ -35,7 +35,7 @@ import {
   Thermometer,
   ZoomIn,
 } from "lucide-react";
-import { trackClick } from "@/lib/analytics";
+import { trackVehicleView, trackVehicleClick } from "@/lib/analytics";
 
 interface CarDetail {
   id: string;
@@ -156,6 +156,18 @@ export default function CarDetails() {
 
     fetchCar();
   }, [slug]);
+
+  // Track vehicle view when car data is loaded
+  useEffect(() => {
+    if (car?.id) {
+      trackVehicleView(car.id, {
+        slug: car.slug,
+        brand: car.brands?.name,
+        model: car.model,
+        page: `/carro/${slug}`,
+      });
+    }
+  }, [car?.id]);
 
   if (isLoading) {
     return (
@@ -529,8 +541,9 @@ export default function CarDetails() {
                       rel="noopener noreferrer"
                       className="block"
                       onClick={() =>
-                        trackClick("car", car.id, {
+                        trackVehicleClick(car.id, {
                           source: "details_whatsapp",
+                          slug: car.slug,
                           brand: brandName,
                           model: car.model,
                         })
