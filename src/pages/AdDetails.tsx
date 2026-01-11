@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MessageCircle, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowLeft, MessageCircle, ExternalLink, Instagram } from "lucide-react";
 import { generateWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/constants";
 import { trackClick, trackView } from "@/lib/analytics";
 import { format } from "date-fns";
@@ -45,19 +45,14 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 
 export default function AdDetails() {
   const { slug } = useParams<{ slug: string }>();
-  const [searchParams] = useSearchParams();
   const [ad, setAd] = useState<AdDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRedirecting, setIsRedirecting] = useState(false);
-  const [showFallback, setShowFallback] = useState(false);
-  const [fallbackUrl, setFallbackUrl] = useState<string>("");
-  const hasRedirected = useRef(false);
+  const hasTrackedView = useRef(false);
+  const hasTrackedClick = useRef(false);
 
-  // Only auto-redirect when ?go=1 is in URL (for campaign links)
-  const shouldAutoRedirect = searchParams.get("go") === "1";
   const isUuidParam = !!slug && UUID_REGEX.test(slug);
 
-  // Build WhatsApp message - extracted so it can be used before redirect
+  // Build WhatsApp message
   const buildAdWhatsAppMessage = (companyName: string, canonicalUrl: string) => {
     const timestamp = format(new Date(), "dd/MM/yyyy 'às' HH:mm");
     return `Olá! Vi este anúncio no site CompreCarros e tenho interesse.
@@ -74,33 +69,33 @@ Data/hora: ${timestamp}`;
         return;
       }
 
-       // Try to find by slug first, then by id (for backwards compatibility)
-       let query = supabase
-         .from("ads")
-         .select(`
-           id,
-           title,
-           category,
-           slug,
-           image_url_home,
-           image_url_search,
-           link,
-           click_type,
-           click_target,
-           whatsapp_number,
-           is_active,
-           created_at,
-           ad_billing (
-             company_name
-           )
-         `)
-         .eq("is_active", true);
+      // Try to find by slug first, then by id (for backwards compatibility)
+      let query = supabase
+        .from("ads")
+        .select(`
+          id,
+          title,
+          category,
+          slug,
+          image_url_home,
+          image_url_search,
+          link,
+          click_type,
+          click_target,
+          whatsapp_number,
+          is_active,
+          created_at,
+          ad_billing (
+            company_name
+          )
+        `)
+        .eq("is_active", true);
 
-       if (isUuidParam) {
-         query = query.eq("id", slug);
-       } else {
-         query = query.eq("slug", slug);
-       }
+      if (isUuidParam) {
+        query = query.eq("id", slug);
+      } else {
+        query = query.eq("slug", slug);
+      }
 
       const { data, error } = await query.maybeSingle();
 
@@ -111,21 +106,24 @@ Data/hora: ${timestamp}`;
         return;
       }
 
-       if (data) {
-         setAd(data as AdDetail);
+      if (data) {
+        setAd(data as AdDetail);
 
-         // If accessed via legacy UUID URL, upgrade the address bar to the slug URL
-         if (isUuidParam && data.slug && data.slug.trim() !== "") {
-           window.history.replaceState(null, "", `/anuncio/${data.slug}`);
-         }
+        // If accessed via legacy UUID URL, upgrade the address bar to the slug URL
+        if (isUuidParam && data.slug && data.slug.trim() !== "") {
+          window.history.replaceState(null, "", `/anuncio/${data.slug}`);
+        }
 
-         // Track view
-         trackView("ad", data.id, {
-           placement: "ad_page",
-           category: data.category,
-           title: data.title,
-         });
-       } else {
+        // Track view once
+        if (!hasTrackedView.current) {
+          trackView("ad", data.id, {
+            placement: "ad_page",
+            category: data.category,
+            title: data.title,
+          });
+          hasTrackedView.current = true;
+        }
+      } else {
         setAd(null);
       }
 
@@ -133,75 +131,7 @@ Data/hora: ${timestamp}`;
     };
 
     fetchAd();
-  }, [slug]);
-
-  // Build redirect URL based on click_type
-  const getRedirectUrl = (ad: AdDetail, canonicalUrl: string): string => {
-    const companyName = ad.ad_billing?.company_name || ad.title;
-    
-    switch (ad.click_type) {
-      case "whatsapp": {
-        const phone = ad.whatsapp_number?.replace(/\D/g, "") || WHATSAPP_NUMBER;
-        return generateWhatsAppUrl(phone, buildAdWhatsAppMessage(companyName, canonicalUrl));
-      }
-      case "instagram":
-      case "link":
-        return ad.click_target || ad.link || "";
-      default: {
-        // Fallback to WhatsApp if no click_type defined
-        const phone = ad.whatsapp_number?.replace(/\D/g, "") || WHATSAPP_NUMBER;
-        return generateWhatsAppUrl(phone, buildAdWhatsAppMessage(companyName, canonicalUrl));
-      }
-    }
-  };
-
-  // Auto-redirect ONLY when ?go=1 is in URL (campaign/lead links)
-  useEffect(() => {
-    if (!ad || hasRedirected.current || isLoading || !shouldAutoRedirect) return;
-
-    // Prevent double redirect
-    hasRedirected.current = true;
-    setIsRedirecting(true);
-
-    // Always use slug for canonical URL (never UUID)
-    const canonicalUrl = getAdPublicUrl(ad);
-    
-    // Get redirect URL based on click_type
-    const redirectUrl = getRedirectUrl(ad, canonicalUrl);
-    
-    if (!redirectUrl) {
-      // No valid redirect URL, just show the page
-      setIsRedirecting(false);
-      hasRedirected.current = false;
-      return;
-    }
-
-    // Store URL for fallback button
-    setFallbackUrl(redirectUrl);
-
-    // Track click before redirect
-    trackClick("ad", ad.id, {
-      placement: "ad_page",
-      category: ad.category,
-      title: ad.title,
-      action: `auto_redirect_${ad.click_type || "whatsapp"}`,
-    });
-
-    // Show fallback button after 1.5s
-    const fallbackTimer = setTimeout(() => {
-      setShowFallback(true);
-    }, 1500);
-
-    // Small delay to ensure tracking is sent and page renders for SEO
-    const redirectTimer = setTimeout(() => {
-      window.location.href = redirectUrl;
-    }, 500);
-
-    return () => {
-      clearTimeout(redirectTimer);
-      clearTimeout(fallbackTimer);
-    };
-  }, [ad, isLoading, shouldAutoRedirect]);
+  }, [slug, isUuidParam]);
 
   if (isLoading) {
     return (
@@ -219,51 +149,6 @@ Data/hora: ${timestamp}`;
       </PublicLayout>
     );
   }
-
-  // Get overlay text based on click_type
-  const getOverlayText = () => {
-    switch (ad?.click_type) {
-      case "instagram":
-        return { title: "Redirecionando para Instagram", description: "Você será direcionado para o perfil do anunciante..." };
-      case "link":
-        return { title: "Redirecionando para o site", description: "Você será direcionado para o site do anunciante..." };
-      default:
-        return { title: "Redirecionando para WhatsApp", description: "Você será direcionado para conversar com o anunciante..." };
-    }
-  };
-
-  // Show redirecting overlay
-  const RedirectingOverlay = () => {
-    const overlayText = getOverlayText();
-    return (
-      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-        <div className="bg-card rounded-2xl p-8 shadow-xl text-center max-w-sm mx-4">
-          <div className="w-16 h-16 rounded-full bg-green-600 flex items-center justify-center mx-auto mb-4">
-            <MessageCircle className="h-8 w-8 text-white" />
-          </div>
-          <h2 className="font-display text-xl font-bold text-foreground mb-2">
-            {overlayText.title}
-          </h2>
-          <p className="text-muted-foreground text-sm mb-4">
-            {overlayText.description}
-          </p>
-          <Loader2 className="h-6 w-6 animate-spin text-green-600 mx-auto" />
-          
-          {/* Fallback button - appears after 1.5s */}
-          {showFallback && fallbackUrl && (
-            <a
-              href={fallbackUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block mt-4 text-sm text-muted-foreground hover:text-foreground underline transition-colors"
-            >
-              Se não redirecionar, clique aqui
-            </a>
-          )}
-        </div>
-      </div>
-    );
-  };
 
   if (!ad) {
     return (
@@ -296,27 +181,21 @@ Data/hora: ${timestamp}`;
     return generateWhatsAppUrl(phone, buildAdWhatsAppMessage(companyName, canonicalUrl));
   };
 
-  const handleWhatsAppClick = () => {
-    trackClick("ad", ad.id, {
-      placement: "ad_page",
-      category: ad.category,
-      title: ad.title,
-      action: "whatsapp_click",
-    });
-  };
-
-  const handleExternalLinkClick = () => {
-    trackClick("ad", ad.id, {
-      placement: "ad_page",
-      category: ad.category,
-      title: ad.title,
-      action: "external_link_click",
-    });
+  // Track click only once per action type
+  const handleCTAClick = (actionType: string) => {
+    if (!hasTrackedClick.current) {
+      trackClick("ad", ad.id, {
+        placement: "ad_page",
+        category: ad.category,
+        title: ad.title,
+        action: actionType,
+      });
+      hasTrackedClick.current = true;
+    }
   };
 
   return (
     <PublicLayout>
-      {isRedirecting && <RedirectingOverlay />}
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={metaDescription} />
@@ -374,47 +253,52 @@ Data/hora: ${timestamp}`;
                 )}
               </div>
 
-              {/* CTA Buttons */}
+              {/* CTA Buttons - Based on click_type configuration */}
               <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                <a
-                  href={getWhatsAppUrl()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={handleWhatsAppClick}
-                  className="flex-1"
-                >
-                  <Button size="lg" className="w-full gap-2 bg-green-600 hover:bg-green-700">
-                    <MessageCircle className="h-5 w-5" />
-                    Falar no WhatsApp
-                  </Button>
-                </a>
+                {/* WhatsApp button - shown for whatsapp click_type or as default */}
+                {(ad.click_type === "whatsapp" || !ad.click_type || ad.click_type === "") && (
+                  <a
+                    href={getWhatsAppUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleCTAClick("whatsapp_click")}
+                    className="flex-1"
+                  >
+                    <Button size="lg" className="w-full gap-2 bg-green-600 hover:bg-green-700">
+                      <MessageCircle className="h-5 w-5" />
+                      Falar no WhatsApp
+                    </Button>
+                  </a>
+                )}
 
+                {/* Site/Link button */}
                 {ad.click_type === "link" && ad.click_target && (
                   <a
                     href={ad.click_target}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={handleExternalLinkClick}
+                    onClick={() => handleCTAClick("link_click")}
                     className="flex-1"
                   >
-                    <Button size="lg" variant="outline" className="w-full gap-2">
+                    <Button size="lg" className="w-full gap-2 bg-primary hover:bg-primary/90">
                       <ExternalLink className="h-5 w-5" />
-                      Visitar Site
+                      Acessar Site
                     </Button>
                   </a>
                 )}
 
+                {/* Instagram button */}
                 {ad.click_type === "instagram" && ad.click_target && (
                   <a
                     href={ad.click_target}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={handleExternalLinkClick}
+                    onClick={() => handleCTAClick("instagram_click")}
                     className="flex-1"
                   >
-                    <Button size="lg" variant="outline" className="w-full gap-2">
-                      <ExternalLink className="h-5 w-5" />
-                      Ver Instagram
+                    <Button size="lg" className="w-full gap-2 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 hover:opacity-90">
+                      <Instagram className="h-5 w-5" />
+                      Ver no Instagram
                     </Button>
                   </a>
                 )}
