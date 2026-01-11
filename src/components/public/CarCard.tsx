@@ -57,7 +57,7 @@ export const CarCard = memo(function CarCard({ car }: CarCardProps) {
   const whatsappUrl = generateWhatsAppUrl(
     WHATSAPP_NUMBER,
     buildCarWhatsAppMessage({
-      id: car.id,
+      slug: car.slug,
       code: car.code,
       model: car.model,
       year: car.year,
