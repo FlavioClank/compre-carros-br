@@ -1,8 +1,6 @@
 import { memo, useEffect, useRef, forwardRef } from "react";
-import { generateWhatsAppUrl } from "@/lib/constants";
-import { trackClick, trackView } from "@/lib/analytics";
-import { format } from "date-fns";
-import { getAdPublicUrl } from "@/lib/ad-utils";
+import { Link } from "react-router-dom";
+import { trackView } from "@/lib/analytics";
 
 interface Ad {
   id: string;
@@ -22,23 +20,9 @@ interface HomeAdCardProps {
 }
 
 /**
- * Builds a simplified WhatsApp message for ads
- */
-function buildAdWhatsAppMessage(ad: Ad): string {
-  const timestamp = format(new Date(), "dd/MM/yyyy 'às' HH:mm");
-  const adPageUrl = getAdPublicUrl(ad);
-  
-  return `Olá! Vi este anúncio no site CompreCarros e tenho interesse.
-
-Anunciante: ${ad.title}
-Página do anúncio: ${adPageUrl}
-Data/hora: ${timestamp}`;
-}
-
-/**
  * HomeAdCard - Ad card specifically for the Home page
- * Matches the exact visual structure of CarCardSingle (horizontal layout)
- * Uses VehicleCardShell for consistent styling with vehicle cards
+ * Always navigates to /anuncio/:slug for the ad details page
+ * Click tracking happens on the ad details page when user clicks CTA buttons
  */
 export const HomeAdCard = memo(
   forwardRef<HTMLDivElement, HomeAdCardProps>(function HomeAdCard({ ad }, ref) {
@@ -55,16 +39,9 @@ export const HomeAdCard = memo(
       }
     }, [ad.id, ad.category, ad.title]);
 
-    const href = getAdHref(ad);
     const imageUrl = ad.image_url_home || "/placeholder.svg";
-
-    const handleClick = () => {
-      trackClick("ad", ad.id, {
-        placement: "home",
-        category: ad.category,
-        title: ad.title,
-      });
-    };
+    // Always navigate to ad details page using slug (or fallback to id)
+    const adPath = `/anuncio/${ad.slug || ad.id}`;
 
     const content = (
       <div
@@ -85,36 +62,10 @@ export const HomeAdCard = memo(
       </div>
     );
 
-    if (href) {
-      return (
-        <a
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={handleClick}
-          className="block"
-        >
-          {content}
-        </a>
-      );
-    }
-
-    return <div className="block">{content}</div>;
+    return (
+      <Link to={adPath} className="block">
+        {content}
+      </Link>
+    );
   })
 );
-
-function getAdHref(ad: Ad): string | undefined {
-  const type = ad.click_type || (ad.link ? "link" : null);
-
-  if (type === "whatsapp" && ad.whatsapp_number) {
-    const message = buildAdWhatsAppMessage(ad);
-    return generateWhatsAppUrl(ad.whatsapp_number.replace(/\D/g, ""), message);
-  }
-
-  const target = ad.click_target || ad.link || undefined;
-  if ((type === "link" || type === "instagram") && target) {
-    return target;
-  }
-
-  return undefined;
-}
