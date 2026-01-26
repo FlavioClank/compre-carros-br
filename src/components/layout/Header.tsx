@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User } from "lucide-react";
+import { Menu, X, Car, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import logo from "@/assets/logo.png";
+import { SITE_NAME } from "@/lib/constants";
 import { useAuth } from "@/lib/auth";
 
 const navLinks = [
@@ -45,12 +45,13 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full glass border-b border-border/30">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center">
-          <img 
-            src={logo} 
-            alt="CompreCarrosBr" 
-            className="h-10 w-auto object-contain"
-          />
+        <Link to="/" className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary glow-primary">
+            <Car className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <span className="font-display text-xl font-bold text-foreground">
+            {SITE_NAME}
+          </span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
