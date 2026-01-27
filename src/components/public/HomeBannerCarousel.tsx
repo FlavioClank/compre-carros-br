@@ -84,7 +84,7 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
   }, []);
 
   // Proporção responsiva com imagens separadas:
-  // Mobile: 4:3 (1080×1440px) - usa image_mobile
+  // Mobile: 1:1 (1080×1080px) - usa image_mobile
   // Desktop: 16:7 (1920×840px) - usa image_desktop
   const renderImage = useCallback(
     (banner: Banner, isFirst: boolean = false) => {
