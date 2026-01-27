@@ -8,6 +8,8 @@ import { OptimizedImage } from "@/components/ui/optimized-image";
 interface Banner {
   id: string;
   image_url: string;
+  image_desktop: string | null;
+  image_mobile: string | null;
   position: number;
   click_type: string | null;
   click_target: string | null;
@@ -30,7 +32,7 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
     const fetchBanners = async () => {
       const { data, error } = await supabase
         .from("banners")
-        .select("id, image_url, position, click_type, click_target, whatsapp_number")
+        .select("id, image_url, image_desktop, image_mobile, position, click_type, click_target, whatsapp_number")
         .eq("is_active", true)
         .order("position", { ascending: true })
         .order("created_at", { ascending: true });
@@ -81,27 +83,48 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
     return undefined;
   }, []);
 
-  // Proporção responsiva:
-  // Mobile: 4:3 (mais alto, melhor visualização)
-  // Desktop: 16:7 (~1920×840px)
+  // Proporção responsiva com imagens separadas:
+  // Mobile: 4:3 (1080×1440px) - usa image_mobile
+  // Desktop: 16:7 (1920×840px) - usa image_desktop
   const renderImage = useCallback(
     (banner: Banner, isFirst: boolean = false) => {
       const href = getBannerHref(banner);
+      
+      // Use new columns with fallback to legacy image_url
+      const desktopSrc = banner.image_desktop || banner.image_url;
+      const mobileSrc = banner.image_mobile || banner.image_url;
 
       // Only the first banner loads eagerly, rest are lazy
       const image = (
-        <div className="relative w-full max-w-full aspect-[4/3] md:aspect-[16/7] bg-muted overflow-hidden">
-          <OptimizedImage
-            src={banner.image_url}
-            alt="Banner promocional"
-            width={1920}
-            height={840}
-            quality={85}
-            eager={isFirst}
-            className="w-full h-full max-w-full max-h-full object-contain md:object-cover object-center"
-            containerClassName="w-full h-full"
-            showSkeleton={true}
-          />
+        <div className="relative w-full overflow-hidden">
+          {/* Desktop/Tablet Image */}
+          <div className="hidden md:block aspect-[16/7] bg-muted">
+            <OptimizedImage
+              src={desktopSrc}
+              alt="Banner promocional"
+              width={1920}
+              height={840}
+              quality={85}
+              eager={isFirst}
+              className="w-full h-full object-cover object-center"
+              containerClassName="w-full h-full"
+              showSkeleton={true}
+            />
+          </div>
+          {/* Mobile Image */}
+          <div className="block md:hidden aspect-[3/4] bg-muted">
+            <OptimizedImage
+              src={mobileSrc}
+              alt="Banner promocional"
+              width={1080}
+              height={1440}
+              quality={85}
+              eager={isFirst}
+              className="w-full h-full object-cover object-center"
+              containerClassName="w-full h-full"
+              showSkeleton={true}
+            />
+          </div>
         </div>
       );
 

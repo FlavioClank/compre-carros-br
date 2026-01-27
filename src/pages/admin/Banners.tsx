@@ -18,6 +18,8 @@ import {
 interface Banner {
   id: string;
   image_url: string;
+  image_desktop: string | null;
+  image_mobile: string | null;
   is_active: boolean;
   position: number;
   click_type: string | null;
@@ -29,8 +31,10 @@ export default function AdminBanners() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [fileDesktop, setFileDesktop] = useState<File | null>(null);
+  const [fileMobile, setFileMobile] = useState<File | null>(null);
+  const [previewDesktop, setPreviewDesktop] = useState<string | null>(null);
+  const [previewMobile, setPreviewMobile] = useState<string | null>(null);
   const [position, setPosition] = useState<number>(0);
   const [clickType, setClickType] = useState<"none" | "link" | "instagram" | "whatsapp">("none");
   const [clickTarget, setClickTarget] = useState<string>("");
@@ -38,8 +42,10 @@ export default function AdminBanners() {
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
 
   const resetForm = () => {
-    setFile(null);
-    setPreviewUrl(null);
+    setFileDesktop(null);
+    setFileMobile(null);
+    setPreviewDesktop(null);
+    setPreviewMobile(null);
     setPosition(0);
     setClickType("none");
     setClickTarget("");
@@ -51,7 +57,7 @@ export default function AdminBanners() {
     setIsLoading(true);
     const { data, error } = await supabase
       .from("banners")
-      .select("id, image_url, is_active, position, click_type, click_target, whatsapp_number")
+      .select("id, image_url, image_desktop, image_mobile, is_active, position, click_type, click_target, whatsapp_number")
       .order("position", { ascending: true })
       .order("created_at", { ascending: true });
 
@@ -72,23 +78,36 @@ export default function AdminBanners() {
     fetchBanners();
   }, []);
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileDesktopChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selected = event.target.files?.[0] || null;
-    setFile(selected);
+    setFileDesktop(selected);
     if (selected) {
-      setPreviewUrl(URL.createObjectURL(selected));
+      setPreviewDesktop(URL.createObjectURL(selected));
     } else if (editingBanner) {
-      setPreviewUrl(editingBanner.image_url);
+      setPreviewDesktop(editingBanner.image_desktop || editingBanner.image_url);
     } else {
-      setPreviewUrl(null);
+      setPreviewDesktop(null);
+    }
+  };
+
+  const handleFileMobileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const selected = event.target.files?.[0] || null;
+    setFileMobile(selected);
+    if (selected) {
+      setPreviewMobile(URL.createObjectURL(selected));
+    } else if (editingBanner) {
+      setPreviewMobile(editingBanner.image_mobile || editingBanner.image_url);
+    } else {
+      setPreviewMobile(null);
     }
   };
 
   const handleSave = async () => {
-    if (!editingBanner && !file) {
+    // Validação: ambas imagens obrigatórias para novo banner
+    if (!editingBanner && (!fileDesktop || !fileMobile)) {
       toast({
-        title: "Selecione uma imagem",
-        description: "Escolha um arquivo de imagem para o banner.",
+        title: "Selecione as duas imagens",
+        description: "É necessário enviar uma imagem para Desktop (1920×840) e outra para Mobile (1080×1440).",
         variant: "destructive",
       });
       return;
@@ -97,16 +116,17 @@ export default function AdminBanners() {
     try {
       setUploading(true);
 
-      let imageUrl = editingBanner?.image_url || "";
+      let imageDesktopUrl = editingBanner?.image_desktop || editingBanner?.image_url || "";
+      let imageMobileUrl = editingBanner?.image_mobile || editingBanner?.image_url || "";
 
-      // Se um novo arquivo foi selecionado, faz upload e usa a nova URL
-      if (file) {
-        const fileExt = file.name.split(".").pop();
-        const filePath = `banner-${Date.now()}.${fileExt}`;
+      // Upload da imagem desktop se selecionada
+      if (fileDesktop) {
+        const fileExt = fileDesktop.name.split(".").pop();
+        const filePath = `banner-desktop-${Date.now()}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from("banners")
-          .upload(filePath, file, {
+          .upload(filePath, fileDesktop, {
             cacheControl: "3600",
             upsert: false,
           });
@@ -117,14 +137,37 @@ export default function AdminBanners() {
           .from("banners")
           .getPublicUrl(filePath);
 
-        imageUrl = publicUrlData.publicUrl;
+        imageDesktopUrl = publicUrlData.publicUrl;
+      }
+
+      // Upload da imagem mobile se selecionada
+      if (fileMobile) {
+        const fileExt = fileMobile.name.split(".").pop();
+        const filePath = `banner-mobile-${Date.now()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("banners")
+          .upload(filePath, fileMobile, {
+            cacheControl: "3600",
+            upsert: false,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage
+          .from("banners")
+          .getPublicUrl(filePath);
+
+        imageMobileUrl = publicUrlData.publicUrl;
       }
 
       // click_type é NOT NULL no banco - sempre enviar valor válido
       const finalClickType = clickType || editingBanner?.click_type || "none";
       
       const payload = {
-        image_url: imageUrl,
+        image_url: imageDesktopUrl, // Mantém compatibilidade com coluna legada
+        image_desktop: imageDesktopUrl,
+        image_mobile: imageMobileUrl,
         position,
         click_type: finalClickType,
         click_target:
@@ -214,8 +257,10 @@ export default function AdminBanners() {
     setClickType(type);
     setClickTarget(banner.click_target || "");
     setWhatsappNumber(banner.whatsapp_number || "");
-    setPreviewUrl(banner.image_url);
-    setFile(null);
+    setPreviewDesktop(banner.image_desktop || banner.image_url);
+    setPreviewMobile(banner.image_mobile || banner.image_url);
+    setFileDesktop(null);
+    setFileMobile(null);
   };
 
   return (
@@ -235,22 +280,48 @@ export default function AdminBanners() {
             <CardTitle>{editingBanner ? "Editar banner" : "Cadastro de banner"}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Informação sobre tamanhos */}
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <p className="text-sm font-medium text-primary">📐 Tamanhos oficiais</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                <strong>Desktop/Tablet:</strong> 1920 × 840 px (proporção 16:7)<br />
+                <strong>Mobile:</strong> 1080 × 1440 px (proporção 3:4)
+              </p>
+              <p className="text-xs text-muted-foreground mt-2 italic">
+                Recomendado usar a mesma arte, adaptada para os dois tamanhos.
+              </p>
+            </div>
+
+            {/* Upload Desktop */}
             <div className="space-y-2">
-              <Label htmlFor="banner-image">Imagem do banner</Label>
+              <Label htmlFor="banner-desktop">Imagem para Desktop/Tablet (1920×840) *</Label>
               <Input
-                id="banner-image"
+                id="banner-desktop"
                 type="file"
                 accept="image/*"
-                onChange={handleFileChange}
+                onChange={handleFileDesktopChange}
               />
-              {editingBanner && (
+              {editingBanner && !fileDesktop && (
                 <p className="text-xs text-muted-foreground break-all">
-                  Imagem atual: <span className="underline">{editingBanner.image_url}</span>
+                  Imagem atual: <span className="underline">{editingBanner.image_desktop || editingBanner.image_url}</span>
                 </p>
               )}
-              <p className="text-xs text-muted-foreground">
-                Prefira imagens em proporção horizontal (16:5), Full HD ou superiores. A imagem será ajustada automaticamente sem cortes.
-              </p>
+            </div>
+
+            {/* Upload Mobile */}
+            <div className="space-y-2">
+              <Label htmlFor="banner-mobile">Imagem para Mobile (1080×1440) *</Label>
+              <Input
+                id="banner-mobile"
+                type="file"
+                accept="image/*"
+                onChange={handleFileMobileChange}
+              />
+              {editingBanner && !fileMobile && (
+                <p className="text-xs text-muted-foreground break-all">
+                  Imagem atual: <span className="underline">{editingBanner.image_mobile || editingBanner.image_url}</span>
+                </p>
+              )}
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
@@ -326,16 +397,33 @@ export default function AdminBanners() {
               </div>
             </div>
 
-            {previewUrl && (
-              <div className="rounded-xl border border-border bg-card p-3">
-                <p className="text-xs text-muted-foreground mb-2">Pré-visualização</p>
-                <div className="w-full overflow-hidden rounded-lg bg-muted flex items-center justify-center">
-                  <img
-                    src={previewUrl}
-                    alt="Pré-visualização do banner"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
+            {/* Previews */}
+            {(previewDesktop || previewMobile) && (
+              <div className="grid gap-4 md:grid-cols-2">
+                {previewDesktop && (
+                  <div className="rounded-xl border border-border bg-card p-3">
+                    <p className="text-xs text-muted-foreground mb-2">Desktop/Tablet (16:7)</p>
+                    <div className="w-full overflow-hidden rounded-lg bg-muted aspect-[16/7]">
+                      <img
+                        src={previewDesktop}
+                        alt="Preview Desktop"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+                {previewMobile && (
+                  <div className="rounded-xl border border-border bg-card p-3">
+                    <p className="text-xs text-muted-foreground mb-2">Mobile (3:4)</p>
+                    <div className="w-full max-w-[200px] overflow-hidden rounded-lg bg-muted aspect-[3/4]">
+                      <img
+                        src={previewMobile}
+                        alt="Preview Mobile"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -380,12 +468,21 @@ export default function AdminBanners() {
                     key={banner.id}
                     className="rounded-xl border border-border bg-card overflow-hidden flex flex-col"
                   >
-                    <div className="w-full bg-muted flex items-center justify-center aspect-[16/5]">
-                      <img
-                        src={banner.image_url}
-                        alt="Banner"
-                        className="w-full h-full object-contain"
-                      />
+                    <div className="grid grid-cols-2 gap-1">
+                      <div className="bg-muted aspect-[16/7] overflow-hidden rounded-t-lg">
+                        <img
+                          src={banner.image_desktop || banner.image_url}
+                          alt="Desktop"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="bg-muted aspect-[3/4] overflow-hidden rounded-t-lg max-h-20">
+                        <img
+                          src={banner.image_mobile || banner.image_url}
+                          alt="Mobile"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                     </div>
                     <div className="p-3 flex items-center justify-between gap-2">
                       <div className="flex flex-col gap-1 text-xs text-muted-foreground">

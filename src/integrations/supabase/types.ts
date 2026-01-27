@@ -180,6 +180,8 @@ export type Database = {
           click_type: string
           created_at: string
           id: string
+          image_desktop: string | null
+          image_mobile: string | null
           image_url: string
           is_active: boolean
           position: number
@@ -190,6 +192,8 @@ export type Database = {
           click_type?: string
           created_at?: string
           id?: string
+          image_desktop?: string | null
+          image_mobile?: string | null
           image_url: string
           is_active?: boolean
           position?: number
@@ -200,6 +204,8 @@ export type Database = {
           click_type?: string
           created_at?: string
           id?: string
+          image_desktop?: string | null
+          image_mobile?: string | null
           image_url?: string
           is_active?: boolean
           position?: number
