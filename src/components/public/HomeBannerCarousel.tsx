@@ -90,7 +90,7 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
 
       // Only the first banner loads eagerly, rest are lazy
       const image = (
-        <div className="relative w-full aspect-[4/3] md:aspect-[16/7] bg-muted overflow-hidden">
+        <div className="relative w-full max-w-full aspect-[4/3] md:aspect-[16/7] bg-muted overflow-hidden">
           <OptimizedImage
             src={banner.image_url}
             alt="Banner promocional"
@@ -98,7 +98,7 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
             height={840}
             quality={85}
             eager={isFirst}
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full max-w-full max-h-full object-contain md:object-cover object-center"
             containerClassName="w-full h-full"
             showSkeleton={true}
           />
