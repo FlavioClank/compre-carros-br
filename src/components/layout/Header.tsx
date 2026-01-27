@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Car, User } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SITE_NAME } from "@/lib/constants";
 import { useAuth } from "@/lib/auth";
+import logoImage from "@/assets/logo.png";
 
 const navLinks = [
   { href: "/", label: "Início" },
@@ -46,9 +47,11 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full glass border-b border-border/30">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary glow-primary">
-            <Car className="h-5 w-5 text-primary-foreground" />
-          </div>
+          <img 
+            src={logoImage} 
+            alt={SITE_NAME} 
+            className="h-10 w-10 rounded-xl object-contain"
+          />
           <span className="font-display text-xl font-bold text-foreground">
             {SITE_NAME}
           </span>
