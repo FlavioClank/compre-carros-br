@@ -50,7 +50,7 @@ export function Header() {
           <img 
             src={logoImage} 
             alt={SITE_NAME} 
-            className="h-12 w-12 rounded-xl object-contain"
+            className="h-14 w-14 rounded-xl object-contain"
           />
           <span className="font-display text-xl font-bold text-foreground">
             {SITE_NAME}
