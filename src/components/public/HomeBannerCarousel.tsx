@@ -112,12 +112,12 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
             />
           </div>
           {/* Mobile Image */}
-          <div className="block md:hidden aspect-[3/4] bg-muted">
+          <div className="block md:hidden aspect-[1/1] bg-muted">
             <OptimizedImage
               src={mobileSrc}
               alt="Banner promocional"
               width={1080}
-              height={1440}
+              height={1080}
               quality={85}
               eager={isFirst}
               className="w-full h-full object-cover object-center"
