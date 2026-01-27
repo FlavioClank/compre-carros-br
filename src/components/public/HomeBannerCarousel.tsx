@@ -81,23 +81,27 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
     return undefined;
   }, []);
 
+  // Proporção padrão: 1920×600px = 16:5 (3.2:1)
+  // Isso garante banners uniformes sem cortes indesejados
   const renderImage = useCallback(
     (banner: Banner, isFirst: boolean = false) => {
       const href = getBannerHref(banner);
 
       // Only the first banner loads eagerly, rest are lazy
       const image = (
-        <OptimizedImage
-          src={banner.image_url}
-          alt="Banner promocional"
-          width={1200}
-          height={600}
-          quality={80}
-          eager={isFirst}
-          className="w-full h-auto"
-          containerClassName="w-full"
-          showSkeleton={true}
-        />
+        <div className="relative w-full aspect-[1920/600] bg-muted overflow-hidden">
+          <OptimizedImage
+            src={banner.image_url}
+            alt="Banner promocional"
+            width={1920}
+            height={600}
+            quality={85}
+            eager={isFirst}
+            className="w-full h-full object-cover object-center"
+            containerClassName="w-full h-full"
+            showSkeleton={true}
+          />
+        </div>
       );
 
       if (!href) return image;
