@@ -107,7 +107,7 @@ export default function AdminBanners() {
     if (!editingBanner && (!fileDesktop || !fileMobile)) {
       toast({
         title: "Selecione as duas imagens",
-        description: "É necessário enviar uma imagem para Desktop (1920×840) e outra para Mobile (1080×1440).",
+        description: "É necessário enviar uma imagem para Desktop (1920×840) e outra para Mobile (1080×1080).",
         variant: "destructive",
       });
       return;
@@ -285,7 +285,7 @@ export default function AdminBanners() {
               <p className="text-sm font-medium text-primary">📐 Tamanhos oficiais</p>
               <p className="text-xs text-muted-foreground mt-1">
                 <strong>Desktop/Tablet:</strong> 1920 × 840 px (proporção 16:7)<br />
-                <strong>Mobile:</strong> 1080 × 1440 px (proporção 3:4)
+                <strong>Mobile:</strong> 1080 × 1080 px (proporção 1:1)
               </p>
               <p className="text-xs text-muted-foreground mt-2 italic">
                 Recomendado usar a mesma arte, adaptada para os dois tamanhos.
@@ -310,7 +310,7 @@ export default function AdminBanners() {
 
             {/* Upload Mobile */}
             <div className="space-y-2">
-              <Label htmlFor="banner-mobile">Imagem para Mobile (1080×1440) *</Label>
+              <Label htmlFor="banner-mobile">Imagem para Mobile (1080×1080) *</Label>
               <Input
                 id="banner-mobile"
                 type="file"
@@ -414,8 +414,8 @@ export default function AdminBanners() {
                 )}
                 {previewMobile && (
                   <div className="rounded-xl border border-border bg-card p-3">
-                    <p className="text-xs text-muted-foreground mb-2">Mobile (3:4)</p>
-                    <div className="w-full max-w-[200px] overflow-hidden rounded-lg bg-muted aspect-[3/4]">
+                    <p className="text-xs text-muted-foreground mb-2">Mobile (1:1)</p>
+                    <div className="w-full max-w-[200px] overflow-hidden rounded-lg bg-muted aspect-[1/1]">
                       <img
                         src={previewMobile}
                         alt="Preview Mobile"
