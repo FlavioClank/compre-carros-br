@@ -140,11 +140,6 @@ async function fetchVehicles({
     }
   }
 
-  // Apply brand filter server-side (moved from client-side for performance)
-  if (filters.brandId) {
-    query = query.eq("brand_id", filters.brandId);
-  }
-
   // Apply pagination
   query = query.range(from, to);
 
@@ -152,7 +147,13 @@ async function fetchVehicles({
 
   if (error) throw error;
 
-  const vehicles: VehicleData[] = (data || []).map((car) => ({
+  // Filter by brandId client-side if needed
+  let filteredData = data || [];
+  if (filters.brandId) {
+    filteredData = filteredData.filter((car) => car.brand_id === filters.brandId);
+  }
+
+  const vehicles: VehicleData[] = filteredData.map((car) => ({
     id: car.id,
     slug: car.slug,
     code: car.code,
