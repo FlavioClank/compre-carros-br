@@ -14,7 +14,7 @@
 DO $$
 DECLARE
   old_url TEXT := 'https://kgtscjvgipowuvuindxt.supabase.co';
-  new_url TEXT := 'https://SEU_PROJECT_ID.supabase.co'; -- ⚠️ ALTERAR AQUI!
+  new_url TEXT := 'new_url TEXT := 'https://vpunpbozwidlzukplfts.supabase.co';
   ads_count INTEGER;
   banners_count INTEGER;
   cars_count INTEGER;
