@@ -1,10 +1,20 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Production domains
+const PRODUCTION_DOMAINS = [
+  "comprecarrosbr.com.br",
+  "www.comprecarrosbr.com.br",
+];
+
 function getCorsHeaders(origin: string | null): Record<string, string> {
-  // Accept all Lovable domains dynamically
+  // Check if origin is valid
   const isAllowed = origin && (
+    // Production domains
+    PRODUCTION_DOMAINS.some(domain => origin === `https://${domain}` || origin === `http://${domain}`) ||
+    // Lovable preview domains
     origin.endsWith(".lovable.app") ||
     origin.endsWith(".lovableproject.com") ||
+    // Localhost for development
     origin.startsWith("http://localhost:")
   );
 

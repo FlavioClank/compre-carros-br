@@ -1,6 +1,6 @@
 import { useMemo, memo, useEffect, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { CarCardSingle } from "@/components/public/CarCardSingle";
 import { HomeAdCard } from "@/components/public/HomeAdCard";

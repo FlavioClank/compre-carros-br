@@ -1,3 +1,5 @@
+import { getSupabaseUrl } from "./supabase-config";
+
 export type AnalyticsEventType = "click" | "visit";
 
 export type AnalyticsEntityType = "ad" | "banner" | "car" | "site" | "vehicle";
@@ -12,7 +14,7 @@ interface TrackEventPayload {
 const FUNCTION_PATH = "/functions/v1/track-analytics";
 
 function getEdgeFunctionUrl(): string | null {
-  const baseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const baseUrl = getSupabaseUrl();
   if (!baseUrl) return null;
   return `${baseUrl}${FUNCTION_PATH}`;
 }

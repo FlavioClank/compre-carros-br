@@ -50,7 +50,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Plus, Check, Calendar, AlertCircle, Trash2, Eye, MousePointerClick, Send, CalendarIcon, FileText, Copy } from "lucide-react";
 import { format, startOfWeek, endOfWeek } from "date-fns";

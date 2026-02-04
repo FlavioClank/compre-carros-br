@@ -30,7 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, ExternalLink, Image as ImageIcon, Home, Search, Copy, Link } from "lucide-react";
 import { getAdPublicUrl } from "@/lib/ad-utils";

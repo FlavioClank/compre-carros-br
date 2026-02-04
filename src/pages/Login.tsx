@@ -62,9 +62,9 @@ export default function Login() {
     setTimeout(() => {
       // Get fresh role from auth context
       const checkAndRedirect = async () => {
-        const { data: { user } } = await (await import("@/integrations/supabase/client")).supabase.auth.getUser();
+        const { data: { user } } = await (await import("@/lib/supabase")).supabase.auth.getUser();
         if (user) {
-          const { data: roleData } = await (await import("@/integrations/supabase/client")).supabase
+          const { data: roleData } = await (await import("@/lib/supabase")).supabase
             .from("user_roles")
             .select("role")
             .eq("user_id", user.id)
