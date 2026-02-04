@@ -1,0 +1,51 @@
+# ================================================
+# Variáveis de Ambiente para Vercel
+# Projeto: CompreCarrosBR
+# Supabase: vpunpbozwidlzukplfts (externo)
+# ================================================
+
+# Cole estas variáveis em:
+# Vercel Dashboard > Seu Projeto > Settings > Environment Variables
+
+# -------------------------------------------------
+# SUPABASE (OBRIGATÓRIO)
+# -------------------------------------------------
+
+VITE_SUPABASE_URL=https://vpunpbozwidlzukplfts.supabase.co
+
+VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwdW5wYm96d2lkbHp1a3BsZnRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2OTE4MzksImV4cCI6MjA1MjI2NzgzOX0.jOhamfNnXXv4Zl0f1_QGvzxQJJtH5ZmqnJh6LGqnQbE
+
+VITE_SUPABASE_PROJECT_ID=vpunpbozwidlzukplfts
+
+# -------------------------------------------------
+# NOTAS
+# -------------------------------------------------
+# 
+# A VITE_SUPABASE_PUBLISHABLE_KEY acima é a anon key do projeto externo.
+# Ela é pública e pode ser commitada no código.
+#
+# NÃO coloque a SERVICE_ROLE_KEY aqui - ela só vai no Supabase Secrets
+# (já configurada pelo DEPLOY-COMMANDS-WINDOWS.cmd)
+#
+# -------------------------------------------------
+# CONFIGURAÇÃO NA VERCEL
+# -------------------------------------------------
+#
+# 1. Vá em: https://vercel.com/dashboard
+# 2. Selecione seu projeto (ou importe do GitHub)
+# 3. Settings > Environment Variables
+# 4. Adicione cada variável acima
+# 5. Marque: Production, Preview, Development
+# 6. Save
+# 7. Redeploy o projeto
+#
+# -------------------------------------------------
+# BUILD SETTINGS (se precisar configurar manualmente)
+# -------------------------------------------------
+#
+# Framework Preset: Vite
+# Build Command: npm run build
+# Output Directory: dist
+# Install Command: npm install
+# Node.js Version: 18.x ou 20.x
+#
