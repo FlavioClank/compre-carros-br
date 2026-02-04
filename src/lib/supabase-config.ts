@@ -1,27 +1,36 @@
 /**
  * Supabase Configuration for Production vs Development
  * 
- * This file detects the environment and returns the correct Supabase credentials.
- * - In production (comprecarrosbr.com.br): Uses the external Supabase project
- * - In development/preview: Uses Lovable Cloud Supabase
+ * Priority order:
+ * 1. Environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY) - used in Vercel/production
+ * 2. Hardcoded external Supabase for production domains - fallback
+ * 3. Lovable Cloud for preview/localhost
  */
 
-// External Supabase project credentials (production)
+// External Supabase project credentials (production fallback)
 const EXTERNAL_SUPABASE_URL = "https://vpunpbozwidlzukplfts.supabase.co";
 const EXTERNAL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwdW5wYm96d2lkbHp1a3BsZnRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2OTE4MzksImV4cCI6MjA1MjI2NzgzOX0.jOhamfNnXXv4Zl0f1_QGvzxQJJtH5ZmqnJh6LGqnQbE";
 
-// Production domains
+// Production domains (custom domain + Vercel)
 const PRODUCTION_DOMAINS = [
   "comprecarrosbr.com.br",
   "www.comprecarrosbr.com.br",
 ];
 
 /**
- * Check if the current environment is production
+ * Check if running on Vercel (production or preview)
  */
-export function isProductionEnvironment(): boolean {
+function isVercelEnvironment(): boolean {
   if (typeof window === "undefined") return false;
-  
+  const hostname = window.location.hostname;
+  return hostname.endsWith(".vercel.app");
+}
+
+/**
+ * Check if the current environment is production (custom domain)
+ */
+function isCustomDomainProduction(): boolean {
+  if (typeof window === "undefined") return false;
   const hostname = window.location.hostname;
   return PRODUCTION_DOMAINS.some(domain => 
     hostname === domain || hostname.endsWith(`.${domain}`)
@@ -29,35 +38,85 @@ export function isProductionEnvironment(): boolean {
 }
 
 /**
+ * Check if we should use external Supabase
+ * - True for: Vercel deployments, custom production domains
+ * - False for: Lovable preview, localhost (unless env vars are set)
+ */
+export function isProductionEnvironment(): boolean {
+  return isCustomDomainProduction() || isVercelEnvironment();
+}
+
+/**
+ * Check if we're in Lovable preview
+ */
+function isLovablePreview(): boolean {
+  if (typeof window === "undefined") return false;
+  const hostname = window.location.hostname;
+  return hostname.endsWith(".lovable.app") || hostname.endsWith(".lovableproject.com");
+}
+
+/**
  * Get the Supabase URL for the current environment
+ * Priority: env vars (Vercel) > production domains > Lovable Cloud
  */
 export function getSupabaseUrl(): string {
-  if (isProductionEnvironment()) {
+  const envUrl = import.meta.env.VITE_SUPABASE_URL;
+  
+  // If we have env vars AND we're in production (Vercel or custom domain), use them
+  if (envUrl && isProductionEnvironment()) {
+    return envUrl;
+  }
+  
+  // If we're on production domains, use external Supabase
+  if (isCustomDomainProduction() || isVercelEnvironment()) {
     return EXTERNAL_SUPABASE_URL;
   }
-  // Fall back to Lovable Cloud (from environment variables)
-  return import.meta.env.VITE_SUPABASE_URL || EXTERNAL_SUPABASE_URL;
+  
+  // Lovable preview uses env vars (which point to Lovable Cloud)
+  if (isLovablePreview() && envUrl) {
+    return envUrl;
+  }
+  
+  // Localhost: use env vars if set, otherwise external
+  return envUrl || EXTERNAL_SUPABASE_URL;
 }
 
 /**
  * Get the Supabase Anon Key for the current environment
  */
 export function getSupabaseAnonKey(): string {
-  if (isProductionEnvironment()) {
+  const envKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  
+  // If we have env vars AND we're in production (Vercel or custom domain), use them
+  if (envKey && isProductionEnvironment()) {
+    return envKey;
+  }
+  
+  // If we're on production domains, use external Supabase
+  if (isCustomDomainProduction() || isVercelEnvironment()) {
     return EXTERNAL_SUPABASE_ANON_KEY;
   }
-  // Fall back to Lovable Cloud (from environment variables)
-  return import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || EXTERNAL_SUPABASE_ANON_KEY;
+  
+  // Lovable preview uses env vars (which point to Lovable Cloud)
+  if (isLovablePreview() && envKey) {
+    return envKey;
+  }
+  
+  // Localhost: use env vars if set, otherwise external
+  return envKey || EXTERNAL_SUPABASE_ANON_KEY;
 }
 
 /**
  * Get the Supabase project ID for the current environment
  */
 export function getSupabaseProjectId(): string {
+  const envProjectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+  
   if (isProductionEnvironment()) {
-    return "vpunpbozwidlzukplfts";
+    return envProjectId || "vpunpbozwidlzukplfts";
   }
-  return import.meta.env.VITE_SUPABASE_PROJECT_ID || "vpunpbozwidlzukplfts";
+  
+  return envProjectId || "vpunpbozwidlzukplfts";
 }
 
 // Export production constants for reference

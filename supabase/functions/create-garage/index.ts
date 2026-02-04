@@ -17,6 +17,11 @@ function isValidOrigin(origin: string | null): boolean {
     }
   }
   
+  // Check Vercel deployments (*.vercel.app)
+  if (origin.endsWith(".vercel.app") && origin.startsWith("https://")) {
+    return true;
+  }
+  
   // Check Lovable preview domains
   if (origin.endsWith(".lovable.app") || origin.endsWith(".lovableproject.com")) {
     return true;
@@ -93,7 +98,10 @@ Deno.serve(async (req) => {
 
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      status: 204, 
+      headers: corsHeaders 
+    });
   }
 
   // Only allow POST

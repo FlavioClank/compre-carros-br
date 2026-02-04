@@ -8,24 +8,42 @@ const PRODUCTION_DOMAINS = [
   "www.comprecarrosbr.com.br",
 ];
 
-function getCorsHeaders(origin: string | null): Record<string, string> {
-  // Check if origin is valid
-  const isAllowed = origin && (
-    // Production domains
-    PRODUCTION_DOMAINS.some(domain => origin === `https://${domain}` || origin === `http://${domain}`) ||
-    // Lovable preview domains
-    origin.endsWith(".lovable.app") ||
-    origin.endsWith(".lovableproject.com") ||
-    // Localhost for development
-    origin.startsWith("http://localhost:")
-  );
+function isValidOrigin(origin: string | null): boolean {
+  if (!origin) return false;
+  
+  // Check production domains
+  for (const domain of PRODUCTION_DOMAINS) {
+    if (origin === `https://${domain}` || origin === `http://${domain}`) {
+      return true;
+    }
+  }
+  
+  // Check Vercel deployments (*.vercel.app)
+  if (origin.endsWith(".vercel.app") && origin.startsWith("https://")) {
+    return true;
+  }
+  
+  // Check Lovable preview domains
+  if (origin.endsWith(".lovable.app") || origin.endsWith(".lovableproject.com")) {
+    return true;
+  }
+  
+  // Check localhost for development
+  if (origin.startsWith("http://localhost:")) {
+    return true;
+  }
+  
+  return false;
+}
 
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const allowedOrigin = isValidOrigin(origin) && origin ? origin : "*";
   return {
-    "Access-Control-Allow-Origin": isAllowed ? origin : "*",
+    "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Content-Type": "application/xml; charset=utf-8",
-    "Cache-Control": "public, max-age=3600", // Cache for 1 hour
+    "Cache-Control": "public, max-age=3600",
   };
 }
 
@@ -45,8 +63,12 @@ Deno.serve(async (req) => {
   const origin = req.headers.get("Origin");
   const corsHeaders = getCorsHeaders(origin);
 
+  // Handle preflight OPTIONS request
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      status: 204,
+      headers: corsHeaders 
+    });
   }
 
   if (req.method !== "GET") {

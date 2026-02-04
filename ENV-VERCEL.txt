@@ -18,29 +18,32 @@ VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 VITE_SUPABASE_PROJECT_ID=vpunpbozwidlzukplfts
 
 # -------------------------------------------------
-# NOTAS
+# NOTAS IMPORTANTES
 # -------------------------------------------------
 # 
 # A VITE_SUPABASE_PUBLISHABLE_KEY acima é a anon key do projeto externo.
-# Ela é pública e pode ser commitada no código.
+# Ela é pública e pode ser usada no frontend.
 #
-# NÃO coloque a SERVICE_ROLE_KEY aqui - ela só vai no Supabase Secrets
-# (já configurada pelo DEPLOY-COMMANDS-WINDOWS.cmd)
+# NÃO coloque a SERVICE_ROLE_KEY aqui - ela só vai nos Supabase Secrets
+# (configurada via DEPLOY-COMMANDS-WINDOWS.cmd)
 #
 # -------------------------------------------------
-# CONFIGURAÇÃO NA VERCEL
+# CONFIGURAÇÃO NA VERCEL - PASSO A PASSO
 # -------------------------------------------------
 #
 # 1. Vá em: https://vercel.com/dashboard
 # 2. Selecione seu projeto (ou importe do GitHub)
 # 3. Settings > Environment Variables
-# 4. Adicione cada variável acima
-# 5. Marque: Production, Preview, Development
-# 6. Save
-# 7. Redeploy o projeto
+# 4. Adicione CADA variável acima (uma por uma):
+#    - Name: VITE_SUPABASE_URL
+#    - Value: https://vpunpbozwidlzukplfts.supabase.co
+#    - Environments: ✅ Production, ✅ Preview, ✅ Development
+# 5. Repita para as outras 2 variáveis
+# 6. Clique "Save" após cada uma
+# 7. Redeploy o projeto (Deployments > ... > Redeploy)
 #
 # -------------------------------------------------
-# BUILD SETTINGS (se precisar configurar manualmente)
+# BUILD SETTINGS (geralmente auto-detectados)
 # -------------------------------------------------
 #
 # Framework Preset: Vite
@@ -48,4 +51,14 @@ VITE_SUPABASE_PROJECT_ID=vpunpbozwidlzukplfts
 # Output Directory: dist
 # Install Command: npm install
 # Node.js Version: 18.x ou 20.x
+#
+# -------------------------------------------------
+# DOMÍNIO CUSTOMIZADO
+# -------------------------------------------------
+#
+# Após o deploy funcionar:
+# 1. Settings > Domains
+# 2. Add: comprecarrosbr.com.br
+# 3. Add: www.comprecarrosbr.com.br
+# 4. Configure os DNS no seu registrador
 #
