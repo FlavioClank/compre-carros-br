@@ -42,4 +42,4 @@ Disallow: /garage/
 Disallow: /login
 
 # Sitemap location
-Sitemap: https://kgtscjvgipowuvuindxt.supabase.co/functions/v1/sitemap
+Sitemap: https://vpunpbozwidlzukplfts.supabase.co/functions/v1/sitemap
