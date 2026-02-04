@@ -1,5 +1,5 @@
 import { useEffect, useState, memo, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import useEmblaCarousel from "embla-carousel-react";
 import { generateWhatsAppUrl } from "@/lib/constants";
 import { trackClick } from "@/lib/analytics";

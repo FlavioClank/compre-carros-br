@@ -1,13 +1,34 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
+// Production domains
+const PRODUCTION_DOMAINS = [
+  "comprecarrosbr.com.br",
+  "www.comprecarrosbr.com.br",
+];
+
+// Dynamic CORS - validates and echoes valid origins
 function isValidOrigin(origin: string | null): boolean {
   if (!origin) return false;
-  return (
-    origin.endsWith(".lovable.app") ||
-    origin.endsWith(".lovableproject.com") ||
-    origin.startsWith("http://localhost:")
-  );
+  
+  // Check production domains
+  for (const domain of PRODUCTION_DOMAINS) {
+    if (origin === `https://${domain}` || origin === `http://${domain}`) {
+      return true;
+    }
+  }
+  
+  // Check Lovable preview domains
+  if (origin.endsWith(".lovable.app") || origin.endsWith(".lovableproject.com")) {
+    return true;
+  }
+  
+  // Check localhost for development
+  if (origin.startsWith("http://localhost:")) {
+    return true;
+  }
+  
+  return false;
 }
 
 function getCorsHeaders(origin: string | null): Record<string, string> {

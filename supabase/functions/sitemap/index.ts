@@ -2,9 +2,26 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SITE_URL = "https://comprecarrosbr.com.br";
 
+// Production domains
+const PRODUCTION_DOMAINS = [
+  "comprecarrosbr.com.br",
+  "www.comprecarrosbr.com.br",
+];
+
 function getCorsHeaders(origin: string | null): Record<string, string> {
+  // Check if origin is valid
+  const isAllowed = origin && (
+    // Production domains
+    PRODUCTION_DOMAINS.some(domain => origin === `https://${domain}` || origin === `http://${domain}`) ||
+    // Lovable preview domains
+    origin.endsWith(".lovable.app") ||
+    origin.endsWith(".lovableproject.com") ||
+    // Localhost for development
+    origin.startsWith("http://localhost:")
+  );
+
   return {
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": isAllowed ? origin : "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Content-Type": "application/xml; charset=utf-8",

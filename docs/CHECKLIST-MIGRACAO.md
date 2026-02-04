@@ -119,44 +119,65 @@ Após upload das imagens:
 
 ---
 
-### 6️⃣ Deploy das Edge Functions
+### 6️⃣ Deploy das Edge Functions (CRÍTICO!)
+
+⚠️ **IMPORTANTE**: As Edge Functions precisam ser deployadas no Supabase EXTERNO para funcionarem em produção!
 
 ```bash
 cd seu-projeto
 
-# Linkar ao projeto externo
-supabase link --project-ref SEU_PROJECT_ID
+# 1. Instalar Supabase CLI (se ainda não tiver)
+npm install -g supabase
 
-# Deploy
+# 2. Fazer login
+supabase login
+
+# 3. Linkar ao projeto EXTERNO (vpunpbozwidlzukplfts)
+supabase link --project-ref vpunpbozwidlzukplfts
+
+# 4. Configurar secrets ANTES do deploy
+supabase secrets set SUPABASE_URL=https://vpunpbozwidlzukplfts.supabase.co
+supabase secrets set SUPABASE_SERVICE_ROLE_KEY=sua_service_role_key_do_projeto_externo
+
+# 5. Deploy de todas as funções
 supabase functions deploy create-garage
 supabase functions deploy reset-garage-password
 supabase functions deploy track-analytics
 supabase functions deploy update-garage-email
 supabase functions deploy sitemap
 
-# Configurar secrets
-supabase secrets set SUPABASE_SERVICE_ROLE_KEY=sua_service_role_key
+# 6. Verificar se funcionam
+curl https://vpunpbozwidlzukplfts.supabase.co/functions/v1/sitemap
 ```
 
-- [ ] `create-garage` deployada
-- [ ] `reset-garage-password` deployada
-- [ ] `track-analytics` deployada
-- [ ] `update-garage-email` deployada
-- [ ] `sitemap` deployada
+**Verificação pós-deploy:**
+```bash
+# Testar se CORS está funcionando para produção
+curl -X OPTIONS https://vpunpbozwidlzukplfts.supabase.co/functions/v1/create-garage \
+  -H "Origin: https://comprecarrosbr.com.br" \
+  -H "Access-Control-Request-Method: POST" \
+  -v
+```
+
+- [ ] `create-garage` deployada no Supabase externo
+- [ ] `reset-garage-password` deployada no Supabase externo
+- [ ] `track-analytics` deployada no Supabase externo
+- [ ] `update-garage-email` deployada no Supabase externo
+- [ ] `sitemap` deployada no Supabase externo
+- [ ] Secrets configurados no Supabase externo
 
 ---
 
-### 7️⃣ Configurar Variáveis de Ambiente
+### 7️⃣ Publicar o App (NÃO precisa de hosting externo!)
 
-Para hospedar externamente (Vercel, Netlify, etc.):
+✅ **BOA NOTÍCIA**: O código do frontend foi atualizado para detectar automaticamente o ambiente:
+- Em `comprecarrosbr.com.br` → usa Supabase externo
+- Em preview Lovable → usa Lovable Cloud
 
-```env
-VITE_SUPABASE_URL=https://SEU_PROJECT_ID.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=SUA_ANON_KEY
-VITE_SUPABASE_PROJECT_ID=SEU_PROJECT_ID
-```
+Basta **Publicar** o app no Lovable e configurar o domínio customizado!
 
-- [ ] Variáveis configuradas no host externo
+- [ ] App publicado no Lovable
+- [ ] Domínio customizado configurado (comprecarrosbr.com.br)
 
 ---
 
