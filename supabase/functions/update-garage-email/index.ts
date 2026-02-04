@@ -18,6 +18,11 @@ function isValidOrigin(origin: string | null): boolean {
     }
   }
   
+  // Check Vercel deployments (*.vercel.app)
+  if (origin.endsWith(".vercel.app") && origin.startsWith("https://")) {
+    return true;
+  }
+  
   // Check Lovable preview domains
   if (origin.endsWith(".lovable.app") || origin.endsWith(".lovableproject.com")) {
     return true;
@@ -32,9 +37,7 @@ function isValidOrigin(origin: string | null): boolean {
 }
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
-  // Echo back the origin if valid; use empty string otherwise (blocks request)
   const allowedOrigin = isValidOrigin(origin) && origin ? origin : "";
-
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -54,8 +57,12 @@ serve(async (req) => {
   const origin = req.headers.get("Origin");
   const corsHeaders = getCorsHeaders(origin);
 
+  // Handle preflight OPTIONS request
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      status: 204,
+      headers: corsHeaders 
+    });
   }
 
   if (req.method !== "POST") {
