@@ -2,20 +2,19 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SITE_URL = "https://comprecarrosbr.com.br";
 
-// Production domains
-const PRODUCTION_DOMAINS = [
-  "comprecarrosbr.com.br",
-  "www.comprecarrosbr.com.br",
+// ===== CORS com Allowlist =====
+const ALLOWED_ORIGINS = [
+  "https://compre-carros-br.vercel.app",
+  "https://comprecarrosbr.com.br",
+  "https://www.comprecarrosbr.com.br",
 ];
 
-function isValidOrigin(origin: string | null): boolean {
+function isAllowedOrigin(origin: string | null): boolean {
   if (!origin) return false;
   
-  // Check production domains
-  for (const domain of PRODUCTION_DOMAINS) {
-    if (origin === `https://${domain}` || origin === `http://${domain}`) {
-      return true;
-    }
+  // Check exact match in allowlist
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    return true;
   }
   
   // Check Vercel deployments (*.vercel.app)
@@ -37,9 +36,10 @@ function isValidOrigin(origin: string | null): boolean {
 }
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
-  const allowedOrigin = isValidOrigin(origin) && origin ? origin : "*";
+  const allowedOrigin = isAllowedOrigin(origin) && origin ? origin : "";
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Content-Type": "application/xml; charset=utf-8",
@@ -63,10 +63,10 @@ Deno.serve(async (req) => {
   const origin = req.headers.get("Origin");
   const corsHeaders = getCorsHeaders(origin);
 
-  // Handle preflight OPTIONS request
+  // Handle preflight OPTIONS request - DEVE retornar 200 OK
   if (req.method === "OPTIONS") {
-    return new Response(null, { 
-      status: 204,
+    return new Response("ok", { 
+      status: 200,
       headers: corsHeaders 
     });
   }

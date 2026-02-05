@@ -26,12 +26,14 @@ async function sendEvent(payload: TrackEventPayload) {
 
     const body = JSON.stringify(payload);
 
+    // Usar sendBeacon para analytics (não envia credentials por padrão)
     if (navigator.sendBeacon) {
       const blob = new Blob([body], { type: "application/json" });
       navigator.sendBeacon(url, blob);
       return;
     }
 
+    // Fallback: fetch SEM credentials (evita erro de CORS com wildcard)
     await fetch(url, {
       method: "POST",
       headers: {
@@ -39,6 +41,7 @@ async function sendEvent(payload: TrackEventPayload) {
       },
       body,
       keepalive: true,
+      // NÃO usar credentials: "include" - causa erro CORS com allowlist
     });
   } catch {
     // Silently ignore - may be blocked by AdBlocker or network issues
