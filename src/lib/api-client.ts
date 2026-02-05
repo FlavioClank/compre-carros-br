@@ -1,6 +1,7 @@
 /**
- * API client for calling Vercel serverless functions
- * These replace Supabase Edge Functions in production to avoid CORS issues
+ * API client unificado para produção na Vercel
+ * - Em produção → SEMPRE usa /api/*
+ * - Em preview/local → usa Supabase Edge Functions (opcional)
  */
 
 import { supabase } from "./supabase";
@@ -12,23 +13,40 @@ interface ApiResponse<T = any> {
 }
 
 /**
- * Get the base URL for API calls
- * Production (Vercel): /api (same origin)
- * Preview (Lovable): Supabase Edge Functions
- */
-function getApiBase(): { type: "vercel" | "supabase" } {
-  if (isProductionEnvironment()) {
-    return { type: "vercel" };
-  }
-  return { type: "supabase" };
-}
-
-/**
- * Get the current session token for authenticated requests
+ * Obtém o token do usuário logado
  */
 async function getAuthToken(): Promise<string | null> {
   const { data } = await supabase.auth.getSession();
   return data.session?.access_token || null;
+}
+
+/**
+ * Helper para POST na Vercel
+ */
+async function postToVercel(path: string, body: any, token?: string) {
+  const res = await fetch(`/api/${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+
+  const text = await res.text();
+  let json: any;
+
+  try {
+    json = JSON.parse(text);
+  } catch {
+    json = { raw: text };
+  }
+
+  if (!res.ok) {
+    throw new Error(json?.error || json?.message || `HTTP ${res.status}`);
+  }
+
+  return json;
 }
 
 /**
@@ -48,31 +66,23 @@ export async function createGarage(payload: {
     return { error: "Sessão expirada. Faça login novamente." };
   }
 
-  const { type } = getApiBase();
-
-  if (type === "vercel") {
-    try {
-      const response = await fetch("/api/create-garage", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { error: data.error || "Erro ao criar garagem" };
-      }
-
+  try {
+    if (isProductionEnvironment()) {
+      const data = await postToVercel("create-garage", payload, token);
       return { data };
-    } catch (err: any) {
-      return { error: err.message || "Erro de rede" };
     }
-  }
 
+    // --- Fallback para preview/local (Edge Function) ---
+    const { data, error } = await supabase.functions.invoke("create-garage", {
+      body: payload,
+    });
+
+    if (error) throw error;
+    return { data };
+  } catch (err: any) {
+    return { error: err.message || "Erro ao criar garagem" };
+  }
+}
 
 /**
  * Reset garage password (Super Admin only)
@@ -86,30 +96,27 @@ export async function resetGaragePassword(payload: {
     return { error: "Sessão expirada. Faça login novamente." };
   }
 
-  const { type } = getApiBase();
-
-  if (type === "vercel") {
-    try {
-      const response = await fetch("/api/reset-garage-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { error: data.error || "Erro ao redefinir senha" };
-      }
-
+  try {
+    if (isProductionEnvironment()) {
+      const data = await postToVercel(
+        "reset-garage-password",
+        payload,
+        token
+      );
       return { data };
-    } catch (err: any) {
-      return { error: err.message || "Erro de rede" };
     }
+
+    const { data, error } = await supabase.functions.invoke(
+      "reset-garage-password",
+      { body: payload }
+    );
+
+    if (error) throw error;
+    return { data };
+  } catch (err: any) {
+    return { error: err.message || "Erro ao redefinir senha" };
   }
+}
 
 /**
  * Update garage email (Super Admin only)
@@ -123,28 +130,24 @@ export async function updateGarageEmail(payload: {
     return { error: "Sessão expirada. Faça login novamente." };
   }
 
-  const { type } = getApiBase();
-
-  if (type === "vercel") {
-    try {
-      const response = await fetch("/api/update-garage-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { error: data.error || "Erro ao atualizar email" };
-      }
-
+  try {
+    if (isProductionEnvironment()) {
+      const data = await postToVercel(
+        "update-garage-email",
+        payload,
+        token
+      );
       return { data };
-    } catch (err: any) {
-      return { error: err.message || "Erro de rede" };
     }
-  }
 
+    const { data, error } = await supabase.functions.invoke(
+      "update-garage-email",
+      { body: payload }
+    );
+
+    if (error) throw error;
+    return { data };
+  } catch (err: any) {
+    return { error: err.message || "Erro ao atualizar email" };
+  }
+}
