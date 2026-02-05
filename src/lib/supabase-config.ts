@@ -43,8 +43,26 @@ function isCustomDomainProduction(): boolean {
  * - False for: Lovable preview, localhost (unless env vars are set)
  */
 export function isProductionEnvironment(): boolean {
-  return isCustomDomainProduction() || isVercelEnvironment();
+  // Build de produção
+  if (import.meta.env.PROD) return true;
+
+  // Se estiver rodando no browser, detecta domínios publicados
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+
+    // Vercel
+    if (host.endsWith("vercel.app")) return true;
+
+    // Seu domínio final (quando colocar)
+    if (host.includes("comprecarrosbr.com.br") || host.includes("comprecarrosbr")) return true;
+
+    // seu subdomínio atual também
+    if (host.includes("compre-carros-br")) return true;
+  }
+
+  return false;
 }
+
 
 /**
  * Check if we're in Lovable preview
