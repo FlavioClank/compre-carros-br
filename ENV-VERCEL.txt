@@ -1,64 +1,106 @@
-# ================================================
-# Variáveis de Ambiente para Vercel
-# Projeto: CompreCarrosBR
-# Supabase: vpunpbozwidlzukplfts (externo)
-# ================================================
+# ================================================================
+# VARIÁVEIS DE AMBIENTE PARA VERCEL
+# ================================================================
+# Configure estas variáveis no painel da Vercel:
+# Settings → Environment Variables
+# ================================================================
 
-# Cole estas variáveis em:
-# Vercel Dashboard > Seu Projeto > Settings > Environment Variables
-
-# -------------------------------------------------
-# SUPABASE (OBRIGATÓRIO)
-# -------------------------------------------------
+# ======================
+# VARIÁVEIS DO FRONTEND (públicas, prefixo VITE_)
+# Usadas pelo client Vite/React
+# ======================
 
 VITE_SUPABASE_URL=https://vpunpbozwidlzukplfts.supabase.co
-
 VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwdW5wYm96d2lkbHp1a3BsZnRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2OTE4MzksImV4cCI6MjA1MjI2NzgzOX0.jOhamfNnXXv4Zl0f1_QGvzxQJJtH5ZmqnJh6LGqnQbE
-
 VITE_SUPABASE_PROJECT_ID=vpunpbozwidlzukplfts
 
-# -------------------------------------------------
-# NOTAS IMPORTANTES
-# -------------------------------------------------
+# ======================
+# VARIÁVEIS DO BACKEND (secretas, SEM prefixo)
+# Usadas pelas Vercel Serverless Functions em /api/*
+# ======================
+
+SUPABASE_URL=https://vpunpbozwidlzukplfts.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwdW5wYm96d2lkbHp1a3BsZnRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2OTE4MzksImV4cCI6MjA1MjI2NzgzOX0.jOhamfNnXXv4Zl0f1_QGvzxQJJtH5ZmqnJh6LGqnQbE
+SUPABASE_SERVICE_ROLE_KEY=<sua-service-role-key-do-supabase-externo>
+
+# ================================================================
+# COMO OBTER A SERVICE_ROLE_KEY:
+# ================================================================
+# 1. Acesse: https://supabase.com/dashboard/project/vpunpbozwidlzukplfts/settings/api
+# 2. Copie o valor de "service_role secret" (NUNCA expor no client!)
+# ================================================================
+
+# ================================================================
+# ARQUITETURA:
+# ================================================================
 # 
-# A VITE_SUPABASE_PUBLISHABLE_KEY acima é a anon key do projeto externo.
-# Ela é pública e pode ser usada no frontend.
+# PRODUÇÃO (Vercel / comprecarrosbr.com.br):
+# ├── Frontend (Vite/React)
+# │   └── Usa VITE_SUPABASE_URL para queries diretas ao Supabase
+# │   └── Chama /api/* para operações admin (mesma origem = sem CORS)
+# │
+# └── Backend (Vercel Serverless Functions em /api/*)
+#     └── Usa SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
+#     └── Endpoints:
+#         - POST /api/create-garage
+#         - POST /api/reset-garage-password
+#         - POST /api/update-garage-email
+#         - POST /api/track-analytics
 #
-# NÃO coloque a SERVICE_ROLE_KEY aqui - ela só vai nos Supabase Secrets
-# (configurada via DEPLOY-COMMANDS-WINDOWS.cmd)
+# PREVIEW (Lovable Cloud):
+# └── Usa Supabase Edge Functions (fallback automático)
 #
-# -------------------------------------------------
-# CONFIGURAÇÃO NA VERCEL - PASSO A PASSO
-# -------------------------------------------------
-#
+# ================================================================
+
+# ================================================================
+# CONFIGURAÇÃO STEP-BY-STEP:
+# ================================================================
+# 
 # 1. Vá em: https://vercel.com/dashboard
-# 2. Selecione seu projeto (ou importe do GitHub)
+# 2. Selecione seu projeto
 # 3. Settings > Environment Variables
-# 4. Adicione CADA variável acima (uma por uma):
-#    - Name: VITE_SUPABASE_URL
-#    - Value: https://vpunpbozwidlzukplfts.supabase.co
-#    - Environments: ✅ Production, ✅ Preview, ✅ Development
-# 5. Repita para as outras 2 variáveis
-# 6. Clique "Save" após cada uma
-# 7. Redeploy o projeto (Deployments > ... > Redeploy)
+# 4. Adicione CADA variável:
 #
-# -------------------------------------------------
-# BUILD SETTINGS (geralmente auto-detectados)
-# -------------------------------------------------
+#    FRONTEND (marque: Production, Preview, Development):
+#    ├── VITE_SUPABASE_URL
+#    ├── VITE_SUPABASE_PUBLISHABLE_KEY
+#    └── VITE_SUPABASE_PROJECT_ID
 #
+#    BACKEND (marque: Production, Preview, Development):
+#    ├── SUPABASE_URL
+#    ├── SUPABASE_ANON_KEY
+#    └── SUPABASE_SERVICE_ROLE_KEY
+#
+# 5. Redeploy o projeto (Deployments > ... > Redeploy)
+#
+# ================================================================
+
+# ================================================================
+# BUILD SETTINGS (geralmente auto-detectados):
+# ================================================================
 # Framework Preset: Vite
 # Build Command: npm run build
 # Output Directory: dist
 # Install Command: npm install
 # Node.js Version: 18.x ou 20.x
-#
-# -------------------------------------------------
-# DOMÍNIO CUSTOMIZADO
-# -------------------------------------------------
-#
-# Após o deploy funcionar:
+# ================================================================
+
+# ================================================================
+# DOMÍNIO CUSTOMIZADO:
+# ================================================================
 # 1. Settings > Domains
 # 2. Add: comprecarrosbr.com.br
 # 3. Add: www.comprecarrosbr.com.br
 # 4. Configure os DNS no seu registrador
-#
+# ================================================================
+
+# ================================================================
+# CHECKLIST DE VALIDAÇÃO:
+# ================================================================
+# [ ] 1. Criar garagem em /admin/garages sem erro CORS
+# [ ] 2. Console sem erro de track-analytics
+# [ ] 3. Redefinir senha de garagem funciona
+# [ ] 4. Alterar email de garagem funciona
+# [ ] 5. Garagem criada consegue fazer login
+# [ ] 6. Network tab mostra requests para /api/* (não supabase.co/functions)
+# ================================================================
