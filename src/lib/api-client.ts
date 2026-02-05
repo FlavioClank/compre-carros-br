@@ -73,21 +73,6 @@ export async function createGarage(payload: {
     }
   }
 
-  // Fallback: Supabase Edge Function
-  const { data, error } = await supabase.functions.invoke("create-garage", {
-    body: payload,
-  });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  if (data?.error) {
-    return { error: data.error };
-  }
-
-  return { data };
-}
 
 /**
  * Reset garage password (Super Admin only)
@@ -126,22 +111,6 @@ export async function resetGaragePassword(payload: {
     }
   }
 
-  // Fallback: Supabase Edge Function
-  const { data, error } = await supabase.functions.invoke("reset-garage-password", {
-    body: payload,
-  });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  if (data?.error) {
-    return { error: data.error };
-  }
-
-  return { data };
-}
-
 /**
  * Update garage email (Super Admin only)
  */
@@ -179,18 +148,3 @@ export async function updateGarageEmail(payload: {
     }
   }
 
-  // Fallback: Supabase Edge Function
-  const { data, error } = await supabase.functions.invoke("update-garage-email", {
-    body: payload,
-  });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  if (data?.error) {
-    return { error: data.error };
-  }
-
-  return { data };
-}
