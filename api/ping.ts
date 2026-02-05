@@ -1,5 +1,8 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+export const config = { runtime: "edge" };
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
-  res.status(200).json({ ok: true, where: "vercel api" });
+export default async function handler(_req: Request) {
+  return new Response(JSON.stringify({ ok: true, where: "vercel edge" }), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
 }
