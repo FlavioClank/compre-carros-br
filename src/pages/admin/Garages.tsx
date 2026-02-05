@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { supabase } from "@/lib/supabase";
+import { createGarage, resetGaragePassword, updateGarageEmail } from "@/lib/api-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,37 +85,24 @@ export default function AdminGarages() {
     },
   });
 
-  // Create garage mutation using edge function for atomic operation
+  // Create garage mutation using API client
   const createGarageMutation = useMutation({
     mutationFn: async (data: GarageFormData) => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      
-      if (!token) {
-        throw new Error("Sessão expirada. Faça login novamente.");
-      }
-
-      const { data: result, error } = await supabase.functions.invoke("create-garage", {
-        body: {
-          name: data.name,
-          email: data.email,
-          password: data.password,
-          phone: data.phone || null,
-          address: data.address || null,
-          city: data.city || null,
-          state: data.state || null,
-        },
+      const result = await createGarage({
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        phone: data.phone || undefined,
+        address: data.address || undefined,
+        city: data.city || undefined,
+        state: data.state || undefined,
       });
 
-      if (error) {
-        throw new Error(error.message || "Erro ao criar garagem");
-      }
-
-      if (result?.error) {
+      if (result.error) {
         throw new Error(result.error);
       }
 
-      return result;
+      return result.data;
     },
     onSuccess: () => {
       toast({ title: "Garagem criada com sucesso!" });
@@ -202,16 +190,16 @@ export default function AdminGarages() {
     },
   });
 
-  // Reset password mutation
+  // Reset password mutation using API client
   const resetPasswordMutation = useMutation({
     mutationFn: async ({ userId, password }: { userId: string; password: string }) => {
-      const { data: result, error } = await supabase.functions.invoke("reset-garage-password", {
-        body: { userId, password },
-      });
-
-      if (error) throw new Error(error.message);
-      if (result?.error) throw new Error(result.error);
-      return result;
+      const result = await resetGaragePassword({ userId, password });
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      return result.data;
     },
     onSuccess: () => {
       toast({ title: "Senha redefinida com sucesso!" });
@@ -263,26 +251,13 @@ export default function AdminGarages() {
         throw new Error("Email inválido");
       }
 
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
+      const result = await updateGarageEmail({ garageId, newEmail: trimmed });
 
-      if (!token) {
-        throw new Error("Sessão expirada. Faça login novamente.");
+      if (result.error) {
+        throw new Error(result.error);
       }
 
-      const { data, error } = await supabase.functions.invoke("update-garage-email", {
-        body: { garageId, newEmail: trimmed },
-      });
-
-      if (error) {
-        throw new Error(error.message || "Erro ao alterar email");
-      }
-
-      if (data?.error) {
-        throw new Error(data.error);
-      }
-
-      return data;
+      return result.data;
     },
     onSuccess: () => {
       toast({ title: "Email atualizado com sucesso!" });

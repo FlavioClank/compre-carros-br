@@ -1,4 +1,4 @@
-import { getSupabaseUrl } from "./supabase-config";
+import { isProductionEnvironment } from "./supabase-config";
 
 export type AnalyticsEventType = "click" | "visit";
 
@@ -11,29 +11,35 @@ interface TrackEventPayload {
   metadata?: Record<string, any>;
 }
 
-const FUNCTION_PATH = "/functions/v1/track-analytics";
-
-function getEdgeFunctionUrl(): string | null {
-  const baseUrl = getSupabaseUrl();
-  if (!baseUrl) return null;
-  return `${baseUrl}${FUNCTION_PATH}`;
+/**
+ * Get the analytics endpoint URL based on environment
+ * - Production (Vercel): /api/track-analytics (same origin, no CORS)
+ * - Preview (Lovable Cloud): Supabase Edge Function
+ */
+function getAnalyticsUrl(): string {
+  if (isProductionEnvironment()) {
+    // Use Vercel serverless function (same origin = no CORS)
+    return "/api/track-analytics";
+  }
+  
+  // Lovable preview: use Supabase Edge Function
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || "kgtscjvgipowuvuindxt";
+  return `https://${projectId}.supabase.co/functions/v1/track-analytics`;
 }
 
 async function sendEvent(payload: TrackEventPayload) {
   try {
-    const url = getEdgeFunctionUrl();
-    if (!url) return;
-
+    const url = getAnalyticsUrl();
     const body = JSON.stringify(payload);
 
-    // Usar sendBeacon para analytics (não envia credentials por padrão)
+    // Use sendBeacon for fire-and-forget analytics
     if (navigator.sendBeacon) {
       const blob = new Blob([body], { type: "application/json" });
       navigator.sendBeacon(url, blob);
       return;
     }
 
-    // Fallback: fetch SEM credentials (evita erro de CORS com wildcard)
+    // Fallback: fetch without credentials (no CORS issues)
     await fetch(url, {
       method: "POST",
       headers: {
@@ -41,7 +47,6 @@ async function sendEvent(payload: TrackEventPayload) {
       },
       body,
       keepalive: true,
-      // NÃO usar credentials: "include" - causa erro CORS com allowlist
     });
   } catch {
     // Silently ignore - may be blocked by AdBlocker or network issues
