@@ -1,12 +1,14 @@
-import { useEffect, useState, useMemo, useCallback, memo } from "react";
+import { useEffect, useState, useMemo, useCallback, memo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { CarCard } from "@/components/public/CarCard";
 import { AdCard } from "@/components/public/AdCard";
 import { useAdsRotation } from "@/hooks/useAdsRotation";
-import { useVehiclesInfiniteQuery, VehicleFilters, VehicleData } from "@/hooks/useVehiclesInfiniteQuery";
-import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import { useVehiclesPaginatedQuery } from "@/hooks/useVehiclesPaginatedQuery";
+import { interleaveVehiclesWithAds } from "@/lib/interleave-ads";
+import { PaginationControls } from "@/components/public/PaginationControls";
+import { VehicleFilters, VehicleData } from "@/hooks/useVehiclesInfiniteQuery";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -109,47 +111,13 @@ const CardItem = memo(function CardItem({ item }: { item: ListItem }) {
   return <AdCard ad={item.data} />;
 });
 
-// Load more trigger component
-function LoadMoreTrigger({ 
-  onVisible, 
-  hasNextPage,
-  isFetchingNextPage,
-}: { 
-  onVisible: () => void; 
-  hasNextPage: boolean;
-  isFetchingNextPage: boolean;
-}) {
-  const { ref, isIntersecting } = useIntersectionObserver({
-    threshold: 0.1,
-    rootMargin: "300px",
-    triggerOnce: false,
-  });
-
-  useEffect(() => {
-    if (isIntersecting && hasNextPage && !isFetchingNextPage) {
-      onVisible();
-    }
-  }, [isIntersecting, hasNextPage, isFetchingNextPage, onVisible]);
-
-  if (!hasNextPage) return null;
-
-  return (
-    <div ref={ref as (el: HTMLDivElement | null) => void} className="col-span-full flex justify-center py-6">
-      {isFetchingNextPage && (
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          <span className="text-sm">Carregando mais veículos...</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function Cars() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [carBrands, setCarBrands] = useState<Brand[]>([]);
   const [motorcycleBrands, setMotorcycleBrands] = useState<Brand[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [page, setPage] = useState(0);
+  const listRef = useRef<HTMLDivElement>(null);
   const { ads, hasAds } = useAdsRotation();
 
   // Filters state
@@ -190,55 +158,28 @@ export default function Cars() {
     };
   }, [search, brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category, coolingType, motorcycleCategory]);
 
-  // Infinite query for vehicles
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-  } = useVehiclesInfiniteQuery(filters);
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [filters]);
 
-  // Flatten all pages into a single array
-  const allVehicles = useMemo(() => {
-    if (!data?.pages) return [];
-    return data.pages.flatMap((page) => page.vehicles);
-  }, [data?.pages]);
+  // Paginated query for vehicles
+  const { data, isLoading, isError, isFetching } = useVehiclesPaginatedQuery(page, filters);
 
-  // Build list items with intercalated ads
+  const vehicles = data?.vehicles ?? [];
+  const totalCount = data?.totalCount ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+
+  // Build list items with intercalated ads (6 per page)
   const listItems = useMemo((): ListItem[] => {
-    if (allVehicles.length === 0) return [];
+    if (vehicles.length === 0) return [];
+    return interleaveVehiclesWithAds(vehicles, ads, 6);
+  }, [vehicles, ads]);
 
-    const items: ListItem[] = [];
-    let adIndex = 0;
-
-    allVehicles.forEach((vehicle, index) => {
-      items.push({ type: "car" as const, data: vehicle });
-
-      // Insert ad after every 5 cars
-      if (hasAds && (index + 1) % 5 === 0 && adIndex < ads.length) {
-        items.push({ type: "ad" as const, data: ads[adIndex] });
-        adIndex++;
-      }
-    });
-
-    // Add remaining ads at the end
-    if (hasAds && !hasNextPage) {
-      while (adIndex < ads.length) {
-        items.push({ type: "ad" as const, data: ads[adIndex] });
-        adIndex++;
-      }
-    }
-
-    return items;
-  }, [allVehicles, ads, hasAds, hasNextPage]);
-
-  const handleLoadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+    listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   // Get brands based on selected category
   const filteredBrands = useMemo((): BrandDisplay[] => {
@@ -717,13 +658,14 @@ export default function Cars() {
             <p className="text-sm text-muted-foreground mt-3">
               {isLoading ? "Carregando..." : (
                 <span className="font-medium">
-                  Resultados encontrados ({allVehicles.length}{hasNextPage ? "+" : ""})
+                  {totalCount} veículo{totalCount !== 1 ? "s" : ""} encontrado{totalCount !== 1 ? "s" : ""}
                 </span>
               )}
             </p>
           </div>
 
-          {/* Cars Grid - Natural page scroll, no internal overflow */}
+          {/* Cars Grid */}
+          <div ref={listRef} />
           {isLoading ? (
             <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -740,21 +682,22 @@ export default function Cars() {
               </p>
             </div>
           ) : listItems.length > 0 ? (
-            <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {listItems.map((item) => (
-                <CardItem
-                  key={item.type === 'car' ? `car-${item.data.id}` : `ad-${item.data.id}`}
-                  item={item}
-                />
-              ))}
-              
-              {/* Load more trigger */}
-              <LoadMoreTrigger
-                onVisible={handleLoadMore}
-                hasNextPage={!!hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
+            <>
+              <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {listItems.map((item) => (
+                  <CardItem
+                    key={item.type === 'car' ? `car-${item.data.id}` : `ad-${item.data.id}`}
+                    item={item}
+                  />
+                ))}
+              </div>
+              <PaginationControls
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                isLoading={isFetching}
               />
-            </div>
+            </>
           ) : (
             <div className="text-center py-16 bg-card/50 rounded-xl border border-border/50">
               <div className="flex justify-center mb-4">
