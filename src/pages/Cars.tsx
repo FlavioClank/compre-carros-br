@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, memo, useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { PublicLayout } from "@/components/layout/PublicLayout";
@@ -35,6 +36,7 @@ import {
   MOTORCYCLE_CATEGORY_LABELS 
 } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
+import { canonicalUrl } from "@/lib/seo";
 
 interface Brand {
   id: string;
@@ -584,6 +586,13 @@ export default function Cars() {
 
   return (
     <PublicLayout>
+      <Helmet>
+        <title>{category === "motorcycle" ? "Motos Disponíveis" : category === "car" ? "Carros Disponíveis" : "Veículos Disponíveis"} | CompreCarrosBr</title>
+        <meta name="description" content="Encontre veículos seminovos verificados com preços acessíveis. Carros e motos de garagens confiáveis na CompreCarrosBr." />
+        <link rel="canonical" href={canonicalUrl("/carros")} />
+        <meta property="og:url" content={canonicalUrl("/carros")} />
+        <meta property="og:title" content="Veículos Disponíveis | CompreCarrosBr" />
+      </Helmet>
       <section className="py-8 md:py-12 bg-muted/30 min-h-screen">
         <div className="container">
           {/* Header */}

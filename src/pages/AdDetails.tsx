@@ -10,6 +10,7 @@ import { generateWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/constants";
 import { trackClick, trackView } from "@/lib/analytics";
 import { format } from "date-fns";
 import { getAdPublicUrl } from "@/lib/ad-utils";
+import { absoluteImageUrl } from "@/lib/seo";
 
 interface AdDetail {
   id: string;
@@ -201,13 +202,13 @@ Data/hora: ${timestamp}`;
         <meta name="description" content={metaDescription} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={metaDescription} />
-        <meta property="og:image" content={imageUrl} />
+        <meta property="og:image" content={absoluteImageUrl(imageUrl)} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={canonicalUrl} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={metaDescription} />
-        <meta name="twitter:image" content={imageUrl} />
+        <meta name="twitter:image" content={absoluteImageUrl(imageUrl)} />
         <link rel="canonical" href={canonicalUrl} />
       </Helmet>
 
