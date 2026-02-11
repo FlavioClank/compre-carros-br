@@ -2,7 +2,7 @@
   "routes": [
     {
       "src": "/sitemap.xml",
-      "dest": "https://vpunpbozwidlzukplfts.supabase.co/functions/v1/sitemap"
+      "dest": "/api/sitemap-xml"
     },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/" }
