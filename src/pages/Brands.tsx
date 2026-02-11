@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/lib/supabase";
 import { PublicLayout } from "@/components/layout/PublicLayout";
+import { canonicalUrl } from "@/lib/seo";
 
 interface Brand {
   id: string;
@@ -37,6 +39,13 @@ export default function Brands() {
 
   return (
     <PublicLayout>
+      <Helmet>
+        <title>Marcas Oficiais | CompreCarrosBr</title>
+        <meta name="description" content="Veja todas as marcas de veículos disponíveis na CompreCarrosBr. Encontre carros seminovos verificados das principais montadoras." />
+        <link rel="canonical" href={canonicalUrl("/marcas")} />
+        <meta property="og:url" content={canonicalUrl("/marcas")} />
+        <meta property="og:title" content="Marcas Oficiais | CompreCarrosBr" />
+      </Helmet>
       <section className="py-8 md:py-12 bg-muted/30 min-h-[60vh]">
         <div className="container">
           {/* Header */}

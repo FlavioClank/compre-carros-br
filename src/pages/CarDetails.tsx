@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/lib/supabase";
+import { canonicalUrl as buildCanonical, absoluteImageUrl } from "@/lib/seo";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Button } from "@/components/ui/button";
@@ -241,7 +242,7 @@ export default function CarDetails() {
   };
 
   // Canonical URL using slug for SEO (fallback to ID if no slug)
-  const canonicalUrl = `${window.location.origin}/carro/${car.slug || car.id}`;
+  const canonicalUrl = buildCanonical(`/carro/${car.slug || car.id}`);
   const shareUrl = canonicalUrl;
 
   const specs = isMotorcycle
@@ -319,13 +320,13 @@ export default function CarDetails() {
         <meta name="description" content={metaDescription} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={metaDescription} />
-        <meta property="og:image" content={mainPhoto} />
+        <meta property="og:image" content={absoluteImageUrl(mainPhoto)} />
         <meta property="og:type" content="product" />
         <meta property="og:url" content={canonicalUrl} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={metaDescription} />
-        <meta name="twitter:image" content={mainPhoto} />
+        <meta name="twitter:image" content={absoluteImageUrl(mainPhoto)} />
         <link rel="canonical" href={canonicalUrl} />
       </Helmet>
 
