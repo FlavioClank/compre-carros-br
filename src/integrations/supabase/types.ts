@@ -556,6 +556,13 @@ export type Database = {
         }
         Returns: string
       }
+      get_active_cities: {
+        Args: never
+        Returns: {
+          city: string
+          state: string
+        }[]
+      }
       get_user_garage_id: { Args: never; Returns: string }
       has_role: {
         Args: {

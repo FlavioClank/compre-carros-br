@@ -16,18 +16,12 @@ export function Footer() {
 
   useEffect(() => {
     const fetchCities = async () => {
-      // Get distinct city/state from active garages
-      const { data } = await supabase
-        .from("garages")
-        .select("city, state")
-        .eq("is_active", true)
-        .not("city", "is", null)
-        .not("state", "is", null);
+      const { data } = await supabase.rpc("get_active_cities");
 
       if (data) {
         const seen = new Set<string>();
         const cities: CityLink[] = [];
-        for (const g of data) {
+        for (const g of data as { city: string; state: string }[]) {
           if (g.city && g.state) {
             const key = `${g.state}-${g.city}`.toLowerCase();
             if (!seen.has(key)) {
