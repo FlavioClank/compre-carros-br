@@ -2,6 +2,17 @@ import { createClient } from "@supabase/supabase-js";
 
 const SITE_URL = "https://comprecarrosbr.com.br";
 
+function toSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).send("Method not allowed");
@@ -34,6 +45,29 @@ export default async function handler(req, res) {
 
     if (adsError) console.error("Error fetching ads:", adsError);
 
+    // Fetch distinct city/state combinations from active garages with vehicles
+    const { data: garages, error: garagesError } = await supabaseAdmin
+      .from("garages")
+      .select("city, state")
+      .eq("is_active", true)
+      .not("city", "is", null)
+      .not("state", "is", null);
+
+    if (garagesError) console.error("Error fetching garages:", garagesError);
+
+    // Build unique city/state set (only garages that actually have available cars)
+    const garageLocations = new Map<string, { city: string; state: string }>();
+    if (garages) {
+      for (const g of garages) {
+        if (g.city && g.state) {
+          const key = `${g.state.toLowerCase()}-${toSlug(g.city)}`;
+          if (!garageLocations.has(key)) {
+            garageLocations.set(key, { city: g.city, state: g.state.toLowerCase() });
+          }
+        }
+      }
+    }
+
     const today = new Date().toISOString().split("T")[0];
 
     let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -57,6 +91,18 @@ export default async function handler(req, res) {
     <priority>0.7</priority>
   </url>
 `;
+
+    // Add city/state pages
+    for (const [, loc] of garageLocations) {
+      const citySlug = toSlug(loc.city);
+      sitemap += `  <url>
+    <loc>${SITE_URL}/carros/${loc.state}/${citySlug}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+`;
+    }
 
     if (cars && cars.length > 0) {
       for (const car of cars) {

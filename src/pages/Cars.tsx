@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, memo, useRef } from "react";
 import { Helmet } from "react-helmet-async";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useParams } from "react-router-dom";
+import { citySlugToName, getStateAbbr } from "@/lib/geo-utils";
 import { supabase } from "@/lib/supabase";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { CarCard } from "@/components/public/CarCard";
@@ -115,6 +116,12 @@ const CardItem = memo(function CardItem({ item }: { item: ListItem }) {
 
 export default function Cars() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { estado, cidade } = useParams<{ estado?: string; cidade?: string }>();
+  
+  // Geo context from URL params
+  const geoCity = cidade ? citySlugToName(cidade) : "";
+  const geoStateAbbr = estado ? getStateAbbr(estado) : "";
+  
   const [carBrands, setCarBrands] = useState<Brand[]>([]);
   const [motorcycleBrands, setMotorcycleBrands] = useState<Brand[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -157,8 +164,10 @@ export default function Cars() {
       category: category || undefined,
       coolingType: coolingType || undefined,
       motorcycleCategory: motorcycleCategory || undefined,
+      garageCity: geoCity || undefined,
+      garageState: geoStateAbbr || undefined,
     };
-  }, [search, brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category, coolingType, motorcycleCategory]);
+  }, [search, brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category, coolingType, motorcycleCategory, geoCity, geoStateAbbr]);
 
   // Reset page when filters change
   useEffect(() => {
@@ -587,21 +596,42 @@ export default function Cars() {
   return (
     <PublicLayout>
       <Helmet>
-        <title>{category === "motorcycle" ? "Motos Disponíveis" : category === "car" ? "Carros Disponíveis" : "Veículos Disponíveis"} | CompreCarrosBr</title>
-        <meta name="description" content="Encontre veículos seminovos verificados com preços acessíveis. Carros e motos de garagens confiáveis na CompreCarrosBr." />
-        <link rel="canonical" href={canonicalUrl("/carros")} />
-        <meta property="og:url" content={canonicalUrl("/carros")} />
-        <meta property="og:title" content="Veículos Disponíveis | CompreCarrosBr" />
+        <title>
+          {geoCity
+            ? `Carros Usados em ${geoCity} - ${geoStateAbbr} | CompreCarrosBR`
+            : category === "motorcycle" ? "Motos Disponíveis | CompreCarrosBr"
+            : category === "car" ? "Carros Disponíveis | CompreCarrosBr"
+            : "Veículos Disponíveis | CompreCarrosBr"}
+        </title>
+        <meta
+          name="description"
+          content={
+            geoCity
+              ? `Confira as melhores ofertas de veículos seminovos em ${geoCity}. Acesse e encontre seu próximo carro!`
+              : "Encontre veículos seminovos verificados com preços acessíveis. Carros e motos de garagens confiáveis na CompreCarrosBr."
+          }
+        />
+        <link rel="canonical" href={canonicalUrl(geoCity && estado ? `/carros/${estado}/${cidade}` : "/carros")} />
+        <meta property="og:url" content={canonicalUrl(geoCity && estado ? `/carros/${estado}/${cidade}` : "/carros")} />
+        <meta property="og:title" content={geoCity ? `Carros Usados em ${geoCity} - ${geoStateAbbr}` : "Veículos Disponíveis | CompreCarrosBr"} />
       </Helmet>
       <section className="py-8 md:py-12 bg-muted/30 min-h-screen">
         <div className="container">
           {/* Header */}
           <div className="mb-6">
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-              {category === "motorcycle" ? "Motos Disponíveis" : category === "car" ? "Carros Disponíveis" : "Veículos Disponíveis"}
+              {geoCity
+                ? `Carros Usados em ${geoCity}, ${geoStateAbbr}`
+                : category === "motorcycle" ? "Motos Disponíveis"
+                : category === "car" ? "Carros Disponíveis"
+                : "Veículos Disponíveis"}
             </h1>
             <p className="text-muted-foreground mt-2">
-              {category === "motorcycle" ? "Encontre a moto perfeita para você" : category === "car" ? "Encontre o carro perfeito para você" : "Encontre o veículo perfeito para você"}
+              {geoCity
+                ? `Encontre os melhores veículos seminovos em ${geoCity}, ${geoStateAbbr}`
+                : category === "motorcycle" ? "Encontre a moto perfeita para você"
+                : category === "car" ? "Encontre o carro perfeito para você"
+                : "Encontre o veículo perfeito para você"}
             </p>
           </div>
 

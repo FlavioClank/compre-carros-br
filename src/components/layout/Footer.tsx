@@ -1,8 +1,52 @@
+import { useEffect, useState } from "react";
 import { Car, Phone, Mail, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SITE_NAME, WHATSAPP_FORMATTED, WHATSAPP_NUMBER, generateWhatsAppUrl } from "@/lib/constants";
+import { supabase } from "@/lib/supabase";
+import { toSlug } from "@/lib/geo-utils";
+
+interface CityLink {
+  city: string;
+  state: string;
+  slug: string;
+}
 
 export function Footer() {
+  const [popularCities, setPopularCities] = useState<CityLink[]>([]);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      // Get distinct city/state from active garages
+      const { data } = await supabase
+        .from("garages")
+        .select("city, state")
+        .eq("is_active", true)
+        .not("city", "is", null)
+        .not("state", "is", null);
+
+      if (data) {
+        const seen = new Set<string>();
+        const cities: CityLink[] = [];
+        for (const g of data) {
+          if (g.city && g.state) {
+            const key = `${g.state}-${g.city}`.toLowerCase();
+            if (!seen.has(key)) {
+              seen.add(key);
+              cities.push({
+                city: g.city,
+                state: g.state.toUpperCase(),
+                slug: `/carros/${g.state.toLowerCase()}/${toSlug(g.city)}`,
+              });
+            }
+          }
+        }
+        cities.sort((a, b) => a.city.localeCompare(b.city));
+        setPopularCities(cities.slice(0, 12));
+      }
+    };
+    fetchCities();
+  }, []);
+
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="container py-12">
@@ -91,6 +135,24 @@ export function Footer() {
             </a>
           </div>
         </div>
+
+        {/* Popular Cities */}
+        {popularCities.length > 0 && (
+          <div className="mt-8 pt-8 border-t border-primary-foreground/10">
+            <h4 className="font-display font-semibold mb-4">Cidades Populares</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+              {popularCities.map((c) => (
+                <Link
+                  key={c.slug}
+                  to={c.slug}
+                  className="text-sm text-primary-foreground/70 hover:text-accent transition-colors"
+                >
+                  {c.city}, {c.state}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Bottom */}
         <div className="mt-8 pt-8 border-t border-primary-foreground/10 text-center text-sm text-primary-foreground/50">

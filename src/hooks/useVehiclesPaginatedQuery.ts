@@ -21,6 +21,19 @@ async function fetchVehiclesPage({
   const from = page * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
+  // If filtering by garage location, first resolve matching garage IDs
+  let garageIds: string[] | null = null;
+  if (filters.garageCity || filters.garageState) {
+    let gq = supabase.from("garages").select("id").eq("is_active", true);
+    if (filters.garageState) gq = gq.ilike("state", filters.garageState);
+    if (filters.garageCity) gq = gq.ilike("city", `%${filters.garageCity}%`);
+    const { data: garages } = await gq;
+    garageIds = (garages || []).map((g: any) => g.id);
+    if (garageIds.length === 0) {
+      return { vehicles: [], totalCount: 0, totalPages: 1, currentPage: page };
+    }
+  }
+
   // Count query
   let countQuery = supabase
     .from("cars")
@@ -39,6 +52,7 @@ async function fetchVehiclesPage({
 
   // Apply filters to both queries
   const applyFilters = (q: typeof countQuery | typeof dataQuery) => {
+    if (garageIds) q = q.in("garage_id", garageIds);
     if (filters.category) q = q.eq("category", filters.category);
     if (filters.search) q = q.or(`model.ilike.%${filters.search}%,code.ilike.%${filters.search}%`);
     if (filters.yearFrom) q = q.gte("year", parseInt(filters.yearFrom));

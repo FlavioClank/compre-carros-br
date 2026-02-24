@@ -63,6 +63,7 @@ const App = () => (
               {/* PUBLIC ROUTES - No auth required */}
               <Route path="/" element={<Index />} />
               <Route path="/home" element={<Index />} />
+              <Route path="/carros/:estado/:cidade" element={<Cars />} />
               <Route path="/carros" element={<Cars />} />
               {/* Vehicle detail page by slug (SEO-friendly) or UUID (fallback) */}
               <Route path="/carro/:slug" element={<CarDetails />} />

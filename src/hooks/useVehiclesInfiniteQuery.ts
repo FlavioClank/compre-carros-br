@@ -17,6 +17,8 @@ export interface VehicleFilters {
   category?: string;
   coolingType?: string;
   motorcycleCategory?: string;
+  garageCity?: string;
+  garageState?: string;
 }
 
 export interface VehicleData {
