@@ -563,6 +563,10 @@ export type Database = {
           state: string
         }[]
       }
+      get_garage_ids_by_location: {
+        Args: { p_city?: string; p_state?: string }
+        Returns: string[]
+      }
       get_user_garage_id: { Args: never; Returns: string }
       has_role: {
         Args: {
