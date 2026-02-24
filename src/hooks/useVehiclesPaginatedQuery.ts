@@ -21,14 +21,14 @@ async function fetchVehiclesPage({
   const from = page * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  // If filtering by garage location, first resolve matching garage IDs
+  // If filtering by garage location, resolve matching garage IDs via RPC
   let garageIds: string[] | null = null;
   if (filters.garageCity || filters.garageState) {
-    let gq = supabase.from("garages").select("id").eq("is_active", true);
-    if (filters.garageState) gq = gq.ilike("state", filters.garageState);
-    if (filters.garageCity) gq = gq.ilike("city", `%${filters.garageCity}%`);
-    const { data: garages } = await gq;
-    garageIds = (garages || []).map((g: any) => g.id);
+    const { data: ids } = await supabase.rpc("get_garage_ids_by_location", {
+      p_city: filters.garageCity || null,
+      p_state: filters.garageState || null,
+    });
+    garageIds = (ids as string[]) || [];
     if (garageIds.length === 0) {
       return { vehicles: [], totalCount: 0, totalPages: 1, currentPage: page };
     }
