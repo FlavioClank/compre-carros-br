@@ -109,6 +109,12 @@ export function FeaturedCars() {
   const { ads, hasAds } = useAdsRotation();
   const seed = getHalfHourSeed();
 
+  // Reset to page 0 when logo/home is clicked
+  useEffect(() => {
+    const handleReset = () => setPage(0);
+    window.addEventListener("reset-home", handleReset);
+    return () => window.removeEventListener("reset-home", handleReset);
+  }, []);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["featured-cars-paginated", page],
     queryFn: () => fetchHomeCars(page),
