@@ -1168,6 +1168,20 @@ export default function AdminCars() {
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                            {car.status === "available" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSellingCar(car);
+                                  setIsSellDialogOpen(true);
+                                }}
+                                title="Marcar como vendido"
+                                className="text-green-600 hover:text-green-700"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
