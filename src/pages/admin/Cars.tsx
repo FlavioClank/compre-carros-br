@@ -1177,7 +1177,7 @@ export default function AdminCars() {
                                   setIsSellDialogOpen(true);
                                 }}
                                 title="Marcar como vendido"
-                                className="text-green-600 hover:text-green-700"
+                                className="text-accent hover:text-accent"
                               >
                                 <CheckCircle className="h-4 w-4" />
                               </Button>
