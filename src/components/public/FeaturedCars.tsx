@@ -137,7 +137,7 @@ export function FeaturedCars() {
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
     setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
   }, []);
 
