@@ -190,7 +190,7 @@ export default function Cars() {
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
     setTimeout(() => {
-      listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }, 50);
   }, []);
 
