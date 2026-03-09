@@ -835,9 +835,15 @@ export default function AdminPlanilha() {
                 </div>
 
                 {/* Report Preview */}
-                <div className="bg-muted rounded-lg p-4 whitespace-pre-wrap text-sm leading-relaxed border border-border/50 shadow-inner">
-                  {generateMonthlyReport(previewBilling, reportMonth, reportYear)}
-                </div>
+                {isLoadingReportMetrics ? (
+                  <div className="bg-muted rounded-lg p-4 text-sm text-center text-muted-foreground border border-border/50">
+                    Carregando métricas do período...
+                  </div>
+                ) : (
+                  <div className="bg-muted rounded-lg p-4 whitespace-pre-wrap text-sm leading-relaxed border border-border/50 shadow-inner">
+                    {generateMonthlyReport(previewBilling, reportMonth, reportYear)}
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground text-center">
                   O texto acima será copiado para a área de transferência. Cole no WhatsApp com Ctrl+V.
                 </p>
