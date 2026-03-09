@@ -147,6 +147,53 @@ export default function AdminPlanilha() {
     fetchData();
   }, []);
 
+  // Fetch metrics for the specific report month/year when modal opens
+  useEffect(() => {
+    if (!previewBilling) {
+      setReportMetrics(null);
+      return;
+    }
+
+    async function fetchReportMetrics() {
+      setIsLoadingReportMetrics(true);
+      try {
+        const monthStart = new Date(reportYear, reportMonth - 1, 1).toISOString();
+        const monthEnd = new Date(reportYear, reportMonth, 1).toISOString();
+
+        const [viewsRes, clicksRes] = await Promise.all([
+          supabase
+            .from("action_logs")
+            .select("id", { count: "exact", head: true })
+            .eq("entity_type", "ad")
+            .eq("action", "visit")
+            .eq("entity_id", previewBilling.ad_id)
+            .gte("created_at", monthStart)
+            .lt("created_at", monthEnd),
+          supabase
+            .from("action_logs")
+            .select("id", { count: "exact", head: true })
+            .eq("entity_type", "ad")
+            .eq("action", "click")
+            .eq("entity_id", previewBilling.ad_id)
+            .gte("created_at", monthStart)
+            .lt("created_at", monthEnd),
+        ]);
+
+        setReportMetrics({
+          views: viewsRes.count || 0,
+          clicks: clicksRes.count || 0,
+        });
+      } catch (err) {
+        console.error("Error fetching report metrics:", err);
+        setReportMetrics({ views: 0, clicks: 0 });
+      } finally {
+        setIsLoadingReportMetrics(false);
+      }
+    }
+
+    fetchReportMetrics();
+  }, [previewBilling, reportMonth, reportYear]);
+
   async function fetchData() {
     setIsLoading(true);
     
