@@ -1,17 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -47,10 +41,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { Plus, Check, CalendarIcon, Trash2, Pencil } from "lucide-react";
+import { Plus, Check, Trash2, Pencil, DollarSign, TrendingDown, CircleCheck, Clock } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
 
 interface Expense {
   id: string;
@@ -76,6 +69,14 @@ const CATEGORIES = [
   { value: "outros", label: "Outros" },
 ];
 
+function getCategoryLabel(value: string) {
+  return CATEGORIES.find((c) => c.value === value)?.label || value;
+}
+
+function formatBRL(value: number) {
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
 export default function AdminGastos() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,6 +84,7 @@ export default function AdminGastos() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [filterMonth, setFilterMonth] = useState<string>(() => format(new Date(), "yyyy-MM"));
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -90,8 +92,8 @@ export default function AdminGastos() {
     amount: "",
     notes: "",
     status: "pending",
+    expense_date: format(new Date(), "yyyy-MM-dd"),
   });
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   useEffect(() => {
     fetchExpenses();
@@ -99,7 +101,6 @@ export default function AdminGastos() {
 
   async function fetchExpenses() {
     setIsLoading(true);
-    
     const { data, error } = await supabase
       .from("internal_expenses")
       .select("*")
@@ -111,9 +112,27 @@ export default function AdminGastos() {
     } else {
       setExpenses(data || []);
     }
-
     setIsLoading(false);
   }
+
+  // Filter expenses by selected month
+  const filteredExpenses = useMemo(() => {
+    if (!filterMonth) return expenses;
+    return expenses.filter((e) => e.expense_date.startsWith(filterMonth));
+  }, [expenses, filterMonth]);
+
+  const totalAmount = filteredExpenses.reduce((s, e) => s + e.amount, 0);
+  const paidAmount = filteredExpenses.filter((e) => e.status === "paid").reduce((s, e) => s + e.amount, 0);
+  const pendingAmount = filteredExpenses.filter((e) => e.status === "pending").reduce((s, e) => s + e.amount, 0);
+
+  // Available months for filter
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    expenses.forEach((e) => months.add(e.expense_date.substring(0, 7)));
+    // Always include current month
+    months.add(format(new Date(), "yyyy-MM"));
+    return Array.from(months).sort().reverse();
+  }, [expenses]);
 
   function resetForm() {
     setFormData({
@@ -123,12 +142,12 @@ export default function AdminGastos() {
       amount: "",
       notes: "",
       status: "pending",
+      expense_date: format(new Date(), "yyyy-MM-dd"),
     });
-    setSelectedDate(new Date());
     setEditingExpense(null);
   }
 
-  function openEditDialog(expense: Expense) {
+  function openEdit(expense: Expense) {
     setEditingExpense(expense);
     setFormData({
       name: expense.name,
@@ -137,24 +156,22 @@ export default function AdminGastos() {
       amount: String(expense.amount),
       notes: expense.notes || "",
       status: expense.status,
+      expense_date: expense.expense_date,
     });
-    setSelectedDate(parseISO(expense.expense_date));
     setIsDialogOpen(true);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
     if (!formData.name || !formData.amount) {
       toast.error("Preencha nome e valor");
       return;
     }
 
     setIsSubmitting(true);
-
     try {
-      const expenseData = {
-        expense_date: format(selectedDate, "yyyy-MM-dd"),
+      const payload = {
+        expense_date: formData.expense_date,
         name: formData.name,
         description: formData.description || null,
         category: formData.category,
@@ -164,18 +181,11 @@ export default function AdminGastos() {
       };
 
       if (editingExpense) {
-        const { error } = await supabase
-          .from("internal_expenses")
-          .update(expenseData)
-          .eq("id", editingExpense.id);
-
+        const { error } = await supabase.from("internal_expenses").update(payload).eq("id", editingExpense.id);
         if (error) throw error;
         toast.success("Gasto atualizado");
       } else {
-        const { error } = await supabase
-          .from("internal_expenses")
-          .insert(expenseData);
-
+        const { error } = await supabase.from("internal_expenses").insert(payload);
         if (error) throw error;
         toast.success("Gasto cadastrado");
       }
@@ -191,15 +201,10 @@ export default function AdminGastos() {
     }
   }
 
-  async function togglePaidStatus(expense: Expense) {
+  async function toggleStatus(expense: Expense) {
     const newStatus = expense.status === "paid" ? "pending" : "paid";
-    
     try {
-      const { error } = await supabase
-        .from("internal_expenses")
-        .update({ status: newStatus })
-        .eq("id", expense.id);
-
+      const { error } = await supabase.from("internal_expenses").update({ status: newStatus }).eq("id", expense.id);
       if (error) throw error;
       toast.success(newStatus === "paid" ? "Marcado como pago" : "Marcado como pendente");
       fetchExpenses();
@@ -211,13 +216,8 @@ export default function AdminGastos() {
 
   async function handleDelete() {
     if (!deleteId) return;
-
     try {
-      const { error } = await supabase
-        .from("internal_expenses")
-        .delete()
-        .eq("id", deleteId);
-      
+      const { error } = await supabase.from("internal_expenses").delete().eq("id", deleteId);
       if (error) throw error;
       toast.success("Gasto removido");
       fetchExpenses();
@@ -229,263 +229,233 @@ export default function AdminGastos() {
     }
   }
 
-  const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const paidAmount = expenses.filter(e => e.status === "paid").reduce((sum, e) => sum + e.amount, 0);
-  const pendingAmount = expenses.filter(e => e.status === "pending").reduce((sum, e) => sum + e.amount, 0);
-
-  function getCategoryLabel(value: string) {
-    return CATEGORIES.find(c => c.value === value)?.label || value;
+  function formatMonthLabel(ym: string) {
+    const [y, m] = ym.split("-");
+    return format(new Date(Number(y), Number(m) - 1, 1), "MMMM yyyy", { locale: ptBR });
   }
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Gastos Internos</h1>
-            <p className="text-muted-foreground">
-              Controle de despesas administrativas
-            </p>
+            <p className="text-sm text-muted-foreground">Controle de despesas da plataforma</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button onClick={resetForm}>
-                <Plus className="mr-2 h-4 w-4" />
-                Novo Gasto
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{editingExpense ? "Editar Gasto" : "Novo Gasto"}</DialogTitle>
-                <DialogDescription>
-                  {editingExpense ? "Atualize os dados do gasto." : "Preencha os campos para registrar um novo gasto."}
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Data *</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !selectedDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : <span>Selecione a data</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-50" align="start">
-                      <CalendarComponent
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(date) => date && setSelectedDate(date)}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                        locale={ptBR}
+          <div className="flex items-center gap-3">
+            <Select value={filterMonth} onValueChange={setFilterMonth}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {availableMonths.map((m) => (
+                  <SelectItem key={m} value={m}>
+                    {formatMonthLabel(m)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Dialog
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) resetForm();
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button size="sm" onClick={resetForm}>
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  Novo Gasto
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>{editingExpense ? "Editar Gasto" : "Novo Gasto"}</DialogTitle>
+                  <DialogDescription>
+                    {editingExpense ? "Atualize os dados." : "Registre uma nova despesa."}
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Data *</Label>
+                      <Input
+                        type="date"
+                        value={formData.expense_date}
+                        onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })}
                       />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Nome *</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Ex: Abastecimento"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Descrição</Label>
-                  <Textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Detalhes do gasto..."
-                    rows={2}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Categoria *</Label>
-                    <Select
-                      value={formData.category}
-                      onValueChange={(v) => setFormData({ ...formData, category: v })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CATEGORIES.map((cat) => (
-                          <SelectItem key={cat.value} value={cat.value}>
-                            {cat.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Categoria</Label>
+                      <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CATEGORIES.map((c) => (
+                            <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Valor (R$) *</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Nome *</Label>
                     <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.amount}
-                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      placeholder="0,00"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Ex: Abastecimento"
                     />
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label>Observação</Label>
-                  <Input
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Anotações adicionais..."
-                  />
-                </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Valor (R$) *</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.amount}
+                        onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                        placeholder="0,00"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Status</Label>
+                      <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pendente</SelectItem>
+                          <SelectItem value="paid">Pago</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(v) => setFormData({ ...formData, status: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pendente</SelectItem>
-                      <SelectItem value="paid">Pago</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Descrição</Label>
+                    <Textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Detalhes opcionais..."
+                      rows={2}
+                    />
+                  </div>
 
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? "Salvando..." : editingExpense ? "Atualizar" : "Cadastrar"}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? "Salvando..." : editingExpense ? "Atualizar" : "Cadastrar"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Total Geral</p>
-              <p className="text-2xl font-bold text-foreground">
-                R$ {totalAmount.toFixed(2).replace(".", ",")}
-              </p>
-            </CardContent>
+        <div className="grid grid-cols-3 gap-3">
+          <Card className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground font-medium">Total</span>
+            </div>
+            <p className="text-xl font-bold text-foreground">{formatBRL(totalAmount)}</p>
           </Card>
-          <Card className="border-green-500/30">
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Pagos</p>
-              <p className="text-2xl font-bold text-green-600">
-                R$ {paidAmount.toFixed(2).replace(".", ",")}
-              </p>
-            </CardContent>
+          <Card className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <CircleCheck className="h-4 w-4 text-primary" />
+              <span className="text-xs text-muted-foreground font-medium">Pagos</span>
+            </div>
+            <p className="text-xl font-bold text-primary">{formatBRL(paidAmount)}</p>
           </Card>
-          <Card className="border-destructive/30">
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Pendentes</p>
-              <p className="text-2xl font-bold text-destructive">
-                R$ {pendingAmount.toFixed(2).replace(".", ",")}
-              </p>
-            </CardContent>
+          <Card className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Clock className="h-4 w-4 text-destructive" />
+              <span className="text-xs text-muted-foreground font-medium">Pendentes</span>
+            </div>
+            <p className="text-xl font-bold text-destructive">{formatBRL(pendingAmount)}</p>
           </Card>
         </div>
 
+        {/* Table */}
         <Card>
-          <CardHeader>
-            <CardTitle>Lista de Gastos</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {isLoading ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Carregando...
-              </div>
-            ) : expenses.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Nenhum gasto cadastrado
-              </div>
+              <p className="text-center py-12 text-muted-foreground">Carregando...</p>
+            ) : filteredExpenses.length === 0 ? (
+              <p className="text-center py-12 text-muted-foreground">Nenhum gasto neste período</p>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Data</TableHead>
+                      <TableHead className="w-[100px]">Data</TableHead>
                       <TableHead>Nome</TableHead>
-                      <TableHead className="hidden md:table-cell">Descrição</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
+                      <TableHead className="hidden md:table-cell">Categoria</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                      <TableHead className="text-center w-[90px]">Status</TableHead>
+                      <TableHead className="text-right w-[120px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {expenses.map((expense) => (
-                      <TableRow
-                        key={expense.id}
-                        className={expense.status === "pending" ? "bg-red-50 dark:bg-red-950/20" : ""}
-                      >
-                        <TableCell className="whitespace-nowrap">
-                          {format(parseISO(expense.expense_date), "dd/MM/yyyy")}
-                        </TableCell>
-                        <TableCell className="font-medium">{expense.name}</TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground max-w-[200px] truncate">
-                          {expense.description || "-"}
+                    {filteredExpenses.map((expense) => (
+                      <TableRow key={expense.id}>
+                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                          {format(parseISO(expense.expense_date), "dd/MM/yy")}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary" className="text-xs">
+                          <div>
+                            <span className="font-medium text-sm">{expense.name}</span>
+                            {expense.description && (
+                              <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                {expense.description}
+                              </p>
+                            )}
+                            <span className="md:hidden text-xs text-muted-foreground">
+                              {getCategoryLabel(expense.category)}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <Badge variant="secondary" className="text-xs font-normal">
                             {getCategoryLabel(expense.category)}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-medium">
-                          R$ {expense.amount.toFixed(2).replace(".", ",")}
+                        <TableCell className="text-right font-medium text-sm">
+                          {formatBRL(expense.amount)}
                         </TableCell>
-                        <TableCell>
-                          {expense.status === "paid" ? (
-                            <Badge className="bg-green-500/20 text-green-600 hover:bg-green-500/30">
-                              🟢 Pago
-                            </Badge>
-                          ) : (
-                            <Badge variant="destructive">🔴 Pendente</Badge>
-                          )}
+                        <TableCell className="text-center">
+                          <button
+                            onClick={() => toggleStatus(expense)}
+                            className="inline-flex"
+                            title={expense.status === "paid" ? "Marcar como pendente" : "Marcar como pago"}
+                          >
+                            {expense.status === "paid" ? (
+                              <Badge className="bg-primary/15 text-primary hover:bg-primary/25 cursor-pointer text-xs">
+                                Pago
+                              </Badge>
+                            ) : (
+                              <Badge variant="destructive" className="cursor-pointer text-xs">
+                                Pendente
+                              </Badge>
+                            )}
+                          </button>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => togglePaidStatus(expense)}
-                            >
-                              <Check className="h-4 w-4" />
+                          <div className="flex items-center justify-end gap-1">
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(expense)}>
+                              <Pencil className="h-3.5 w-3.5" />
                             </Button>
                             <Button
-                              size="sm"
+                              size="icon"
                               variant="ghost"
-                              onClick={() => openEditDialog(expense)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-destructive hover:text-destructive"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
                               onClick={() => setDeleteId(expense.id)}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         </TableCell>
@@ -498,13 +468,12 @@ export default function AdminGastos() {
           </CardContent>
         </Card>
 
+        {/* Delete Confirmation */}
         <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-              <AlertDialogDescription>
-                Tem certeza que deseja remover este gasto?
-              </AlertDialogDescription>
+              <AlertDialogDescription>Tem certeza que deseja remover este gasto?</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
