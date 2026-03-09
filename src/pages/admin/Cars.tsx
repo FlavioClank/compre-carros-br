@@ -240,6 +240,61 @@ export default function AdminCars() {
     },
   });
 
+  // Mark as sold mutation (reuses garage logic)
+  const markAsSoldMutation = useMutation({
+    mutationFn: async ({ carId, reason }: { carId: string; reason: string }) => {
+      const { data: car, error: carError } = await supabase
+        .from("cars")
+        .select("*, brands(name)")
+        .eq("id", carId)
+        .single();
+      if (carError) throw carError;
+
+      const { error: updateError } = await supabase
+        .from("cars")
+        .update({
+          status: "sold",
+          sold_at: new Date().toISOString(),
+          sold_reason: reason,
+        })
+        .eq("id", carId);
+      if (updateError) throw updateError;
+
+      const { error: historyError } = await supabase.from("sales_history").insert({
+        car_id: carId,
+        garage_id: car.garage_id,
+        sold_reason: reason,
+        car_snapshot: {
+          code: car.code,
+          brand_id: car.brand_id,
+          brand: car.brands?.name,
+          model: car.model,
+          year: car.year,
+          version: car.version,
+          price: car.price,
+          mileage: car.mileage,
+          color: car.color,
+          category: car.category,
+        },
+      });
+      if (historyError) throw historyError;
+    },
+    onSuccess: () => {
+      toast({ title: "Veículo marcado como vendido!" });
+      queryClient.invalidateQueries({ queryKey: ["admin-cars"] });
+      setIsSellDialogOpen(false);
+      setSellingCar(null);
+      setSoldReason("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao marcar como vendido",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCategoryChange = (category: VehicleCategory) => {
     setFormData((prev) => ({
       ...prev,
