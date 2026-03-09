@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SITE_NAME } from "@/lib/constants";
 import { useAuth } from "@/lib/auth";
-import logoImage from "@/assets/logo.png";
+import logoImage from "@/assets/logo-new.jpeg";
 
 const navLinks = [
   { href: "/", label: "Início" },
