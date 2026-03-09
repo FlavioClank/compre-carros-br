@@ -31,15 +31,17 @@ async function sendEvent(payload: TrackEventPayload) {
   try {
     const url = getAnalyticsUrl();
     const body = JSON.stringify(payload);
+    const isSameOrigin = url.startsWith("/");
 
-    // Use sendBeacon for fire-and-forget analytics
-    if (navigator.sendBeacon) {
+    // sendBeacon only works reliably for same-origin (production /api/*)
+    // Cross-origin with application/json requires CORS preflight which sendBeacon doesn't support
+    if (isSameOrigin && navigator.sendBeacon) {
       const blob = new Blob([body], { type: "application/json" });
       navigator.sendBeacon(url, blob);
       return;
     }
 
-    // Fallback: fetch without credentials (no CORS issues)
+    // For cross-origin (Lovable preview → Edge Function), use fetch
     await fetch(url, {
       method: "POST",
       headers: {
