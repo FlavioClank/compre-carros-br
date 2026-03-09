@@ -174,6 +174,13 @@ export default function Cars() {
     setPage(0);
   }, [filters]);
 
+  // Reset to page 0 when logo is clicked while on search page
+  useEffect(() => {
+    const handleReset = () => setPage(0);
+    window.addEventListener("reset-search", handleReset);
+    return () => window.removeEventListener("reset-search", handleReset);
+  }, []);
+
   // Paginated query for vehicles
   const { data, isLoading, isError, isFetching } = useVehiclesPaginatedQuery(page, filters);
 
