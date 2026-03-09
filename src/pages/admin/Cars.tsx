@@ -52,6 +52,7 @@ import {
   ImagePlus,
   Copy,
   Link,
+  CheckCircle,
 } from "lucide-react";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import {
