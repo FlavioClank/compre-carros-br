@@ -189,7 +189,9 @@ export default function Cars() {
 
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
-    listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => {
+      listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
   }, []);
 
   // Get brands based on selected category

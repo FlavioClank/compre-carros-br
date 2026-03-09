@@ -126,6 +126,9 @@ export default function AdminCars() {
   const [garageFilter, setGarageFilter] = useState<string>("all");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingCar, setDeletingCar] = useState<any>(null);
+  const [isSellDialogOpen, setIsSellDialogOpen] = useState(false);
+  const [sellingCar, setSellingCar] = useState<any>(null);
+  const [soldReason, setSoldReason] = useState("");
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCar, setEditingCar] = useState<any>(null);
