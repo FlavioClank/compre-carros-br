@@ -120,10 +120,15 @@ export function FeaturedCars() {
   const totalCars = data?.totalCount ?? 0;
   const totalPages = data?.totalPages ?? 1;
 
-  // Shuffle cars deterministically
+  // Shuffle cars deterministically, keeping featured first
   const shuffledCars = useMemo(() => {
     if (!data?.cars) return [];
-    return shuffleSeeded(data.cars, seed + page);
+    const featured = data.cars.filter(c => c.is_featured);
+    const regular = data.cars.filter(c => !c.is_featured);
+    return [
+      ...shuffleSeeded(featured, seed + page),
+      ...shuffleSeeded(regular, seed + page),
+    ];
   }, [data?.cars, seed, page]);
 
   // Interleave 6 ads per page
