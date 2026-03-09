@@ -46,7 +46,10 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full glass border-b border-border/30">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-3">
+        <Link to="/" className="flex items-center gap-3" onClick={() => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          window.dispatchEvent(new CustomEvent("reset-home"));
+        }}>
           <img 
             src={logoImage} 
             alt={SITE_NAME} 
