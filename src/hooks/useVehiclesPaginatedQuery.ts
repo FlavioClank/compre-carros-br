@@ -48,6 +48,7 @@ async function fetchVehiclesPage({
       category, engine_cc, cooling_type, motorcycle_category, created_at,
       brands:brand_id ( name, logo_url )
     `)
+    .order("is_featured", { ascending: false })
     .order("created_at", { ascending: false });
 
   // Apply filters to both queries
