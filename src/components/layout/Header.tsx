@@ -132,7 +132,13 @@ export function Header() {
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-card"
                 }`}
-                onClick={() => setIsMenuOpen(false)}
+                onClick={(e) => {
+                  setIsMenuOpen(false);
+                  if (location.pathname === link.href || location.pathname.startsWith(link.href + "/")) {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
               >
                 {link.label}
               </Link>
