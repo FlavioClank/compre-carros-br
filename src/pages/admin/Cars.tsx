@@ -1235,6 +1235,50 @@ export default function AdminCars() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Sell Confirmation Dialog */}
+        <Dialog open={isSellDialogOpen} onOpenChange={setIsSellDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Marcar como Vendido</DialogTitle>
+            </DialogHeader>
+            {sellingCar && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Deseja realmente marcar o veículo{" "}
+                  <strong>
+                    {sellingCar.brands?.name} {sellingCar.model}
+                  </strong>{" "}
+                  ({sellingCar.code}) como vendido?
+                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="admin_sold_reason">Motivo da Venda *</Label>
+                  <Textarea
+                    id="admin_sold_reason"
+                    value={soldReason}
+                    onChange={(e) => setSoldReason(e.target.value)}
+                    rows={3}
+                    placeholder="Descreva o motivo da venda..."
+                    required
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsSellDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      markAsSoldMutation.mutate({ carId: sellingCar.id, reason: soldReason })
+                    }
+                    disabled={!soldReason.trim() || markAsSoldMutation.isPending}
+                  >
+                    {markAsSoldMutation.isPending ? "Processando..." : "Confirmar Venda"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
