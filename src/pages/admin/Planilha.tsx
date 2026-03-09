@@ -133,6 +133,8 @@ export default function AdminPlanilha() {
   const [previewBilling, setPreviewBilling] = useState<BillingRecord | null>(null);
   const [reportMonth, setReportMonth] = useState<number>(new Date().getMonth() + 1);
   const [reportYear, setReportYear] = useState<number>(new Date().getFullYear());
+  const [reportMetrics, setReportMetrics] = useState<{ views: number; clicks: number } | null>(null);
+  const [isLoadingReportMetrics, setIsLoadingReportMetrics] = useState(false);
   const [formData, setFormData] = useState({
     ad_id: "",
     company_name: "",
