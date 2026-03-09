@@ -64,7 +64,8 @@ function useSummaryCount(entityType: string, action: string, since: string) {
       if (error) throw error;
       return count || 0;
     },
-    staleTime: 60_000,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
   });
 }
 
@@ -158,7 +159,8 @@ function SiteTab() {
         .sort((a, b) => a[0].localeCompare(b[0]))
         .map(([dia, visitas]) => ({ dia, visitas }));
     },
-    staleTime: 60_000,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
   });
 
   return (
