@@ -431,7 +431,7 @@ export default function AdminPlanilha() {
   }
 
   function generateMonthlyReport(billing: BillingRecord, month: number, year: number) {
-    const metrics = adMetrics[billing.ad_id] || { views: 0, clicks: 0 };
+    const metrics = reportMetrics || { views: 0, clicks: 0 };
     const monthName = format(new Date(year, month - 1, 1), "MMMM 'de' yyyy", { locale: ptBR });
 
     const mensagem = `Olá, *${billing.company_name}*! 👋\n\n` +
