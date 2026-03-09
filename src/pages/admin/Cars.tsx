@@ -52,6 +52,7 @@ import {
   ImagePlus,
   Copy,
   Link,
+  CheckCircle,
 } from "lucide-react";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import {
@@ -126,6 +127,9 @@ export default function AdminCars() {
   const [garageFilter, setGarageFilter] = useState<string>("all");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingCar, setDeletingCar] = useState<any>(null);
+  const [isSellDialogOpen, setIsSellDialogOpen] = useState(false);
+  const [sellingCar, setSellingCar] = useState<any>(null);
+  const [soldReason, setSoldReason] = useState("");
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCar, setEditingCar] = useState<any>(null);
@@ -230,6 +234,61 @@ export default function AdminCars() {
     onError: (error: any) => {
       toast({
         title: "Erro ao excluir veículo",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mark as sold mutation (reuses garage logic)
+  const markAsSoldMutation = useMutation({
+    mutationFn: async ({ carId, reason }: { carId: string; reason: string }) => {
+      const { data: car, error: carError } = await supabase
+        .from("cars")
+        .select("*, brands(name)")
+        .eq("id", carId)
+        .single();
+      if (carError) throw carError;
+
+      const { error: updateError } = await supabase
+        .from("cars")
+        .update({
+          status: "sold",
+          sold_at: new Date().toISOString(),
+          sold_reason: reason,
+        })
+        .eq("id", carId);
+      if (updateError) throw updateError;
+
+      const { error: historyError } = await supabase.from("sales_history").insert({
+        car_id: carId,
+        garage_id: car.garage_id,
+        sold_reason: reason,
+        car_snapshot: {
+          code: car.code,
+          brand_id: car.brand_id,
+          brand: car.brands?.name,
+          model: car.model,
+          year: car.year,
+          version: car.version,
+          price: car.price,
+          mileage: car.mileage,
+          color: car.color,
+          category: car.category,
+        },
+      });
+      if (historyError) throw historyError;
+    },
+    onSuccess: () => {
+      toast({ title: "Veículo marcado como vendido!" });
+      queryClient.invalidateQueries({ queryKey: ["admin-cars"] });
+      setIsSellDialogOpen(false);
+      setSellingCar(null);
+      setSoldReason("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao marcar como vendido",
         description: error.message,
         variant: "destructive",
       });
@@ -1109,6 +1168,20 @@ export default function AdminCars() {
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                            {car.status === "available" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSellingCar(car);
+                                  setIsSellDialogOpen(true);
+                                }}
+                                title="Marcar como vendido"
+                                className="text-accent hover:text-accent"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
@@ -1162,6 +1235,50 @@ export default function AdminCars() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Sell Confirmation Dialog */}
+        <Dialog open={isSellDialogOpen} onOpenChange={setIsSellDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Marcar como Vendido</DialogTitle>
+            </DialogHeader>
+            {sellingCar && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Deseja realmente marcar o veículo{" "}
+                  <strong>
+                    {sellingCar.brands?.name} {sellingCar.model}
+                  </strong>{" "}
+                  ({sellingCar.code}) como vendido?
+                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="admin_sold_reason">Motivo da Venda *</Label>
+                  <Textarea
+                    id="admin_sold_reason"
+                    value={soldReason}
+                    onChange={(e) => setSoldReason(e.target.value)}
+                    rows={3}
+                    placeholder="Descreva o motivo da venda..."
+                    required
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsSellDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      markAsSoldMutation.mutate({ carId: sellingCar.id, reason: soldReason })
+                    }
+                    disabled={!soldReason.trim() || markAsSoldMutation.isPending}
+                  >
+                    {markAsSoldMutation.isPending ? "Processando..." : "Confirmar Venda"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
