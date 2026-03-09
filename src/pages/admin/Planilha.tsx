@@ -133,6 +133,8 @@ export default function AdminPlanilha() {
   const [previewBilling, setPreviewBilling] = useState<BillingRecord | null>(null);
   const [reportMonth, setReportMonth] = useState<number>(new Date().getMonth() + 1);
   const [reportYear, setReportYear] = useState<number>(new Date().getFullYear());
+  const [reportMetrics, setReportMetrics] = useState<{ views: number; clicks: number } | null>(null);
+  const [isLoadingReportMetrics, setIsLoadingReportMetrics] = useState(false);
   const [formData, setFormData] = useState({
     ad_id: "",
     company_name: "",
@@ -144,6 +146,53 @@ export default function AdminPlanilha() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Fetch metrics for the specific report month/year when modal opens
+  useEffect(() => {
+    if (!previewBilling) {
+      setReportMetrics(null);
+      return;
+    }
+
+    async function fetchReportMetrics() {
+      setIsLoadingReportMetrics(true);
+      try {
+        const monthStart = new Date(reportYear, reportMonth - 1, 1).toISOString();
+        const monthEnd = new Date(reportYear, reportMonth, 1).toISOString();
+
+        const [viewsRes, clicksRes] = await Promise.all([
+          supabase
+            .from("action_logs")
+            .select("id", { count: "exact", head: true })
+            .eq("entity_type", "ad")
+            .eq("action", "visit")
+            .eq("entity_id", previewBilling.ad_id)
+            .gte("created_at", monthStart)
+            .lt("created_at", monthEnd),
+          supabase
+            .from("action_logs")
+            .select("id", { count: "exact", head: true })
+            .eq("entity_type", "ad")
+            .eq("action", "click")
+            .eq("entity_id", previewBilling.ad_id)
+            .gte("created_at", monthStart)
+            .lt("created_at", monthEnd),
+        ]);
+
+        setReportMetrics({
+          views: viewsRes.count || 0,
+          clicks: clicksRes.count || 0,
+        });
+      } catch (err) {
+        console.error("Error fetching report metrics:", err);
+        setReportMetrics({ views: 0, clicks: 0 });
+      } finally {
+        setIsLoadingReportMetrics(false);
+      }
+    }
+
+    fetchReportMetrics();
+  }, [previewBilling, reportMonth, reportYear]);
 
   async function fetchData() {
     setIsLoading(true);
@@ -382,7 +431,7 @@ export default function AdminPlanilha() {
   }
 
   function generateMonthlyReport(billing: BillingRecord, month: number, year: number) {
-    const metrics = adMetrics[billing.ad_id] || { views: 0, clicks: 0 };
+    const metrics = reportMetrics || { views: 0, clicks: 0 };
     const monthName = format(new Date(year, month - 1, 1), "MMMM 'de' yyyy", { locale: ptBR });
 
     const mensagem = `Olá, *${billing.company_name}*! 👋\n\n` +
@@ -786,9 +835,15 @@ export default function AdminPlanilha() {
                 </div>
 
                 {/* Report Preview */}
-                <div className="bg-muted rounded-lg p-4 whitespace-pre-wrap text-sm leading-relaxed border border-border/50 shadow-inner">
-                  {generateMonthlyReport(previewBilling, reportMonth, reportYear)}
-                </div>
+                {isLoadingReportMetrics ? (
+                  <div className="bg-muted rounded-lg p-4 text-sm text-center text-muted-foreground border border-border/50">
+                    Carregando métricas do período...
+                  </div>
+                ) : (
+                  <div className="bg-muted rounded-lg p-4 whitespace-pre-wrap text-sm leading-relaxed border border-border/50 shadow-inner">
+                    {generateMonthlyReport(previewBilling, reportMonth, reportYear)}
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground text-center">
                   O texto acima será copiado para a área de transferência. Cole no WhatsApp com Ctrl+V.
                 </p>
