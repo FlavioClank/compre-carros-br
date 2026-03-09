@@ -69,6 +69,12 @@ export function Header() {
             <Link
               key={link.href}
               to={link.href}
+              onClick={(e) => {
+                if (location.pathname === link.href || location.pathname.startsWith(link.href + "/")) {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
               className={`text-sm font-medium transition-colors hover:text-primary ${
                 isActive(link.href) ? "text-primary" : "text-muted-foreground"
               }`}
@@ -126,7 +132,13 @@ export function Header() {
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-card"
                 }`}
-                onClick={() => setIsMenuOpen(false)}
+                onClick={(e) => {
+                  setIsMenuOpen(false);
+                  if (location.pathname === link.href || location.pathname.startsWith(link.href + "/")) {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
               >
                 {link.label}
               </Link>
