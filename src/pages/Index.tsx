@@ -7,6 +7,7 @@ import { FeaturedCars } from "@/components/public/FeaturedCars";
 import { WhyChooseUs } from "@/components/public/WhyChooseUs";
 import { CTASection } from "@/components/public/CTASection";
 import { HomeBannerCarousel } from "@/components/public/HomeBannerCarousel";
+import { InstallAppBanner } from "@/components/public/InstallAppBanner";
 import { trackSiteVisit } from "@/lib/analytics";
 import { canonicalUrl } from "@/lib/seo";
 
@@ -29,6 +30,7 @@ const Index = forwardRef<HTMLDivElement>(function Index(_props, ref) {
         <BrandCarousel />
         <FeaturedCars />
         <WhyChooseUs />
+        <InstallAppBanner />
         <CTASection />
       </PublicLayout>
     </div>
