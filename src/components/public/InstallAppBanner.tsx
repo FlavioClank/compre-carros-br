@@ -81,21 +81,11 @@ export function InstallAppBanner() {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
-                <Link to="/instalar">
-                  <Button
-                    size="lg"
-                    className="bg-white text-primary hover:bg-white/90 font-bold rounded-xl px-8 h-13 text-base shadow-lg shadow-black/10 gap-2"
-                  >
-                    <Download className="h-5 w-5" />
-                    Instalar App
-                  </Button>
+                <Link to="/instalar" className="transition-transform hover:scale-105">
+                  <img src={badgeAppStore} alt="Disponível na App Store" className="h-12 md:h-14 w-auto rounded-lg" />
                 </Link>
-                <Link
-                  to="/instalar"
-                  className="inline-flex items-center gap-1 text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors underline underline-offset-2"
-                >
-                  Como funciona?
-                  <ArrowRight className="h-3.5 w-3.5" />
+                <Link to="/instalar" className="transition-transform hover:scale-105">
+                  <img src={badgeGooglePlay} alt="Disponível no Google Play" className="h-12 md:h-14 w-auto rounded-lg" />
                 </Link>
               </div>
 
