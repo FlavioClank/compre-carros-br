@@ -88,7 +88,7 @@ interface CarFormData {
   year: number;
   model_year: number | null;
   version: string;
-  mileage: number;
+  mileage: number | null;
   transmission: TransmissionType;
   fuel: FuelType;
   color: string;
