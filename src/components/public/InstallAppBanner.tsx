@@ -80,12 +80,12 @@ export function InstallAppBanner() {
                 direto na tela do seu celular. Rápido, leve e sempre atualizado.
               </p>
 
-              <div className="flex flex-col items-center lg:flex-row gap-4 justify-center lg:justify-start">
+              <div className="flex flex-col items-center lg:flex-row gap-2 justify-center lg:justify-start">
                 <Link to="/instalar" className="transition-transform hover:scale-105">
-                  <img src={badgeAppStore} alt="Disponível na App Store" className="h-40 sm:h-48 lg:h-36 w-auto rounded-xl" />
+                  <img src={badgeAppStore} alt="Disponível na App Store" className="h-14 sm:h-16 lg:h-14 w-auto" />
                 </Link>
                 <Link to="/instalar" className="transition-transform hover:scale-105">
-                  <img src={badgeGooglePlay} alt="Disponível no Google Play" className="h-40 sm:h-48 lg:h-36 w-auto rounded-xl" />
+                  <img src={badgeGooglePlay} alt="Disponível no Google Play" className="h-14 sm:h-16 lg:h-14 w-auto" />
                 </Link>
               </div>
 
