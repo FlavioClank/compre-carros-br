@@ -77,7 +77,7 @@ const initialFormData: CarFormData = {
   year: new Date().getFullYear(),
   model_year: null,
   version: "",
-  mileage: 0,
+  mileage: null,
   transmission: "automatic",
   fuel: "flex",
   color: "",
