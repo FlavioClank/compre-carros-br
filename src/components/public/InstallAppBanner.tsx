@@ -99,12 +99,12 @@ export function InstallAppBanner() {
             </div>
 
             {/* QR Code - Desktop only */}
-            <div className="hidden lg:flex flex-shrink-0 flex-col items-center gap-3">
+            <div className="hidden lg:flex flex-shrink-0 flex-col items-center justify-center gap-3">
               <p className="text-primary-foreground/90 text-sm font-medium text-center leading-snug">
                 Está no computador?<br />Baixe pelo celular aqui 😉
               </p>
-              <div className="bg-white rounded-2xl p-3 shadow-lg">
-                <img src={qrcodeImg} alt="QR Code para instalar o app" className="w-32 h-32 object-contain" />
+              <div className="bg-white rounded-2xl p-4 shadow-lg">
+                <img src={qrcodeImg} alt="QR Code para instalar o app" className="w-44 h-44 object-contain" />
               </div>
             </div>
           </div>
