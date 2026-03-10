@@ -57,7 +57,7 @@ interface CarFormData {
   year: number;
   model_year: number | null;
   version: string;
-  mileage: number;
+  mileage: number | null;
   transmission: TransmissionType;
   fuel: FuelType;
   color: string;
@@ -77,7 +77,7 @@ const initialFormData: CarFormData = {
   year: new Date().getFullYear(),
   model_year: null,
   version: "",
-  mileage: 0,
+  mileage: null,
   transmission: "automatic",
   fuel: "flex",
   color: "",
@@ -399,7 +399,7 @@ export default function GarageCars() {
       year: car.year,
       model_year: car.model_year || null,
       version: car.version || "",
-      mileage: car.mileage,
+      mileage: car.mileage ?? null,
       transmission: car.transmission,
       fuel: car.fuel,
       color: car.color,
@@ -582,13 +582,13 @@ export default function GarageCars() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="mileage">Quilometragem *</Label>
+                    <Label htmlFor="mileage">Quilometragem</Label>
                     <Input
                       id="mileage"
                       type="number"
-                      value={formData.mileage}
-                      onChange={(e) => setFormData({ ...formData, mileage: parseInt(e.target.value) })}
-                      required
+                      value={formData.mileage ?? ''}
+                      onChange={(e) => setFormData({ ...formData, mileage: e.target.value ? parseInt(e.target.value) : null })}
+                      placeholder="Deixe vazio se não souber"
                       min={0}
                     />
                   </div>

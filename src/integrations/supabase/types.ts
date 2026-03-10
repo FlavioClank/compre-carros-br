@@ -260,7 +260,7 @@ export type Database = {
           garage_is_active: boolean
           id: string
           is_featured: boolean
-          mileage: number
+          mileage: number | null
           model: string
           model_year: number | null
           motorcycle_category: string | null
@@ -291,7 +291,7 @@ export type Database = {
           garage_is_active?: boolean
           id?: string
           is_featured?: boolean
-          mileage?: number
+          mileage?: number | null
           model: string
           model_year?: number | null
           motorcycle_category?: string | null
@@ -322,7 +322,7 @@ export type Database = {
           garage_is_active?: boolean
           id?: string
           is_featured?: boolean
-          mileage?: number
+          mileage?: number | null
           model?: string
           model_year?: number | null
           motorcycle_category?: string | null
