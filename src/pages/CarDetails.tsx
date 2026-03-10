@@ -303,6 +303,7 @@ export default function CarDetails() {
         { icon: FileText, label: "Código", value: car.code },
       ];
 
+  const vehicleType = isMotorcycle ? "Moto" : "Carro";
   const yearDisplay = formatYearDisplay(car.year, car.model_year);
   const pageTitle = `${brandName} ${car.model} ${yearDisplay}${car.version ? ` ${car.version}` : ""} | CompreCarrosBr`;
   const transmissionLabel =
