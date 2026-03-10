@@ -67,7 +67,7 @@ async function fetchHomeCars(page: number) {
     supabase
       .from("cars")
       .select(`
-        id, slug, code, model, year, version, mileage, transmission,
+        id, slug, code, model, year, model_year, version, mileage, transmission,
         fuel, color, price, photos, is_featured, created_at,
         brands:brand_id ( name, logo_url )
       `)
