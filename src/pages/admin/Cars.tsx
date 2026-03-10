@@ -416,6 +416,7 @@ export default function AdminCars() {
         brand_id: data.brand_id,
         model: data.model,
         year: data.year,
+        model_year: data.model_year,
         version: data.version || null,
         mileage: data.mileage,
         fuel: data.fuel,
