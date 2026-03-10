@@ -696,10 +696,10 @@ export default function AdminCars() {
                   </div>
                 </div>
 
-                {/* Ano, km, preço */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Ano, Ano Modelo, km, preço */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="year">Ano *</Label>
+                    <Label htmlFor="year">Ano (Fabricação) *</Label>
                     <Input
                       id="year"
                       type="number"
@@ -708,6 +708,18 @@ export default function AdminCars() {
                         setFormData({ ...formData, year: Number(e.target.value || new Date().getFullYear()) })
                       }
                       required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="model_year">Ano do Modelo</Label>
+                    <Input
+                      id="model_year"
+                      type="number"
+                      value={formData.model_year || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, model_year: e.target.value ? Number(e.target.value) : null })
+                      }
+                      placeholder="Ex: 2023"
                     />
                   </div>
                   <div className="space-y-2">
