@@ -48,15 +48,12 @@ export function InstallAppBanner() {
             {/* Phone mockup */}
             <div className="flex-shrink-0">
               <div className="relative w-52 h-52 md:w-60 md:h-60">
-                {/* Glow */}
                 <div className="absolute inset-0 bg-white/10 rounded-full blur-2xl animate-pulse" />
-                {/* Phone frame */}
                 <div className="relative w-full h-full bg-white/10 backdrop-blur-sm rounded-3xl border border-white/20 flex items-center justify-center p-4">
                   <div className="text-center space-y-2">
                     <img src={logoImg} alt="CompreCarrosBr" className="h-36 w-36 md:h-40 md:w-40 lg:h-44 lg:w-44 rounded-2xl mx-auto object-cover shadow-lg" />
                     <span className="text-primary-foreground/80 text-xs font-medium block">CompreCarrosBr</span>
                   </div>
-                  {/* Notification badge */}
                   <div className="absolute -top-1 -right-1 w-6 h-6 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold shadow-lg animate-bounce">
                     !
                   </div>
@@ -90,24 +87,22 @@ export function InstallAppBanner() {
                 </Link>
               </div>
 
+              {/* QR Code inline - Desktop only */}
+              <div className="hidden lg:flex items-center gap-4">
+                <div className="bg-white rounded-xl p-2 shadow-lg">
+                  <img src={qrcodeImg} alt="QR Code para instalar o app" className="w-20 h-20 object-contain" />
+                </div>
+                <p className="text-primary-foreground/80 text-sm leading-snug">
+                  Está no computador?<br />
+                  <span className="font-semibold text-primary-foreground">Escaneie e baixe no celular 😉</span>
+                </p>
+              </div>
+
               {/* Trust badges */}
               <div className="flex items-center gap-4 justify-center lg:justify-start text-primary-foreground/60 text-xs">
                 <span className="flex items-center gap-1">✓ Sem ocupar espaço</span>
                 <span className="flex items-center gap-1">✓ Android e iPhone</span>
                 <span className="flex items-center gap-1">✓ 100% gratuito</span>
-              </div>
-            </div>
-
-            {/* QR Code - Desktop only */}
-            <div className="hidden lg:flex flex-shrink-0">
-              <div className="relative w-60 h-60 flex flex-col items-center justify-center gap-3">
-                <div className="absolute inset-0 bg-white/10 rounded-full blur-2xl animate-pulse" />
-                <p className="relative text-primary-foreground/90 text-sm font-medium text-center leading-snug">
-                  Está no computador?<br />Baixe pelo celular aqui 😉
-                </p>
-                <div className="relative bg-white rounded-2xl p-3 shadow-lg">
-                  <img src={qrcodeImg} alt="QR Code para instalar o app" className="w-36 h-36 object-contain" />
-                </div>
               </div>
             </div>
           </div>
