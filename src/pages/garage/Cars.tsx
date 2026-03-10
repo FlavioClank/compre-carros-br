@@ -55,6 +55,7 @@ interface CarFormData {
   brand_id: string;
   model: string;
   year: number;
+  model_year: number | null;
   version: string;
   mileage: number;
   transmission: TransmissionType;
