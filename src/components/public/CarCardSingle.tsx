@@ -28,7 +28,7 @@ interface CarCardSingleProps {
     year: number;
     model_year?: number | null;
     version: string | null;
-    mileage: number;
+    mileage: number | null;
     transmission: string;
     fuel: string;
     color: string;
