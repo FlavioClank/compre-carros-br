@@ -82,10 +82,10 @@ export function InstallAppBanner() {
 
               <div className="flex flex-col items-center lg:flex-row gap-4 justify-center lg:justify-start">
                 <Link to="/instalar" className="transition-transform hover:scale-105">
-                  <img src={badgeAppStore} alt="Disponível na App Store" className="h-16 sm:h-20 w-auto rounded-lg" />
+                  <img src={badgeAppStore} alt="Disponível na App Store" className="h-40 sm:h-48 lg:h-36 w-auto rounded-xl" />
                 </Link>
                 <Link to="/instalar" className="transition-transform hover:scale-105">
-                  <img src={badgeGooglePlay} alt="Disponível no Google Play" className="h-16 sm:h-20 w-auto rounded-lg" />
+                  <img src={badgeGooglePlay} alt="Disponível no Google Play" className="h-40 sm:h-48 lg:h-36 w-auto rounded-xl" />
                 </Link>
               </div>
 
