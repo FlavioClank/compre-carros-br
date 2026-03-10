@@ -1,0 +1,111 @@
+import { useState, useEffect } from "react";
+import { Smartphone, Download, ArrowRight, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+
+export function InstallAppBanner() {
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setIsInstalled(true);
+    }
+    const wasDismissed = sessionStorage.getItem("ccb_install_dismissed");
+    if (wasDismissed) setDismissed(true);
+  }, []);
+
+  if (isInstalled || dismissed) return null;
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    sessionStorage.setItem("ccb_install_dismissed", "1");
+  };
+
+  return (
+    <section className="py-10 md:py-16 relative overflow-hidden">
+      <div className="container">
+        <div className="relative bg-gradient-to-br from-primary via-primary to-primary/85 rounded-3xl p-6 md:p-10 lg:p-14 overflow-hidden">
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-72 h-72 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/3 -translate-x-1/4" />
+          <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-white/5 rounded-full" />
+
+          {/* Dismiss button */}
+          <button
+            onClick={handleDismiss}
+            className="absolute top-4 right-4 text-primary-foreground/50 hover:text-primary-foreground transition-colors z-10"
+            aria-label="Fechar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+          <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+            {/* Phone mockup */}
+            <div className="flex-shrink-0">
+              <div className="relative w-44 h-44 md:w-52 md:h-52">
+                {/* Glow */}
+                <div className="absolute inset-0 bg-white/10 rounded-full blur-2xl animate-pulse" />
+                {/* Phone frame */}
+                <div className="relative w-full h-full bg-white/10 backdrop-blur-sm rounded-3xl border border-white/20 flex items-center justify-center">
+                  <div className="text-center space-y-2">
+                    <Smartphone className="h-14 w-14 md:h-16 md:w-16 text-primary-foreground mx-auto" />
+                    <span className="text-primary-foreground/80 text-xs font-medium block">CompreCarrosBr</span>
+                  </div>
+                  {/* Notification badge */}
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-accent text-accent-foreground rounded-full flex items-center justify-center text-xs font-bold shadow-lg animate-bounce">
+                    !
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 text-center lg:text-left space-y-5 text-primary-foreground">
+              <div>
+                <span className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider mb-3">
+                  <Download className="h-3 w-3" />
+                  Grátis
+                </span>
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold font-[Outfit] leading-tight">
+                  Tenha o CompreCarrosBr<br className="hidden md:block" /> no seu celular!
+                </h2>
+              </div>
+
+              <p className="text-base md:text-lg text-primary-foreground/85 max-w-lg mx-auto lg:mx-0">
+                Instale nosso app gratuitamente e receba os melhores veículos seminovos
+                direto na tela do seu celular. Rápido, leve e sempre atualizado.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
+                <Link to="/instalar">
+                  <Button
+                    size="lg"
+                    className="bg-white text-primary hover:bg-white/90 font-bold rounded-xl px-8 h-13 text-base shadow-lg shadow-black/10 gap-2"
+                  >
+                    <Download className="h-5 w-5" />
+                    Instalar App
+                  </Button>
+                </Link>
+                <Link
+                  to="/instalar"
+                  className="inline-flex items-center gap-1 text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors underline underline-offset-2"
+                >
+                  Como funciona?
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+
+              {/* Trust badges */}
+              <div className="flex items-center gap-4 justify-center lg:justify-start text-primary-foreground/60 text-xs">
+                <span className="flex items-center gap-1">✓ Sem ocupar espaço</span>
+                <span className="flex items-center gap-1">✓ Android e iPhone</span>
+                <span className="flex items-center gap-1">✓ 100% gratuito</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
