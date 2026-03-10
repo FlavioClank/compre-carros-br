@@ -723,13 +723,13 @@ export default function AdminCars() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="mileage">Quilometragem *</Label>
+                    <Label htmlFor="mileage">Quilometragem</Label>
                     <Input
                       id="mileage"
                       type="number"
-                      value={formData.mileage}
-                      onChange={(e) => setFormData({ ...formData, mileage: Number(e.target.value || 0) })}
-                      required
+                      value={formData.mileage ?? ''}
+                      onChange={(e) => setFormData({ ...formData, mileage: e.target.value ? Number(e.target.value) : null })}
+                      placeholder="Deixe vazio se não souber"
                     />
                   </div>
                   <div className="space-y-2">
