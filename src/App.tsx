@@ -15,6 +15,7 @@ import Cars from "./pages/Cars";
 import CarDetails from "./pages/CarDetails";
 import AdDetails from "./pages/AdDetails";
 import Brands from "./pages/Brands";
+import Install from "./pages/Install";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -70,6 +71,7 @@ const App = () => (
               {/* Ad detail page by slug (SEO-friendly) or UUID (fallback) */}
               <Route path="/anuncio/:slug" element={<AdDetails />} />
               <Route path="/marcas" element={<Brands />} />
+              <Route path="/instalar" element={<Install />} />
               <Route path="/login" element={<Login />} />
 
               {/* ADMIN ROUTES - Super Admin only */}
