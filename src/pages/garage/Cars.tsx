@@ -544,9 +544,9 @@ export default function GarageCars() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="year">Ano *</Label>
+                    <Label htmlFor="year">Ano (Fabricação) *</Label>
                     <Input
                       id="year"
                       type="number"
@@ -555,6 +555,18 @@ export default function GarageCars() {
                       required
                       min={1900}
                       max={new Date().getFullYear() + 1}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="model_year">Ano do Modelo</Label>
+                    <Input
+                      id="model_year"
+                      type="number"
+                      value={formData.model_year || ''}
+                      onChange={(e) => setFormData({ ...formData, model_year: e.target.value ? parseInt(e.target.value) : null })}
+                      placeholder="Ex: 2023"
+                      min={1900}
+                      max={new Date().getFullYear() + 2}
                     />
                   </div>
                   <div className="space-y-2">
