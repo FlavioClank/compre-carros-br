@@ -12,6 +12,7 @@ import {
   COOLING_TYPE_LABELS,
   MOTORCYCLE_CATEGORY_LABELS,
   formatEngineCC,
+  formatYearDisplay,
 } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
