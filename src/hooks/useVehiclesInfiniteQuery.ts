@@ -68,6 +68,7 @@ async function fetchVehicles({
       brand_id,
       model,
       year,
+      model_year,
       version,
       mileage,
       transmission,
