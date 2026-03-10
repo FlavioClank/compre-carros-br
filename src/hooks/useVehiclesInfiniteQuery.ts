@@ -163,6 +163,7 @@ async function fetchVehicles({
     code: car.code,
     model: car.model,
     year: car.year,
+    model_year: car.model_year,
     version: car.version,
     mileage: car.mileage,
     transmission: car.transmission,
