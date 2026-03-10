@@ -45,6 +45,7 @@ interface CarDetail {
   code: string;
   model: string;
   year: number;
+  model_year: number | null;
   version: string | null;
   mileage: number;
   transmission: string;
