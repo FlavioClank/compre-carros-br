@@ -56,8 +56,14 @@ async function fetchVehiclesPage({
     if (garageIds) q = q.in("garage_id", garageIds);
     if (filters.category) q = q.eq("category", filters.category);
     if (filters.search) q = q.or(`model.ilike.%${filters.search}%,code.ilike.%${filters.search}%`);
-    if (filters.yearFrom) q = q.gte("year", parseInt(filters.yearFrom));
-    if (filters.yearTo) q = q.lte("year", parseInt(filters.yearTo));
+    if (filters.yearFrom) {
+      const yf = parseInt(filters.yearFrom);
+      q = q.or(`year.gte.${yf},model_year.gte.${yf}`);
+    }
+    if (filters.yearTo) {
+      const yt = parseInt(filters.yearTo);
+      q = q.lte("year", yt);
+    }
     if (filters.priceRange) q = q.gte("price", filters.priceRange.min).lte("price", filters.priceRange.max);
     if ((filters.category === "car" || !filters.category) && filters.transmission) {
       q = q.eq("transmission", filters.transmission as any);
