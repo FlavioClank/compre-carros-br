@@ -86,6 +86,7 @@ interface CarFormData {
   brand_id: string;
   model: string;
   year: number;
+  model_year: number | null;
   version: string;
   mileage: number;
   transmission: TransmissionType;
@@ -105,6 +106,7 @@ const initialFormData: CarFormData = {
   brand_id: "",
   model: "",
   year: new Date().getFullYear(),
+  model_year: null,
   version: "",
   mileage: 0,
   transmission: "automatic",
