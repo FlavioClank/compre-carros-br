@@ -1,0 +1,1 @@
+ALTER TABLE public.cars ADD COLUMN model_year integer;

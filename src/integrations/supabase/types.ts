@@ -262,6 +262,7 @@ export type Database = {
           is_featured: boolean
           mileage: number
           model: string
+          model_year: number | null
           motorcycle_category: string | null
           photos: string[] | null
           price: number
@@ -292,6 +293,7 @@ export type Database = {
           is_featured?: boolean
           mileage?: number
           model: string
+          model_year?: number | null
           motorcycle_category?: string | null
           photos?: string[] | null
           price: number
@@ -322,6 +324,7 @@ export type Database = {
           is_featured?: boolean
           mileage?: number
           model?: string
+          model_year?: number | null
           motorcycle_category?: string | null
           photos?: string[] | null
           price?: number
