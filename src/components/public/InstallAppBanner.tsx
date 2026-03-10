@@ -44,13 +44,13 @@ export function InstallAppBanner() {
           <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
             {/* Phone mockup */}
             <div className="flex-shrink-0">
-              <div className="relative w-44 h-44 md:w-52 md:h-52">
+              <div className="relative w-52 h-52 md:w-60 md:h-60">
                 {/* Glow */}
                 <div className="absolute inset-0 bg-white/10 rounded-full blur-2xl animate-pulse" />
                 {/* Phone frame */}
                 <div className="relative w-full h-full bg-white/10 backdrop-blur-sm rounded-3xl border border-white/20 flex items-center justify-center p-4">
                   <div className="text-center space-y-2">
-                    <img src={logoImg} alt="CompreCarrosBr" className="h-32 w-32 md:h-36 md:w-36 lg:h-40 lg:w-40 rounded-2xl mx-auto object-cover shadow-lg" />
+                    <img src={logoImg} alt="CompreCarrosBr" className="h-36 w-36 md:h-40 md:w-40 lg:h-44 lg:w-44 rounded-2xl mx-auto object-cover shadow-lg" />
                     <span className="text-primary-foreground/80 text-xs font-medium block">CompreCarrosBr</span>
                   </div>
                   {/* Notification badge */}
