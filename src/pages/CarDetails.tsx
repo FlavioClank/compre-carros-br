@@ -134,6 +134,7 @@ export default function CarDetails() {
           code: data.code,
           model: data.model,
           year: data.year,
+          model_year: data.model_year ?? null,
           version: data.version,
           mileage: data.mileage,
           transmission: data.transmission,
