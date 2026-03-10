@@ -16,6 +16,7 @@ import {
   formatEngineCC,
   formatMileage,
   formatPrice,
+  formatYearDisplay,
   generateWhatsAppUrl,
   MOTORCYCLE_CATEGORY_LABELS,
   TRANSMISSION_LABELS,
