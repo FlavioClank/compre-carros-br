@@ -71,6 +71,7 @@ const App = () => (
               {/* Ad detail page by slug (SEO-friendly) or UUID (fallback) */}
               <Route path="/anuncio/:slug" element={<AdDetails />} />
               <Route path="/marcas" element={<Brands />} />
+              <Route path="/instalar" element={<Install />} />
               <Route path="/login" element={<Login />} />
 
               {/* ADMIN ROUTES - Super Admin only */}
