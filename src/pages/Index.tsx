@@ -29,8 +29,8 @@ const Index = forwardRef<HTMLDivElement>(function Index(_props, ref) {
         <HeroSection />
         <BrandCarousel />
         <FeaturedCars />
-        <WhyChooseUs />
         <InstallAppBanner />
+        <WhyChooseUs />
         <CTASection />
       </PublicLayout>
     </div>
