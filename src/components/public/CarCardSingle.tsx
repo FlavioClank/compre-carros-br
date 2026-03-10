@@ -9,6 +9,7 @@ import {
   FUEL_LABELS,
   generateWhatsAppUrl,
   TRANSMISSION_LABELS,
+  formatYearDisplay,
 } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
