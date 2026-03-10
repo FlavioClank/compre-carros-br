@@ -102,7 +102,8 @@ async function fetchVehicles({
 
   // Apply year filters
   if (filters.yearFrom) {
-    query = query.gte("year", parseInt(filters.yearFrom));
+    const yf = parseInt(filters.yearFrom);
+    query = query.or(`year.gte.${yf},model_year.gte.${yf}`);
   }
   if (filters.yearTo) {
     query = query.lte("year", parseInt(filters.yearTo));
