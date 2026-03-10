@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Smartphone, Download, ArrowRight, X } from "lucide-react";
 import logoImg from "@/assets/logo-new.jpeg";
+import badgeAppStore from "@/assets/badge-app-store.png";
+import badgeGooglePlay from "@/assets/badge-google-play.png";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
