@@ -105,8 +105,6 @@ export function InstallAppBanner() {
                 <span className="flex items-center gap-1">✓ 100% gratuito</span>
               </div>
             </div>
-          </div>
-          </div>
         </div>
       </div>
     </section>
