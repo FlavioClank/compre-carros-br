@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Smartphone, Download, ArrowRight, X } from "lucide-react";
+import logoImg from "@/assets/logo-new.jpeg";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -47,9 +48,9 @@ export function InstallAppBanner() {
                 {/* Glow */}
                 <div className="absolute inset-0 bg-white/10 rounded-full blur-2xl animate-pulse" />
                 {/* Phone frame */}
-                <div className="relative w-full h-full bg-white/10 backdrop-blur-sm rounded-3xl border border-white/20 flex items-center justify-center">
+                <div className="relative w-full h-full bg-white/10 backdrop-blur-sm rounded-3xl border border-white/20 flex items-center justify-center p-4">
                   <div className="text-center space-y-2">
-                    <Smartphone className="h-14 w-14 md:h-16 md:w-16 text-primary-foreground mx-auto" />
+                    <img src={logoImg} alt="CompreCarrosBr" className="h-20 w-20 md:h-24 md:w-24 rounded-2xl mx-auto object-cover shadow-lg" />
                     <span className="text-primary-foreground/80 text-xs font-medium block">CompreCarrosBr</span>
                   </div>
                   {/* Notification badge */}
