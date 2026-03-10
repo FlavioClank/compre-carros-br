@@ -94,6 +94,7 @@ export default function CarDetails() {
           code,
           model,
           year,
+          model_year,
           version,
           mileage,
           transmission,
