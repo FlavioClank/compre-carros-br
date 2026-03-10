@@ -50,7 +50,7 @@ export function InstallAppBanner() {
                 {/* Phone frame */}
                 <div className="relative w-full h-full bg-white/10 backdrop-blur-sm rounded-3xl border border-white/20 flex items-center justify-center p-4">
                   <div className="text-center space-y-2">
-                    <img src={logoImg} alt="CompreCarrosBr" className="h-20 w-20 md:h-24 md:w-24 rounded-2xl mx-auto object-cover shadow-lg" />
+                    <img src={logoImg} alt="CompreCarrosBr" className="h-20 w-20 md:h-28 md:w-28 lg:h-32 lg:w-32 rounded-2xl mx-auto object-cover shadow-lg" />
                     <span className="text-primary-foreground/80 text-xs font-medium block">CompreCarrosBr</span>
                   </div>
                   {/* Notification badge */}
