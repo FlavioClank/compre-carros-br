@@ -16,6 +16,7 @@ import {
   formatEngineCC,
   formatMileage,
   formatPrice,
+  formatYearDisplay,
   generateWhatsAppUrl,
   MOTORCYCLE_CATEGORY_LABELS,
   TRANSMISSION_LABELS,
@@ -44,6 +45,7 @@ interface CarDetail {
   code: string;
   model: string;
   year: number;
+  model_year: number | null;
   version: string | null;
   mileage: number;
   transmission: string;
@@ -92,6 +94,7 @@ export default function CarDetails() {
           code,
           model,
           year,
+          model_year,
           version,
           mileage,
           transmission,
@@ -131,6 +134,7 @@ export default function CarDetails() {
           code: data.code,
           model: data.model,
           year: data.year,
+          model_year: data.model_year ?? null,
           version: data.version,
           mileage: data.mileage,
           transmission: data.transmission,
@@ -247,7 +251,7 @@ export default function CarDetails() {
 
   const specs = isMotorcycle
     ? [
-        { icon: Calendar, label: "Ano", value: car.year },
+        { icon: Calendar, label: "Ano", value: formatYearDisplay(car.year, car.model_year) },
         {
           icon: Gauge,
           label: "Quilometragem",
@@ -279,7 +283,7 @@ export default function CarDetails() {
         { icon: FileText, label: "Código", value: car.code },
       ]
     : [
-        { icon: Calendar, label: "Ano", value: car.year },
+        { icon: Calendar, label: "Ano", value: formatYearDisplay(car.year, car.model_year) },
         {
           icon: Gauge,
           label: "Quilometragem",
@@ -300,7 +304,8 @@ export default function CarDetails() {
       ];
 
   const vehicleType = isMotorcycle ? "Moto" : "Carro";
-  const pageTitle = `${brandName} ${car.model} ${car.year}${car.version ? ` ${car.version}` : ""} | CompreCarrosBr`;
+  const yearDisplay = formatYearDisplay(car.year, car.model_year);
+  const pageTitle = `${brandName} ${car.model} ${yearDisplay}${car.version ? ` ${car.version}` : ""} | CompreCarrosBr`;
   const transmissionLabel =
     TRANSMISSION_LABELS[car.transmission] || car.transmission;
   const fuelLabel = FUEL_LABELS[car.fuel] || car.fuel;

@@ -86,6 +86,7 @@ interface CarFormData {
   brand_id: string;
   model: string;
   year: number;
+  model_year: number | null;
   version: string;
   mileage: number;
   transmission: TransmissionType;
@@ -105,6 +106,7 @@ const initialFormData: CarFormData = {
   brand_id: "",
   model: "",
   year: new Date().getFullYear(),
+  model_year: null,
   version: "",
   mileage: 0,
   transmission: "automatic",
@@ -321,6 +323,7 @@ export default function AdminCars() {
       brand_id: car.brand_id,
       model: car.model,
       year: car.year,
+      model_year: car.model_year || null,
       version: car.version || "",
       mileage: car.mileage,
       transmission: car.transmission,
@@ -413,6 +416,7 @@ export default function AdminCars() {
         brand_id: data.brand_id,
         model: data.model,
         year: data.year,
+        model_year: data.model_year,
         version: data.version || null,
         mileage: data.mileage,
         fuel: data.fuel,
@@ -462,6 +466,7 @@ export default function AdminCars() {
         brand_id: data.brand_id,
         model: data.model,
         year: data.year,
+        model_year: data.model_year,
         version: data.version || null,
         mileage: data.mileage,
         fuel: data.fuel,
@@ -691,10 +696,10 @@ export default function AdminCars() {
                   </div>
                 </div>
 
-                {/* Ano, km, preço */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Ano, Ano Modelo, km, preço */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="year">Ano *</Label>
+                    <Label htmlFor="year">Ano (Fabricação) *</Label>
                     <Input
                       id="year"
                       type="number"
@@ -703,6 +708,18 @@ export default function AdminCars() {
                         setFormData({ ...formData, year: Number(e.target.value || new Date().getFullYear()) })
                       }
                       required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="model_year">Ano do Modelo</Label>
+                    <Input
+                      id="model_year"
+                      type="number"
+                      value={formData.model_year || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, model_year: e.target.value ? Number(e.target.value) : null })
+                      }
+                      placeholder="Ex: 2023"
                     />
                   </div>
                   <div className="space-y-2">

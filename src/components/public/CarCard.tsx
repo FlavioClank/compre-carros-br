@@ -12,6 +12,7 @@ import {
   COOLING_TYPE_LABELS,
   MOTORCYCLE_CATEGORY_LABELS,
   formatEngineCC,
+  formatYearDisplay,
 } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ interface CarCardProps {
     code: string;
     model: string;
     year: number;
+    model_year?: number | null;
     version: string | null;
     mileage: number;
     transmission: string;
@@ -131,7 +133,7 @@ export const CarCard = memo(function CarCard({ car }: CarCardProps) {
         <div className="grid grid-cols-2 gap-1.5 mb-3">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Calendar className="h-3 w-3 text-accent" />
-            <span>{car.year}</span>
+            <span>{formatYearDisplay(car.year, car.model_year)}</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Gauge className="h-3 w-3 text-accent" />

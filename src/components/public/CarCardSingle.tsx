@@ -9,6 +9,7 @@ import {
   FUEL_LABELS,
   generateWhatsAppUrl,
   TRANSMISSION_LABELS,
+  formatYearDisplay,
 } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ interface CarCardSingleProps {
     code: string;
     model: string;
     year: number;
+    model_year?: number | null;
     version: string | null;
     mileage: number;
     transmission: string;
@@ -126,7 +128,7 @@ export const CarCardSingle = memo(function CarCardSingle({ car }: CarCardSingleP
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] md:text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3 md:h-4 md:w-4 text-accent" />
-                {car.year}
+                {formatYearDisplay(car.year, car.model_year)}
               </span>
               <span className="flex items-center gap-1">
                 <Gauge className="h-3 w-3 md:h-4 md:w-4 text-accent" />

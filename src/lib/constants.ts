@@ -89,6 +89,14 @@ export const formatEngineCC = (cc: number): string => {
   return `${cc}cc`;
 };
 
+// Format year display (e.g. "2022/2023" or just "2022")
+export const formatYearDisplay = (year: number, modelYear?: number | null): string => {
+  if (modelYear && modelYear !== year) {
+    return `${year}/${modelYear}`;
+  }
+  return `${year}`;
+};
+
 // Generate WhatsApp URL - SINGLE SOURCE OF TRUTH (wa.me only)
 export const generateWhatsAppUrl = (phone: string, message: string): string => {
   return `https://wa.me/${phone}/?text=${encodeURIComponent(message)}`;
