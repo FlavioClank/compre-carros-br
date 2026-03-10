@@ -43,7 +43,7 @@ async function fetchVehiclesPage({
   let dataQuery = supabase
     .from("cars")
     .select(`
-      id, slug, code, brand_id, model, year, version, mileage,
+      id, slug, code, brand_id, model, year, model_year, version, mileage,
       transmission, fuel, color, price, photos, doors, condition,
       category, engine_cc, cooling_type, motorcycle_category, created_at,
       brands:brand_id ( name, logo_url )
