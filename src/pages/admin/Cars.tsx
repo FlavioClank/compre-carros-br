@@ -323,6 +323,7 @@ export default function AdminCars() {
       brand_id: car.brand_id,
       model: car.model,
       year: car.year,
+      model_year: car.model_year || null,
       version: car.version || "",
       mileage: car.mileage,
       transmission: car.transmission,
