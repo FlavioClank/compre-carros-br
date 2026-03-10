@@ -283,7 +283,7 @@ export default function CarDetails() {
         { icon: FileText, label: "Código", value: car.code },
       ]
     : [
-        { icon: Calendar, label: "Ano", value: car.year },
+        { icon: Calendar, label: "Ano", value: formatYearDisplay(car.year, car.model_year) },
         {
           icon: Gauge,
           label: "Quilometragem",
