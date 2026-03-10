@@ -27,6 +27,7 @@ export interface VehicleData {
   code: string;
   model: string;
   year: number;
+  model_year?: number | null;
   version: string | null;
   mileage: number;
   transmission: string;
@@ -67,6 +68,7 @@ async function fetchVehicles({
       brand_id,
       model,
       year,
+      model_year,
       version,
       mileage,
       transmission,
@@ -100,7 +102,8 @@ async function fetchVehicles({
 
   // Apply year filters
   if (filters.yearFrom) {
-    query = query.gte("year", parseInt(filters.yearFrom));
+    const yf = parseInt(filters.yearFrom);
+    query = query.or(`year.gte.${yf},model_year.gte.${yf}`);
   }
   if (filters.yearTo) {
     query = query.lte("year", parseInt(filters.yearTo));
@@ -161,6 +164,7 @@ async function fetchVehicles({
     code: car.code,
     model: car.model,
     year: car.year,
+    model_year: car.model_year,
     version: car.version,
     mileage: car.mileage,
     transmission: car.transmission,

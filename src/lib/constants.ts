@@ -93,7 +93,7 @@ export const formatEngineCC = (cc: number): string => {
 // Format year display (e.g. "2022/2023" or just "2022")
 export const formatYearDisplay = (year: number, modelYear?: number | null): string => {
   if (modelYear && modelYear !== year) {
-    return `${year}/${modelYear}`;
+    return `${year}/${String(modelYear).slice(-2)}`;
   }
   return `${year}`;
 };

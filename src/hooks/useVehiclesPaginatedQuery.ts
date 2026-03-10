@@ -43,7 +43,7 @@ async function fetchVehiclesPage({
   let dataQuery = supabase
     .from("cars")
     .select(`
-      id, slug, code, brand_id, model, year, version, mileage,
+      id, slug, code, brand_id, model, year, model_year, version, mileage,
       transmission, fuel, color, price, photos, doors, condition,
       category, engine_cc, cooling_type, motorcycle_category, created_at,
       brands:brand_id ( name, logo_url )
@@ -56,8 +56,14 @@ async function fetchVehiclesPage({
     if (garageIds) q = q.in("garage_id", garageIds);
     if (filters.category) q = q.eq("category", filters.category);
     if (filters.search) q = q.or(`model.ilike.%${filters.search}%,code.ilike.%${filters.search}%`);
-    if (filters.yearFrom) q = q.gte("year", parseInt(filters.yearFrom));
-    if (filters.yearTo) q = q.lte("year", parseInt(filters.yearTo));
+    if (filters.yearFrom) {
+      const yf = parseInt(filters.yearFrom);
+      q = q.or(`year.gte.${yf},model_year.gte.${yf}`);
+    }
+    if (filters.yearTo) {
+      const yt = parseInt(filters.yearTo);
+      q = q.lte("year", yt);
+    }
     if (filters.priceRange) q = q.gte("price", filters.priceRange.min).lte("price", filters.priceRange.max);
     if ((filters.category === "car" || !filters.category) && filters.transmission) {
       q = q.eq("transmission", filters.transmission as any);
@@ -95,6 +101,7 @@ async function fetchVehiclesPage({
     code: car.code,
     model: car.model,
     year: car.year,
+    model_year: car.model_year,
     version: car.version,
     mileage: car.mileage,
     transmission: car.transmission,

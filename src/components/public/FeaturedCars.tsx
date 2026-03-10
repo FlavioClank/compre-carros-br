@@ -19,6 +19,7 @@ interface Car {
   code: string;
   model: string;
   year: number;
+  model_year?: number | null;
   version: string | null;
   mileage: number;
   transmission: string;
@@ -66,7 +67,7 @@ async function fetchHomeCars(page: number) {
     supabase
       .from("cars")
       .select(`
-        id, slug, code, model, year, version, mileage, transmission,
+        id, slug, code, model, year, model_year, version, mileage, transmission,
         fuel, color, price, photos, is_featured, created_at,
         brands:brand_id ( name, logo_url )
       `)
@@ -84,6 +85,7 @@ async function fetchHomeCars(page: number) {
     code: car.code,
     model: car.model,
     year: car.year,
+    model_year: car.model_year,
     version: car.version,
     mileage: car.mileage,
     transmission: car.transmission,
