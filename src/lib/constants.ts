@@ -80,7 +80,8 @@ export const formatPrice = (price: number): string => {
 };
 
 // Format mileage
-export const formatMileage = (mileage: number): string => {
+export const formatMileage = (mileage: number | null | undefined): string => {
+  if (mileage === null || mileage === undefined) return "Quilometragem não informada";
   return new Intl.NumberFormat("pt-BR").format(mileage) + " km";
 };
 

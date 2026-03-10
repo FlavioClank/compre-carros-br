@@ -582,13 +582,13 @@ export default function GarageCars() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="mileage">Quilometragem *</Label>
+                    <Label htmlFor="mileage">Quilometragem</Label>
                     <Input
                       id="mileage"
                       type="number"
-                      value={formData.mileage}
-                      onChange={(e) => setFormData({ ...formData, mileage: parseInt(e.target.value) })}
-                      required
+                      value={formData.mileage ?? ''}
+                      onChange={(e) => setFormData({ ...formData, mileage: e.target.value ? parseInt(e.target.value) : null })}
+                      placeholder="Deixe vazio se não souber"
                       min={0}
                     />
                   </div>
