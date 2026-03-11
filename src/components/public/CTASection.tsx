@@ -26,28 +26,6 @@ const promises = [
   },
 ];
 
-const triggers = [
-  {
-    emoji: "🔍",
-    title: "Pensou em carro?",
-    description: "Pensou CompreCarrosBr.",
-  },
-  {
-    emoji: "💰",
-    title: "Quer o melhor preço?",
-    description: "A gente negocia por você.",
-  },
-  {
-    emoji: "🛡️",
-    title: "Medo de golpe?",
-    description: "Aqui todo veículo é verificado.",
-  },
-  {
-    emoji: "⚡",
-    title: "Sem tempo?",
-    description: "Encontre em minutos, não em dias.",
-  },
-];
 
 export function CTASection() {
   return (
@@ -89,35 +67,6 @@ export function CTASection() {
         </div>
       </section>
 
-      {/* Mental Triggers */}
-      <section className="py-12 md:py-16 bg-muted/50">
-        <div className="container">
-          <div className="text-center mb-10">
-            <span className="inline-block bg-accent/10 text-accent font-semibold text-xs uppercase tracking-wider px-3 py-1 rounded-full mb-3">
-              Sua busca termina aqui
-            </span>
-            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">
-              Por que escolher a <span className="text-primary">CompreCarrosBr</span>?
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 max-w-5xl mx-auto">
-            {triggers.map((trigger, i) => (
-              <div
-                key={trigger.title}
-                className="bg-card rounded-2xl p-4 md:p-5 border border-border shadow-card hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-center animate-fade-in opacity-0"
-                style={{ animationDelay: `${i * 0.1}s`, animationFillMode: "forwards" }}
-              >
-                <span className="text-2xl md:text-3xl block mb-2">{trigger.emoji}</span>
-                <h3 className="font-display font-bold text-foreground text-sm md:text-base mb-1">
-                  {trigger.title}
-                </h3>
-                <p className="text-xs md:text-sm text-muted-foreground">{trigger.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Memorable Slogan Band */}
       <section className="relative py-14 md:py-20 bg-primary text-primary-foreground overflow-hidden">
