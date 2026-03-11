@@ -144,13 +144,6 @@ export function CTASection() {
                 Fale Conosco
                 <ArrowRight className="h-4 w-4" />
               </a>
-              <a
-                href={`tel:${WHATSAPP_NUMBER}`}
-                className="hidden sm:flex items-center gap-2 border border-background/20 text-background px-5 py-2.5 rounded-full font-semibold text-sm hover:bg-background/10 transition-colors"
-              >
-                <Phone className="h-4 w-4" />
-                Ligar
-              </a>
             </div>
           </div>
         </div>
