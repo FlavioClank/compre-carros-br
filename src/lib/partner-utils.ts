@@ -1,27 +1,17 @@
 /**
- * Utility functions for ads
+ * Utility functions for partner content
  */
 import { SITE_URL } from "@/lib/seo";
 
-interface AdWithSlug {
+interface ItemWithSlug {
   id: string;
   slug?: string | null;
 }
 
-/**
- * Returns the public URL for an ad, always preferring slug over UUID.
- * Uses the official SITE_URL for consistent SEO and social sharing.
- *
- * @param ad - The ad object containing id and optional slug
- * @returns The full public URL for the ad
- */
-export function getPartnerPublicUrl(item: AdWithSlug): string {
-  // Always prefer slug - it MUST be used if available
-  if (ad.slug && ad.slug.trim() !== "") {
-    return `${SITE_URL}/anuncio/${ad.slug}`;
+export function getPartnerPublicUrl(item: ItemWithSlug): string {
+  if (item.slug && item.slug.trim() !== "") {
+    return `${SITE_URL}/anuncio/${item.slug}`;
   }
-
-  // Fallback to UUID only if slug is truly missing (should be rare/temporary)
-  console.warn(`[getAdPublicUrl] Ad "${ad.id}" is missing slug - using UUID as fallback. Please add a slug in admin.`);
-  return `${SITE_URL}/anuncio/${ad.id}`;
+  console.warn(`[getPartnerPublicUrl] Item "${item.id}" is missing slug - using UUID as fallback.`);
+  return `${SITE_URL}/anuncio/${item.id}`;
 }

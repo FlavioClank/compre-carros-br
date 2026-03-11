@@ -25,11 +25,11 @@ const Index = forwardRef<HTMLDivElement>(function Index(_props, ref) {
           <link rel="canonical" href={canonicalUrl("/")} />
           <meta property="og:url" content={canonicalUrl("/")} />
         </Helmet>
-        <HomeBannerCarousel />
+        <HomeShowcase />
         <HeroSection />
         <BrandCarousel />
         <FeaturedCars />
-        <InstallAppBanner />
+        <InstallAppSection />
         <WhyChooseUs />
         <CTASection />
       </PublicLayout>

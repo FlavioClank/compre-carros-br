@@ -172,7 +172,7 @@ Data/hora: ${timestamp}`;
   const companyName = ad.ad_billing?.company_name || ad.title;
   const categoryLabel = CATEGORY_LABELS[ad.category] || ad.category;
   const imageUrl = ad.image_url_home || ad.image_url_search || "/placeholder.svg";
-  const canonicalUrl = getAdPublicUrl(ad);
+  const canonicalUrl = getPartnerPublicUrl(ad);
   
   const pageTitle = `${companyName} - ${categoryLabel} | CompreCarrosBr`;
   const metaDescription = `${companyName} - Anúncio de ${categoryLabel} no CompreCarrosBr. Entre em contato e saiba mais sobre os serviços oferecidos.`;

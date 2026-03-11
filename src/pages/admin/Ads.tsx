@@ -736,7 +736,7 @@ export default function AdminAds() {
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
-                    <a href={getAdPublicUrl(ad)} target="_blank" rel="noopener noreferrer">
+                    <a href={getPartnerPublicUrl(ad)} target="_blank" rel="noopener noreferrer">
                       <Button variant="ghost" size="icon" className="h-6 w-6" title="Abrir página">
                         <Link className="h-3 w-3" />
                       </Button>
