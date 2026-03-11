@@ -755,37 +755,34 @@ export default function Cars() {
             <div className="flex-1 min-w-0">
               {/* Mobile-only sticky filter bar */}
               <div className="lg:hidden sticky top-0 z-40 -mx-4 px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border/50 shadow-sm mb-6">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    {isLoading ? "Carregando..." : (
-                      <span className="font-medium">
-                        {totalCount} veículo{totalCount !== 1 ? "s" : ""} encontrado{totalCount !== 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </p>
-                  
-                  <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                    <SheetTrigger asChild>
-                      <Button variant="outline" className="h-10 gap-2 shrink-0">
-                        <SlidersHorizontal className="h-4 w-4" />
-                        Filtros
-                        {activeFiltersCount > 0 && (
-                          <span className="h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center font-medium">
-                            {activeFiltersCount}
-                          </span>
-                        )}
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent side="right" className="w-[320px] sm:w-[380px] overflow-y-auto">
-                      <SheetHeader>
-                        <SheetTitle className="text-left">Filtros</SheetTitle>
-                      </SheetHeader>
-                      <div className="mt-6">
-                        <FilterContent />
-                      </div>
-                    </SheetContent>
-                  </Sheet>
-                </div>
+                <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" className="w-full h-12 gap-2 justify-center text-base">
+                      <SlidersHorizontal className="h-5 w-5" />
+                      Filtros
+                      {activeFiltersCount > 0 && (
+                        <span className="h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center font-medium">
+                          {activeFiltersCount}
+                        </span>
+                      )}
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[320px] sm:w-[380px] overflow-y-auto">
+                    <SheetHeader>
+                      <SheetTitle className="text-left">Filtros</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-6">
+                      <FilterContent />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+                <p className="text-sm text-muted-foreground mt-2 text-center">
+                  {isLoading ? "Carregando..." : (
+                    <span className="font-medium">
+                      {totalCount} veículo{totalCount !== 1 ? "s" : ""} encontrado{totalCount !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </p>
               </div>
 
               {/* Desktop results count */}
