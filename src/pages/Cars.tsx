@@ -28,7 +28,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Search, SlidersHorizontal, X, Car, Bike, Loader2 } from "lucide-react";
+import { Search, SlidersHorizontal, X, Car, Bike, Loader2, Mic, MicOff } from "lucide-react";
 import { 
   FUEL_LABELS, 
   TRANSMISSION_LABELS, 
