@@ -127,7 +127,7 @@ export default function Cars() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [page, setPage] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
-  const { ads, hasAds } = useAdsRotation();
+  const { ads, hasAds } = usePartnersRotation();
 
   // Filters state
   const [search, setSearch] = useState(searchParams.get("busca") || "");
