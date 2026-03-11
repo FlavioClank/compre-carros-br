@@ -734,7 +734,7 @@ export default function Cars() {
               <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {listItems.map((item) => (
                   <CardItem
-                    key={item.type === 'car' ? `car-${item.data.id}` : `ad-${item.data.id}`}
+                    key={item.type === 'car' ? `car-${item.data.id}` : `promo-${item.data.id}`}
                     item={item}
                   />
                 ))}

@@ -193,7 +193,7 @@ export function FeaturedCars() {
             <div className="space-y-3 md:space-y-4">
               {listItems.map((item) => (
                 <CardItem
-                  key={item.type === "car" ? `car-${item.data.id}` : `ad-${item.data.id}`}
+                  key={item.type === "car" ? `car-${item.data.id}` : `promo-${item.data.id}`}
                   item={item}
                 />
               ))}
