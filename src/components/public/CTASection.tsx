@@ -53,8 +53,8 @@ export function CTASection() {
                   className="bg-card rounded-2xl p-5 md:p-6 border border-border text-center shadow-card hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-fade-in opacity-0"
                   style={{ animationDelay: `${i * 0.1}s`, animationFillMode: "forwards" }}
                 >
-                  <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                    <Icon className="h-5 w-5 text-primary" />
+                  <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <Icon className="h-6 w-6 text-primary" />
                   </div>
                   <h3 className="font-display font-bold text-foreground text-lg md:text-xl mb-1">
                     {item.title}
