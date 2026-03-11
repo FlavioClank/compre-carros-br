@@ -24,6 +24,7 @@ export function ImageLightbox({
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const isSwiping = useRef(false);
+  const swipeOffsetRef = useRef(0);
   const [swipeOffset, setSwipeOffset] = useState(0);
 
   const handleKeyDown = useCallback(
@@ -81,6 +82,7 @@ export function ImageLightbox({
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     isSwiping.current = false;
+    swipeOffsetRef.current = 0;
     setSwipeOffset(0);
   }, []);
 
@@ -90,19 +92,20 @@ export function ImageLightbox({
     const deltaX = e.touches[0].clientX - touchStartX.current;
     const deltaY = e.touches[0].clientY - touchStartY.current;
     
-    // If horizontal movement is dominant, it's a swipe
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
       isSwiping.current = true;
       e.preventDefault();
+      swipeOffsetRef.current = deltaX;
       setSwipeOffset(deltaX);
     }
   }, []);
 
   const handleTouchEnd = useCallback(() => {
     const SWIPE_THRESHOLD = 50;
+    const offset = swipeOffsetRef.current;
     
-    if (isSwiping.current && Math.abs(swipeOffset) > SWIPE_THRESHOLD) {
-      if (swipeOffset < 0) {
+    if (isSwiping.current && Math.abs(offset) > SWIPE_THRESHOLD) {
+      if (offset < 0) {
         onNext();
       } else {
         onPrev();
@@ -112,8 +115,9 @@ export function ImageLightbox({
     touchStartX.current = null;
     touchStartY.current = null;
     isSwiping.current = false;
+    swipeOffsetRef.current = 0;
     setSwipeOffset(0);
-  }, [swipeOffset, onNext, onPrev]);
+  }, [onNext, onPrev]);
 
   // Only close on backdrop click if not swiping
   const handleBackdropClick = useCallback(() => {
