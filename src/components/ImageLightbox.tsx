@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -21,11 +21,14 @@ export function ImageLightbox({
   onNext,
   alt = "Imagem ampliada",
 }: ImageLightboxProps) {
-  // Handle keyboard navigation
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const isSwiping = useRef(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (!isOpen) return;
-
       switch (e.key) {
         case "Escape":
           onClose();
@@ -46,7 +49,6 @@ export function ImageLightbox({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  // Prevent body scroll when lightbox is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -58,38 +60,79 @@ export function ImageLightbox({
     };
   }, [isOpen]);
 
-  // Push history state when lightbox opens, pop to close
+  // History API for back button
   useEffect(() => {
     if (!isOpen) return;
-
-    // Push a fake state so pressing back closes the lightbox
     window.history.pushState({ lightbox: true }, "");
-
-    const handlePopState = (e: PopStateEvent) => {
-      // Back button pressed while lightbox is open → close it
+    const handlePopState = () => {
       onClose();
     };
-
     window.addEventListener("popstate", handlePopState);
-
     return () => {
       window.removeEventListener("popstate", handlePopState);
-      // If lightbox closes by X button or click-outside, clean up the extra history entry
-      // Check if the current state is our lightbox state
       if (window.history.state?.lightbox) {
         window.history.back();
       }
     };
   }, [isOpen, onClose]);
 
+  // Touch handlers for swipe navigation
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    isSwiping.current = false;
+    setSwipeOffset(0);
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    
+    const deltaX = e.touches[0].clientX - touchStartX.current;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+    
+    // If horizontal movement is dominant, it's a swipe
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+      isSwiping.current = true;
+      e.preventDefault();
+      setSwipeOffset(deltaX);
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    const SWIPE_THRESHOLD = 50;
+    
+    if (isSwiping.current && Math.abs(swipeOffset) > SWIPE_THRESHOLD) {
+      if (swipeOffset < 0) {
+        onNext();
+      } else {
+        onPrev();
+      }
+    }
+    
+    touchStartX.current = null;
+    touchStartY.current = null;
+    isSwiping.current = false;
+    setSwipeOffset(0);
+  }, [swipeOffset, onNext, onPrev]);
+
+  // Only close on backdrop click if not swiping
+  const handleBackdropClick = useCallback(() => {
+    if (!isSwiping.current) {
+      onClose();
+    }
+  }, [onClose]);
+
   if (!isOpen) return null;
 
   return (
     <div
       className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
-      onClick={onClose}
+      onClick={handleBackdropClick}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
-      {/* Close button - larger on mobile */}
+      {/* Close button */}
       <Button
         variant="ghost"
         size="icon"
@@ -119,15 +162,20 @@ export function ImageLightbox({
         </Button>
       )}
 
-      {/* Main Image */}
+      {/* Main Image with swipe offset */}
       <div
-        className="max-w-[90vw] max-h-[90vh] flex items-center justify-center"
+        className="max-w-[90vw] max-h-[90vh] flex items-center justify-center transition-transform"
+        style={{
+          transform: swipeOffset ? `translateX(${swipeOffset}px)` : undefined,
+          transition: swipeOffset ? 'none' : 'transform 0.2s ease-out',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <img
           src={images[currentIndex]}
           alt={alt}
-          className="max-w-full max-h-[90vh] object-contain"
+          className="max-w-full max-h-[90vh] object-contain select-none pointer-events-none"
+          draggable={false}
         />
       </div>
 
