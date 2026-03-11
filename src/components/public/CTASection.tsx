@@ -123,13 +123,16 @@ export function CTASection() {
       <section className="py-10 md:py-14 bg-foreground text-background">
         <div className="container">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 max-w-4xl mx-auto">
-            <div className="text-center md:text-left">
-              <p className="font-display text-xl md:text-2xl font-bold">
-                CompreCarrosBr
-              </p>
-              <p className="text-background/60 text-sm mt-1">
-                O lugar certo pra quem quer comprar certo. 🚗
-              </p>
+            <div className="flex items-center gap-4 text-center md:text-left">
+              <img src={logoImg} alt="CompreCarrosBr" className="h-14 w-14 rounded-xl object-cover shadow-lg" />
+              <div>
+                <p className="font-display text-xl md:text-2xl font-bold">
+                  CompreCarrosBr
+                </p>
+                <p className="text-background/60 text-sm mt-1">
+                  O lugar certo pra quem quer comprar certo. 🚗
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-4">
               <a
