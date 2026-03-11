@@ -160,7 +160,7 @@ export const HomeShowcase = memo(function HomeShowcase() {
               type="button"
               onClick={handlePrev}
               className="pointer-events-auto inline-flex items-center justify-center h-8 w-8 rounded-full bg-background/30 text-foreground/70 shadow-sm border border-border/30"
-              aria-label="Banner anterior"
+              aria-label="Anterior"
             >
               &#8592;
             </button>
