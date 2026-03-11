@@ -53,7 +53,7 @@ const CardItem = memo(function CardItem({ item }: { item: ListItem }) {
   if (item.type === "car") {
     return <CarCardSingle car={item.data} />;
   }
-  return <HomeAdCard ad={item.data} />;
+  return <HomePartnerCard item={item.data} />;
 });
 
 const PAGE_SIZE = 30;
