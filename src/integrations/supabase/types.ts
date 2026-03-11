@@ -581,6 +581,55 @@ export type Database = {
       is_garage: { Args: never; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       normalize_slug: { Args: { input_text: string }; Returns: string }
+      search_cars_ranked: {
+        Args: {
+          p_brand_id?: string
+          p_category?: string
+          p_color?: string
+          p_condition?: string
+          p_cooling_type?: string
+          p_doors?: number
+          p_fuel?: string
+          p_garage_ids?: string[]
+          p_limit?: number
+          p_motorcycle_category?: string
+          p_offset?: number
+          p_price_max?: number
+          p_price_min?: number
+          p_search?: string
+          p_transmission?: string
+          p_year_from?: number
+          p_year_to?: number
+        }
+        Returns: {
+          brand_logo_url: string
+          brand_name: string
+          car_brand_id: string
+          car_category: string
+          car_code: string
+          car_color: string
+          car_condition: string
+          car_cooling_type: string
+          car_created_at: string
+          car_doors: number
+          car_engine_cc: number
+          car_fuel: string
+          car_id: string
+          car_is_featured: boolean
+          car_mileage: number
+          car_model: string
+          car_model_year: number
+          car_motorcycle_category: string
+          car_photos: string[]
+          car_price: number
+          car_slug: string
+          car_transmission: string
+          car_version: string
+          car_year: number
+          relevance_score: number
+          total_count: number
+        }[]
+      }
     }
     Enums: {
       app_role: "super_admin" | "garage"

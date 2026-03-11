@@ -18,8 +18,7 @@ async function fetchVehiclesPage({
   page: number;
   filters: VehicleFilters;
 }): Promise<PaginatedResult> {
-  const from = page * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
+  const offset = page * PAGE_SIZE;
 
   // If filtering by garage location, resolve matching garage IDs via RPC
   let garageIds: string[] | null = null;
@@ -34,90 +33,55 @@ async function fetchVehiclesPage({
     }
   }
 
-  // Count query
-  let countQuery = supabase
-    .from("cars")
-    .select("*", { count: "exact", head: true });
+  // Use the ranked search RPC for relevance-ordered results
+  const { data, error } = await supabase.rpc("search_cars_ranked", {
+    p_search: filters.search || null,
+    p_brand_id: filters.brandId || null,
+    p_category: filters.category || null,
+    p_year_from: filters.yearFrom ? parseInt(filters.yearFrom) : null,
+    p_year_to: filters.yearTo ? parseInt(filters.yearTo) : null,
+    p_price_min: filters.priceRange?.min ?? null,
+    p_price_max: filters.priceRange?.max ?? null,
+    p_transmission: (filters.category === "car" || !filters.category) ? (filters.transmission || null) : null,
+    p_fuel: filters.fuel || null,
+    p_color: filters.color || null,
+    p_doors: (filters.category === "car" || !filters.category) && filters.doors ? parseInt(filters.doors) : null,
+    p_condition: filters.condition || null,
+    p_cooling_type: filters.category === "motorcycle" ? (filters.coolingType || null) : null,
+    p_motorcycle_category: filters.category === "motorcycle" ? (filters.motorcycleCategory || null) : null,
+    p_garage_ids: garageIds,
+    p_limit: PAGE_SIZE,
+    p_offset: offset,
+  });
 
-  // Data query
-  let dataQuery = supabase
-    .from("cars")
-    .select(`
-      id, slug, code, brand_id, model, year, model_year, version, mileage,
-      transmission, fuel, color, price, photos, doors, condition,
-      category, engine_cc, cooling_type, motorcycle_category, created_at,
-      brands:brand_id ( name, logo_url )
-    `)
-    .order("is_featured", { ascending: false })
-    .order("created_at", { ascending: false });
+  if (error) throw error;
 
-  // Apply filters to both queries
-  const applyFilters = (q: typeof countQuery | typeof dataQuery) => {
-    if (garageIds) q = q.in("garage_id", garageIds);
-    if (filters.category) q = q.eq("category", filters.category);
-    if (filters.search) q = q.or(`model.ilike.%${filters.search}%,code.ilike.%${filters.search}%,version.ilike.%${filters.search}%`);
-    if (filters.yearFrom) {
-      const yf = parseInt(filters.yearFrom);
-      q = q.or(`year.gte.${yf},model_year.gte.${yf}`);
-    }
-    if (filters.yearTo) {
-      const yt = parseInt(filters.yearTo);
-      q = q.lte("year", yt);
-    }
-    if (filters.priceRange) q = q.gte("price", filters.priceRange.min).lte("price", filters.priceRange.max);
-    if ((filters.category === "car" || !filters.category) && filters.transmission) {
-      q = q.eq("transmission", filters.transmission as any);
-    }
-    if (filters.fuel) q = q.eq("fuel", filters.fuel as any);
-    if (filters.color) q = q.eq("color", filters.color);
-    if ((filters.category === "car" || !filters.category) && filters.doors) {
-      q = q.eq("doors", parseInt(filters.doors));
-    }
-    if (filters.condition) q = q.eq("condition", filters.condition);
-    if (filters.category === "motorcycle") {
-      if (filters.coolingType) q = q.eq("cooling_type", filters.coolingType);
-      if (filters.motorcycleCategory) q = q.eq("motorcycle_category", filters.motorcycleCategory);
-    }
-    if (filters.brandId) q = q.eq("brand_id", filters.brandId);
-    return q;
-  };
+  const rows = (data || []) as any[];
+  const totalCount = rows.length > 0 ? Number(rows[0].total_count) : 0;
 
-  countQuery = applyFilters(countQuery) as typeof countQuery;
-  dataQuery = applyFilters(dataQuery) as typeof dataQuery;
-
-  // Apply pagination to data query only
-  dataQuery = dataQuery.range(from, to);
-
-  const [countResult, dataResult] = await Promise.all([countQuery, dataQuery]);
-
-  if (countResult.error) throw countResult.error;
-  if (dataResult.error) throw dataResult.error;
-
-  const totalCount = countResult.count || 0;
-
-  const vehicles: VehicleData[] = (dataResult.data || []).map((car) => ({
-    id: car.id,
-    slug: car.slug,
-    code: car.code,
-    model: car.model,
-    year: car.year,
-    model_year: car.model_year,
-    version: car.version,
-    mileage: car.mileage,
-    transmission: car.transmission,
-    fuel: car.fuel,
-    color: car.color,
-    price: car.price,
-    photos: car.photos || [],
+  const vehicles: VehicleData[] = rows.map((row) => ({
+    id: row.car_id,
+    slug: row.car_slug,
+    code: row.car_code,
+    model: row.car_model,
+    year: row.car_year,
+    model_year: row.car_model_year,
+    version: row.car_version,
+    mileage: row.car_mileage,
+    transmission: row.car_transmission,
+    fuel: row.car_fuel,
+    color: row.car_color,
+    price: row.car_price,
+    photos: row.car_photos || [],
     status: "available",
-    doors: car.doors,
-    condition: car.condition,
-    category: car.category,
-    engine_cc: car.engine_cc,
-    cooling_type: car.cooling_type,
-    motorcycle_category: car.motorcycle_category,
-    brand_id: car.brand_id,
-    brands: car.brands,
+    doors: row.car_doors,
+    condition: row.car_condition,
+    category: row.car_category,
+    engine_cc: row.car_engine_cc,
+    cooling_type: row.car_cooling_type,
+    motorcycle_category: row.car_motorcycle_category,
+    brand_id: row.car_brand_id,
+    brands: row.brand_name ? { name: row.brand_name, logo_url: row.brand_logo_url } : null,
   }));
 
   return {
@@ -134,7 +98,7 @@ export function useVehiclesPaginatedQuery(page: number, filters: VehicleFilters)
     queryFn: () => fetchVehiclesPage({ page, filters }),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    placeholderData: (prev) => prev, // keep previous data while loading next page
+    placeholderData: (prev) => prev,
   });
 }
 
