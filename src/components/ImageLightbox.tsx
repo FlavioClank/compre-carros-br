@@ -58,6 +58,30 @@ export function ImageLightbox({
     };
   }, [isOpen]);
 
+  // Push history state when lightbox opens, pop to close
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Push a fake state so pressing back closes the lightbox
+    window.history.pushState({ lightbox: true }, "");
+
+    const handlePopState = (e: PopStateEvent) => {
+      // Back button pressed while lightbox is open → close it
+      onClose();
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      // If lightbox closes by X button or click-outside, clean up the extra history entry
+      // Check if the current state is our lightbox state
+      if (window.history.state?.lightbox) {
+        window.history.back();
+      }
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -65,18 +89,18 @@ export function ImageLightbox({
       className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
       onClick={onClose}
     >
-      {/* Close button */}
+      {/* Close button - larger on mobile */}
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-4 right-4 text-white hover:bg-white/20 z-10"
+        className="absolute top-3 right-3 text-white hover:bg-white/20 z-10 h-12 w-12 md:h-10 md:w-10"
         onClick={(e) => {
           e.stopPropagation();
           onClose();
         }}
         aria-label="Fechar"
       >
-        <X className="h-6 w-6" />
+        <X className="h-8 w-8 md:h-6 md:w-6" />
       </Button>
 
       {/* Navigation - Previous */}
@@ -84,7 +108,7 @@ export function ImageLightbox({
         <Button
           variant="ghost"
           size="icon"
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 h-12 w-12 z-10"
+          className="absolute left-2 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 h-12 w-12 z-10"
           onClick={(e) => {
             e.stopPropagation();
             onPrev();
@@ -112,7 +136,7 @@ export function ImageLightbox({
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 h-12 w-12 z-10"
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 h-12 w-12 z-10"
           onClick={(e) => {
             e.stopPropagation();
             onNext();
