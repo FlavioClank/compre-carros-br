@@ -56,10 +56,10 @@ export function CTASection() {
                   <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
                     <Icon className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="font-display font-bold text-foreground text-base mb-1">
+                  <h3 className="font-display font-bold text-foreground text-lg md:text-xl mb-1">
                     {item.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                  <p className="text-sm md:text-base text-muted-foreground">{item.description}</p>
                 </div>
               );
             })}
