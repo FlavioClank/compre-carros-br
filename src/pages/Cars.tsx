@@ -716,7 +716,7 @@ export default function Cars() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Buscar por modelo ou código..."
+                placeholder="Buscar marca, modelo, ano..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-12 pr-12 h-12 bg-card border-border"
