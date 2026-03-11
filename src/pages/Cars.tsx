@@ -696,8 +696,28 @@ export default function Cars() {
                 placeholder="Buscar por modelo ou código..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-12 h-12 bg-card border-border"
+                className="pl-12 pr-12 h-12 bg-card border-border"
               />
+              {isSupported && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isListening) {
+                      stopListening();
+                    } else {
+                      startListening((text) => setSearch(text));
+                    }
+                  }}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors ${
+                    isListening 
+                      ? "bg-destructive/10 text-destructive animate-pulse" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                  title={isListening ? "Parar gravação" : "Buscar por voz"}
+                >
+                  {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </button>
+              )}
             </div>
             
             {/* Category Quick Selector */}
@@ -721,105 +741,129 @@ export default function Cars() {
             </div>
           </div>
 
-          {/* Sticky Filter Bar */}
-          <div className="sticky top-0 z-40 -mx-4 px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border/50 shadow-sm mb-6">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                {isLoading ? "Carregando..." : (
-                  <span className="font-medium">
-                    {totalCount} veículo{totalCount !== 1 ? "s" : ""} encontrado{totalCount !== 1 ? "s" : ""}
-                  </span>
-                )}
-              </p>
-              
-              {/* Filter Button */}
-              <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" className="h-10 gap-2 shrink-0">
-                    <SlidersHorizontal className="h-4 w-4" />
-                    Filtros
-                    {activeFiltersCount > 0 && (
-                      <span className="h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center font-medium">
-                        {activeFiltersCount}
+          {/* Desktop: sidebar filters + grid | Mobile: sticky filter button + grid */}
+          <div className="flex gap-6">
+            {/* Desktop Sidebar Filters */}
+            <aside className="hidden lg:block w-[280px] shrink-0">
+              <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl border border-border bg-card p-4">
+                <h3 className="font-semibold text-foreground mb-4">Filtros</h3>
+                <FilterContent />
+              </div>
+            </aside>
+
+            {/* Main Content */}
+            <div className="flex-1 min-w-0">
+              {/* Mobile-only sticky filter bar */}
+              <div className="lg:hidden sticky top-0 z-40 -mx-4 px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border/50 shadow-sm mb-6">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {isLoading ? "Carregando..." : (
+                      <span className="font-medium">
+                        {totalCount} veículo{totalCount !== 1 ? "s" : ""} encontrado{totalCount !== 1 ? "s" : ""}
                       </span>
                     )}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-[320px] sm:w-[380px] overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle className="text-left">Filtros</SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-6">
-                    <FilterContent />
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
-          </div>
+                  </p>
+                  
+                  <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" className="h-10 gap-2 shrink-0">
+                        <SlidersHorizontal className="h-4 w-4" />
+                        Filtros
+                        {activeFiltersCount > 0 && (
+                          <span className="h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center font-medium">
+                            {activeFiltersCount}
+                          </span>
+                        )}
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="w-[320px] sm:w-[380px] overflow-y-auto">
+                      <SheetHeader>
+                        <SheetTitle className="text-left">Filtros</SheetTitle>
+                      </SheetHeader>
+                      <div className="mt-6">
+                        <FilterContent />
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                </div>
+              </div>
 
-          {/* Cars Grid */}
-          <div ref={listRef} />
-          {isLoading ? (
-            <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="aspect-[4/5] rounded-xl bg-card" />
-              ))}
-            </div>
-          ) : isError ? (
-            <div className="text-center py-16 bg-card/50 rounded-xl border border-border/50">
-              <p className="text-muted-foreground text-lg font-medium">
-                Erro ao carregar veículos
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Tente novamente mais tarde
-              </p>
-            </div>
-          ) : listItems.length > 0 ? (
-            <>
-              <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {listItems.map((item) => (
-                  <CardItem
-                    key={item.type === 'car' ? `car-${item.data.id}` : `promo-${item.data.id}`}
-                    item={item}
+              {/* Desktop results count */}
+              <div className="hidden lg:block mb-4">
+                <p className="text-sm text-muted-foreground">
+                  {isLoading ? "Carregando..." : (
+                    <span className="font-medium">
+                      {totalCount} veículo{totalCount !== 1 ? "s" : ""} encontrado{totalCount !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </p>
+              </div>
+
+              {/* Cars Grid */}
+              <div ref={listRef} />
+              {isLoading ? (
+                <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="aspect-[4/5] rounded-xl bg-card" />
+                  ))}
+                </div>
+              ) : isError ? (
+                <div className="text-center py-16 bg-card/50 rounded-xl border border-border/50">
+                  <p className="text-muted-foreground text-lg font-medium">
+                    Erro ao carregar veículos
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Tente novamente mais tarde
+                  </p>
+                </div>
+              ) : listItems.length > 0 ? (
+                <>
+                  <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+                    {listItems.map((item) => (
+                      <CardItem
+                        key={item.type === 'car' ? `car-${item.data.id}` : `promo-${item.data.id}`}
+                        item={item}
+                      />
+                    ))}
+                  </div>
+                  <PaginationControls
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    isLoading={isFetching}
                   />
-                ))}
-              </div>
-              <PaginationControls
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-                isLoading={isFetching}
-              />
-            </>
-          ) : (
-            <div className="text-center py-16 bg-card/50 rounded-xl border border-border/50">
-              <div className="flex justify-center mb-4">
-                {category === "motorcycle" ? (
-                  <Bike className="h-16 w-16 text-muted-foreground/50" />
-                ) : category === "car" ? (
-                  <Car className="h-16 w-16 text-muted-foreground/50" />
-                ) : (
-                  <Search className="h-16 w-16 text-muted-foreground/50" />
-                )}
-              </div>
-              <p className="text-muted-foreground text-lg font-medium">
-                {category === "motorcycle" 
-                  ? "Nenhuma moto cadastrada no momento" 
-                  : category === "car" 
-                    ? "Nenhum carro cadastrado nesta categoria"
-                    : "Nenhum veículo encontrado"}
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                {category ? "Não há veículos disponíveis no momento" : "Tente ajustar os filtros de busca"}
-              </p>
-              {hasFilters && (
-                <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4 gap-2">
-                  <X className="h-4 w-4" />
-                  Limpar filtros
-                </Button>
+                </>
+              ) : (
+                <div className="text-center py-16 bg-card/50 rounded-xl border border-border/50">
+                  <div className="flex justify-center mb-4">
+                    {category === "motorcycle" ? (
+                      <Bike className="h-16 w-16 text-muted-foreground/50" />
+                    ) : category === "car" ? (
+                      <Car className="h-16 w-16 text-muted-foreground/50" />
+                    ) : (
+                      <Search className="h-16 w-16 text-muted-foreground/50" />
+                    )}
+                  </div>
+                  <p className="text-muted-foreground text-lg font-medium">
+                    {category === "motorcycle" 
+                      ? "Nenhuma moto cadastrada no momento" 
+                      : category === "car" 
+                        ? "Nenhum carro cadastrado nesta categoria"
+                        : "Nenhum veículo encontrado"}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {category ? "Não há veículos disponíveis no momento" : "Tente ajustar os filtros de busca"}
+                  </p>
+                  {hasFilters && (
+                    <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4 gap-2">
+                      <X className="h-4 w-4" />
+                      Limpar filtros
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
-          )}
+          </div>
         </div>
       </section>
     </PublicLayout>
