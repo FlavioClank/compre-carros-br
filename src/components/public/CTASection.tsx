@@ -1,6 +1,7 @@
 import { WHATSAPP_NUMBER, SITE_NAME, generateWhatsAppUrl } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Phone, ArrowRight, Search, CheckCircle2, Eye, MessageCircle, ShieldCheck } from "lucide-react";
+import logoImg from "@/assets/logo-new.jpeg";
 import { Link } from "react-router-dom";
 
 const promises = [
