@@ -741,7 +741,41 @@ export default function Cars() {
             </div>
           </div>
 
-          {/* Desktop: sidebar filters + grid | Mobile: sticky filter button + grid */}
+          {/* Mobile-only sticky filter button */}
+          <div className="lg:hidden sticky top-0 z-40 -mx-4 px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border/50 shadow-sm mb-4">
+            <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="w-full h-12 gap-2 justify-center text-base">
+                  <SlidersHorizontal className="h-5 w-5" />
+                  Filtros
+                  {activeFiltersCount > 0 && (
+                    <span className="h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center font-medium">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[320px] sm:w-[380px] overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle className="text-left">Filtros</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6">
+                  <FilterContent />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          {/* Results count (not sticky) */}
+          <p className="text-sm text-muted-foreground mb-4 lg:hidden text-center">
+            {isLoading ? "Carregando..." : (
+              <span className="font-medium">
+                {totalCount} veículo{totalCount !== 1 ? "s" : ""} encontrado{totalCount !== 1 ? "s" : ""}
+              </span>
+            )}
+          </p>
+
+          {/* Desktop: sidebar filters + grid | Mobile: grid only */}
           <div className="flex gap-6">
             {/* Desktop Sidebar Filters */}
             <aside className="hidden lg:block w-[280px] shrink-0">
@@ -753,38 +787,6 @@ export default function Cars() {
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">
-              {/* Mobile-only sticky filter bar */}
-              <div className="lg:hidden sticky top-0 z-40 -mx-4 px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border/50 shadow-sm mb-6">
-                <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" className="w-full h-12 gap-2 justify-center text-base">
-                      <SlidersHorizontal className="h-5 w-5" />
-                      Filtros
-                      {activeFiltersCount > 0 && (
-                        <span className="h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center font-medium">
-                          {activeFiltersCount}
-                        </span>
-                      )}
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="w-[320px] sm:w-[380px] overflow-y-auto">
-                    <SheetHeader>
-                      <SheetTitle className="text-left">Filtros</SheetTitle>
-                    </SheetHeader>
-                    <div className="mt-6">
-                      <FilterContent />
-                    </div>
-                  </SheetContent>
-                </Sheet>
-                <p className="text-sm text-muted-foreground mt-2 text-center">
-                  {isLoading ? "Carregando..." : (
-                    <span className="font-medium">
-                      {totalCount} veículo{totalCount !== 1 ? "s" : ""} encontrado{totalCount !== 1 ? "s" : ""}
-                    </span>
-                  )}
-                </p>
-              </div>
-
               {/* Desktop results count */}
               <div className="hidden lg:block mb-4">
                 <p className="text-sm text-muted-foreground">
