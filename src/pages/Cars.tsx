@@ -129,6 +129,7 @@ export default function Cars() {
   const [page, setPage] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
   const { ads, hasAds } = usePartnersRotation();
+  const seed = getHalfHourSeed();
 
   // Filters state
   const [search, setSearch] = useState(searchParams.get("busca") || "");
