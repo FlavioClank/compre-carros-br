@@ -26,28 +26,6 @@ const promises = [
   },
 ];
 
-const triggers = [
-  {
-    emoji: "🔍",
-    title: "Pensou em carro?",
-    description: "Pensou CompreCarrosBr.",
-  },
-  {
-    emoji: "💰",
-    title: "Quer o melhor preço?",
-    description: "A gente negocia por você.",
-  },
-  {
-    emoji: "🛡️",
-    title: "Medo de golpe?",
-    description: "Aqui todo veículo é verificado.",
-  },
-  {
-    emoji: "⚡",
-    title: "Sem tempo?",
-    description: "Encontre em minutos, não em dias.",
-  },
-];
 
 export function CTASection() {
   return (
