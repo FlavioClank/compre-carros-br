@@ -18,8 +18,8 @@ interface Ad {
   whatsapp_number?: string | null;
 }
 
-interface AdCardProps {
-  ad: Ad;
+interface PartnerCardProps {
+  item: Ad;
 }
 
 /**

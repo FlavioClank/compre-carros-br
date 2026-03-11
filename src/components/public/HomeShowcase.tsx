@@ -16,7 +16,7 @@ interface Banner {
   whatsapp_number: string | null;
 }
 
-export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
+export const HomeShowcase = memo(function HomeShowcase() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [autoplayKey, setAutoplayKey] = useState(0);

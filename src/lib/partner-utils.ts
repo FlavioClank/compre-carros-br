@@ -15,7 +15,7 @@ interface AdWithSlug {
  * @param ad - The ad object containing id and optional slug
  * @returns The full public URL for the ad
  */
-export function getAdPublicUrl(ad: AdWithSlug): string {
+export function getPartnerPublicUrl(item: AdWithSlug): string {
   // Always prefer slug - it MUST be used if available
   if (ad.slug && ad.slug.trim() !== "") {
     return `${SITE_URL}/anuncio/${ad.slug}`;

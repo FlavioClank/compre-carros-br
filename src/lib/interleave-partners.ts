@@ -2,7 +2,7 @@
  * Interleave ads into a vehicle list: 1 ad every 5 vehicles.
  * Returns at most `maxAds` ads (default 6).
  */
-export function interleaveVehiclesWithAds<V, A>(
+export function interleaveVehiclesWithPartners<V, A>(
   vehicles: V[],
   ads: A[],
   maxAds = 6,

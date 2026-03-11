@@ -25,7 +25,7 @@ interface AdCardSingleProps {
  * Always navigates to /anuncio/:slug for the ad details page
  * Click tracking happens on the ad details page when user clicks CTA buttons
  */
-export const AdCardSingle = memo(function AdCardSingle({ ad }: AdCardSingleProps) {
+export const PartnerCardSingle = memo(function PartnerCardSingle({ item }: { item: Ad }) {
   const hasTrackedView = useRef(false);
 
   // Track view when ad is rendered (once per mount)

@@ -7,7 +7,7 @@ import badgeGooglePlay from "@/assets/badge-google-play.png";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
-export function InstallAppBanner() {
+export function InstallAppSection() {
   const [isInstalled, setIsInstalled] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
