@@ -108,7 +108,7 @@ async function fetchHomeCars(page: number) {
 export function FeaturedCars() {
   const [page, setPage] = useState(0);
   const sectionRef = useRef<HTMLDivElement>(null);
-  const { ads, hasAds } = useAdsRotation();
+  const { ads, hasAds } = usePartnersRotation();
   const seed = getHalfHourSeed();
 
   // Reset to page 0 when logo/home is clicked
