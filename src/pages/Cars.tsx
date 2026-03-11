@@ -115,6 +115,40 @@ const CardItem = memo(function CardItem({ item }: { item: ListItem }) {
   return <PartnerCard item={item.data} />;
 });
 
+// Voice search support
+const useSpeechRecognition = () => {
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  const isSupported = typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+
+  const startListening = useCallback((onResult: (text: string) => void) => {
+    if (!isSupported) return;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "pt-BR";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onresult = (event: any) => {
+      const text = event.results[0][0].transcript;
+      onResult(text);
+      setIsListening(false);
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }, [isSupported]);
+
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+  }, []);
+
+  return { isListening, isSupported, startListening, stopListening };
+};
+
 export default function Cars() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { estado, cidade } = useParams<{ estado?: string; cidade?: string }>();
