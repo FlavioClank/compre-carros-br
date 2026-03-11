@@ -102,9 +102,10 @@ export function ImageLightbox({
 
   const handleTouchEnd = useCallback(() => {
     const SWIPE_THRESHOLD = 50;
+    const offset = swipeOffsetRef.current;
     
-    if (isSwiping.current && Math.abs(swipeOffset) > SWIPE_THRESHOLD) {
-      if (swipeOffset < 0) {
+    if (isSwiping.current && Math.abs(offset) > SWIPE_THRESHOLD) {
+      if (offset < 0) {
         onNext();
       } else {
         onPrev();
@@ -114,8 +115,9 @@ export function ImageLightbox({
     touchStartX.current = null;
     touchStartY.current = null;
     isSwiping.current = false;
+    swipeOffsetRef.current = 0;
     setSwipeOffset(0);
-  }, [swipeOffset, onNext, onPrev]);
+  }, [onNext, onPrev]);
 
   // Only close on backdrop click if not swiping
   const handleBackdropClick = useCallback(() => {
