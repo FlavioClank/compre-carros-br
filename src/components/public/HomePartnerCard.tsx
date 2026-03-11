@@ -24,8 +24,8 @@ interface HomeAdCardProps {
  * Always navigates to /anuncio/:slug for the ad details page
  * Click tracking happens on the ad details page when user clicks CTA buttons
  */
-export const HomeAdCard = memo(
-  forwardRef<HTMLDivElement, HomeAdCardProps>(function HomeAdCard({ ad }, ref) {
+export const HomePartnerCard = memo(
+  forwardRef<HTMLDivElement, HomePartnerCardProps>(function HomePartnerCard({ item }, ref) {
     const hasTrackedView = useRef(false);
 
     useEffect(() => {
