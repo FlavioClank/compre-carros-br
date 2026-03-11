@@ -182,20 +182,42 @@ export default function Cars() {
   const [coolingType, setCoolingType] = useState(searchParams.get("refrigeracao") || "");
   const [motorcycleCategory, setMotorcycleCategory] = useState(searchParams.get("categoria_moto") || "");
 
-  // Build filters object for query
+  // All brands combined for smart search matching
+  const allBrands = useMemo(() => {
+    const map = new Map<string, { id: string; name: string }>();
+    carBrands.forEach((b) => map.set(b.id, { id: b.id, name: b.name }));
+    motorcycleBrands.forEach((b) => map.set(b.id, { id: b.id, name: b.name }));
+    return Array.from(map.values());
+  }, [carBrands, motorcycleBrands]);
+
+  // Parse search text into structured filters
+  const parsedSearch = useMemo(() => {
+    if (!search) return null;
+    return parseSearchQuery(search, allBrands);
+  }, [search, allBrands]);
+
+  // Build filters object for query — merge manual filters with smart-parsed ones
   const filters = useMemo((): VehicleFilters => {
     const priceRangeObj = priceRange 
       ? priceRanges.find((r) => r.label === priceRange) 
       : undefined;
+
+    // Smart search: use parsed values only when user hasn't manually set filter
+    const effectiveBrandId = brandId || parsedSearch?.detectedBrandId || undefined;
+    const effectiveYearFrom = yearFrom || parsedSearch?.detectedYear || undefined;
+    const effectiveYearTo = yearTo || parsedSearch?.detectedYear || undefined;
+    const effectiveFuel = fuel || parsedSearch?.detectedFuel || undefined;
+    const effectiveTransmission = transmission || parsedSearch?.detectedTransmission || undefined;
+    const effectiveSearch = parsedSearch?.searchText || (search && !parsedSearch ? search : undefined);
     
     return {
-      search: search || undefined,
-      brandId: brandId || undefined,
-      yearFrom: yearFrom || undefined,
-      yearTo: yearTo || undefined,
+      search: effectiveSearch || undefined,
+      brandId: effectiveBrandId,
+      yearFrom: effectiveYearFrom,
+      yearTo: effectiveYearTo,
       priceRange: priceRangeObj ? { min: priceRangeObj.min, max: priceRangeObj.max } : undefined,
-      transmission: transmission || undefined,
-      fuel: fuel || undefined,
+      transmission: effectiveTransmission,
+      fuel: effectiveFuel,
       color: color || undefined,
       doors: doors || undefined,
       condition: condition || undefined,
@@ -205,7 +227,7 @@ export default function Cars() {
       garageCity: geoCity || undefined,
       garageState: geoStateAbbr || undefined,
     };
-  }, [search, brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category, coolingType, motorcycleCategory, geoCity, geoStateAbbr]);
+  }, [search, parsedSearch, brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category, coolingType, motorcycleCategory, geoCity, geoStateAbbr]);
 
   // Reset page when filters change
   useEffect(() => {
