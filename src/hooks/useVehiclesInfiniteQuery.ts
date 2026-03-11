@@ -97,7 +97,7 @@ async function fetchVehicles({
 
   // Apply search filter
   if (filters.search) {
-    query = query.or(`model.ilike.%${filters.search}%,code.ilike.%${filters.search}%`);
+    query = query.or(`model.ilike.%${filters.search}%,code.ilike.%${filters.search}%,version.ilike.%${filters.search}%`);
   }
 
   // Apply year filters

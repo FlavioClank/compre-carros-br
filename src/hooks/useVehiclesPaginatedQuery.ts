@@ -55,7 +55,7 @@ async function fetchVehiclesPage({
   const applyFilters = (q: typeof countQuery | typeof dataQuery) => {
     if (garageIds) q = q.in("garage_id", garageIds);
     if (filters.category) q = q.eq("category", filters.category);
-    if (filters.search) q = q.or(`model.ilike.%${filters.search}%,code.ilike.%${filters.search}%`);
+    if (filters.search) q = q.or(`model.ilike.%${filters.search}%,code.ilike.%${filters.search}%,version.ilike.%${filters.search}%`);
     if (filters.yearFrom) {
       const yf = parseInt(filters.yearFrom);
       q = q.or(`year.gte.${yf},model_year.gte.${yf}`);

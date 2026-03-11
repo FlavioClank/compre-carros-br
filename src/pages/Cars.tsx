@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, memo, useRef } from "react";
+import { parseSearchQuery, applyCorrections } from "@/lib/search-utils";
 import { shuffleSeeded, getHalfHourSeed } from "@/lib/shuffle";
 import { Helmet } from "react-helmet-async";
 import { useSearchParams, useParams } from "react-router-dom";
@@ -181,20 +182,42 @@ export default function Cars() {
   const [coolingType, setCoolingType] = useState(searchParams.get("refrigeracao") || "");
   const [motorcycleCategory, setMotorcycleCategory] = useState(searchParams.get("categoria_moto") || "");
 
-  // Build filters object for query
+  // All brands combined for smart search matching
+  const allBrands = useMemo(() => {
+    const map = new Map<string, { id: string; name: string }>();
+    carBrands.forEach((b) => map.set(b.id, { id: b.id, name: b.name }));
+    motorcycleBrands.forEach((b) => map.set(b.id, { id: b.id, name: b.name }));
+    return Array.from(map.values());
+  }, [carBrands, motorcycleBrands]);
+
+  // Parse search text into structured filters
+  const parsedSearch = useMemo(() => {
+    if (!search) return null;
+    return parseSearchQuery(search, allBrands);
+  }, [search, allBrands]);
+
+  // Build filters object for query — merge manual filters with smart-parsed ones
   const filters = useMemo((): VehicleFilters => {
     const priceRangeObj = priceRange 
       ? priceRanges.find((r) => r.label === priceRange) 
       : undefined;
+
+    // Smart search: use parsed values only when user hasn't manually set filter
+    const effectiveBrandId = brandId || parsedSearch?.detectedBrandId || undefined;
+    const effectiveYearFrom = yearFrom || parsedSearch?.detectedYear || undefined;
+    const effectiveYearTo = yearTo || parsedSearch?.detectedYear || undefined;
+    const effectiveFuel = fuel || parsedSearch?.detectedFuel || undefined;
+    const effectiveTransmission = transmission || parsedSearch?.detectedTransmission || undefined;
+    const effectiveSearch = parsedSearch?.searchText || (search && !parsedSearch ? search : undefined);
     
     return {
-      search: search || undefined,
-      brandId: brandId || undefined,
-      yearFrom: yearFrom || undefined,
-      yearTo: yearTo || undefined,
+      search: effectiveSearch || undefined,
+      brandId: effectiveBrandId,
+      yearFrom: effectiveYearFrom,
+      yearTo: effectiveYearTo,
       priceRange: priceRangeObj ? { min: priceRangeObj.min, max: priceRangeObj.max } : undefined,
-      transmission: transmission || undefined,
-      fuel: fuel || undefined,
+      transmission: effectiveTransmission,
+      fuel: effectiveFuel,
       color: color || undefined,
       doors: doors || undefined,
       condition: condition || undefined,
@@ -204,7 +227,7 @@ export default function Cars() {
       garageCity: geoCity || undefined,
       garageState: geoStateAbbr || undefined,
     };
-  }, [search, brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category, coolingType, motorcycleCategory, geoCity, geoStateAbbr]);
+  }, [search, parsedSearch, brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category, coolingType, motorcycleCategory, geoCity, geoStateAbbr]);
 
   // Reset page when filters change
   useEffect(() => {
@@ -693,7 +716,7 @@ export default function Cars() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Buscar por modelo ou código..."
+                placeholder="Buscar marca, modelo, ano..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-12 pr-12 h-12 bg-card border-border"
@@ -705,7 +728,10 @@ export default function Cars() {
                     if (isListening) {
                       stopListening();
                     } else {
-                      startListening((text) => setSearch(text));
+                      startListening((text) => {
+                        const corrected = applyCorrections(text);
+                        setSearch(corrected);
+                      });
                     }
                   }}
                   className={`absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors ${
