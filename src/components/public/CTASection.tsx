@@ -37,7 +37,7 @@ export function CTASection() {
             <span className="inline-block bg-primary/10 text-primary font-semibold text-xs uppercase tracking-wider px-3 py-1 rounded-full mb-3">
               Nosso compromisso
             </span>
-            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
               O que você pode esperar da gente
             </h2>
             <p className="text-muted-foreground mt-2 text-sm md:text-base max-w-lg mx-auto">
