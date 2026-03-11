@@ -190,11 +190,17 @@ export default function Cars() {
   const totalCount = data?.totalCount ?? 0;
   const totalPages = data?.totalPages ?? 1;
 
+  // Shuffle vehicles deterministically to mix garages
+  const shuffledVehicles = useMemo(() => {
+    if (vehicles.length === 0) return [];
+    return shuffleSeeded(vehicles, seed + page);
+  }, [vehicles, seed, page]);
+
   // Build list items with intercalated ads (6 per page)
   const listItems = useMemo((): ListItem[] => {
-    if (vehicles.length === 0) return [];
-    return interleaveVehiclesWithPartners(vehicles, ads, 6);
-  }, [vehicles, ads]);
+    if (shuffledVehicles.length === 0) return [];
+    return interleaveVehiclesWithPartners(shuffledVehicles, ads, 6);
+  }, [shuffledVehicles, ads]);
 
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
