@@ -652,44 +652,55 @@ export default function Cars() {
             </p>
           </div>
 
-          {/* Sticky Search & Filter Bar */}
-          <div className="sticky top-0 z-40 -mx-4 px-4 py-4 bg-background/80 backdrop-blur-md border-b border-border/50 shadow-sm mb-6">
-            <div className="flex flex-col md:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Buscar por modelo ou código..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-12 h-12 bg-card border-border"
-                />
-              </div>
-              
-              {/* Category Quick Selector */}
-              <div className="flex gap-2">
-                <Button
-                  variant={category === "car" ? "default" : "outline"}
-                  className="gap-2 h-12"
-                  onClick={() => handleCategoryChange(category === "car" ? "" : "car")}
-                >
-                  <Car className="h-4 w-4" />
-                  <span className="hidden sm:inline">Carros</span>
-                </Button>
-                <Button
-                  variant={category === "motorcycle" ? "default" : "outline"}
-                  className="gap-2 h-12"
-                  onClick={() => handleCategoryChange(category === "motorcycle" ? "" : "motorcycle")}
-                >
-                  <Bike className="h-4 w-4" />
-                  <span className="hidden sm:inline">Motos</span>
-                </Button>
-              </div>
+          {/* Search + Category Bar (not sticky) */}
+          <div className="flex flex-col md:flex-row gap-3 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Buscar por modelo ou código..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-12 h-12 bg-card border-border"
+              />
+            </div>
+            
+            {/* Category Quick Selector */}
+            <div className="flex gap-2">
+              <Button
+                variant={category === "car" ? "default" : "outline"}
+                className="gap-2 h-12"
+                onClick={() => handleCategoryChange(category === "car" ? "" : "car")}
+              >
+                <Car className="h-4 w-4" />
+                <span className="hidden sm:inline">Carros</span>
+              </Button>
+              <Button
+                variant={category === "motorcycle" ? "default" : "outline"}
+                className="gap-2 h-12"
+                onClick={() => handleCategoryChange(category === "motorcycle" ? "" : "motorcycle")}
+              >
+                <Bike className="h-4 w-4" />
+                <span className="hidden sm:inline">Motos</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Sticky Filter Bar */}
+          <div className="sticky top-0 z-40 -mx-4 px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border/50 shadow-sm mb-6">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                {isLoading ? "Carregando..." : (
+                  <span className="font-medium">
+                    {totalCount} veículo{totalCount !== 1 ? "s" : ""} encontrado{totalCount !== 1 ? "s" : ""}
+                  </span>
+                )}
+              </p>
               
               {/* Filter Button */}
               <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="outline" className="h-12 gap-2 shrink-0">
+                  <Button variant="outline" className="h-10 gap-2 shrink-0">
                     <SlidersHorizontal className="h-4 w-4" />
                     Filtros
                     {activeFiltersCount > 0 && (
@@ -709,15 +720,6 @@ export default function Cars() {
                 </SheetContent>
               </Sheet>
             </div>
-
-            {/* Results Count */}
-            <p className="text-sm text-muted-foreground mt-3">
-              {isLoading ? "Carregando..." : (
-                <span className="font-medium">
-                  {totalCount} veículo{totalCount !== 1 ? "s" : ""} encontrado{totalCount !== 1 ? "s" : ""}
-                </span>
-              )}
-            </p>
           </div>
 
           {/* Cars Grid */}
