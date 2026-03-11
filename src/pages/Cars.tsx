@@ -741,8 +741,8 @@ export default function Cars() {
             </div>
           </div>
 
-          {/* Mobile-only fixed filter button - always visible at top */}
-          <div className="lg:hidden fixed top-0 left-0 right-0 z-50 px-4 py-3 bg-background/95 backdrop-blur-md border-b border-border/50 shadow-sm">
+          {/* Mobile-only sticky filter button - sticks below header */}
+          <div className="lg:hidden sticky top-[64px] z-40 -mx-4 px-4 py-3 bg-background/95 backdrop-blur-md border-b border-border/50 shadow-sm mb-4">
             <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" className="w-full h-12 gap-2 justify-center text-base">
@@ -765,8 +765,6 @@ export default function Cars() {
               </SheetContent>
             </Sheet>
           </div>
-          {/* Spacer for fixed filter bar on mobile */}
-          <div className="lg:hidden h-[72px]" />
 
           {/* Results count (not sticky) */}
           <p className="text-sm text-muted-foreground mb-4 lg:hidden text-center">
