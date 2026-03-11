@@ -82,6 +82,7 @@ export function ImageLightbox({
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     isSwiping.current = false;
+    swipeOffsetRef.current = 0;
     setSwipeOffset(0);
   }, []);
 
@@ -91,10 +92,10 @@ export function ImageLightbox({
     const deltaX = e.touches[0].clientX - touchStartX.current;
     const deltaY = e.touches[0].clientY - touchStartY.current;
     
-    // If horizontal movement is dominant, it's a swipe
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
       isSwiping.current = true;
       e.preventDefault();
+      swipeOffsetRef.current = deltaX;
       setSwipeOffset(deltaX);
     }
   }, []);
