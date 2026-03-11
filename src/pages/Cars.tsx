@@ -164,6 +164,7 @@ export default function Cars() {
   const listRef = useRef<HTMLDivElement>(null);
   const { ads, hasAds } = usePartnersRotation();
   const seed = getHalfHourSeed();
+  const { isListening, isSupported, startListening, stopListening } = useSpeechRecognition();
 
   // Filters state
   const [search, setSearch] = useState(searchParams.get("busca") || "");
