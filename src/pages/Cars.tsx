@@ -191,7 +191,7 @@ export default function Cars() {
   // Build list items with intercalated ads (6 per page)
   const listItems = useMemo((): ListItem[] => {
     if (vehicles.length === 0) return [];
-    return interleaveVehiclesWithAds(vehicles, ads, 6);
+    return interleaveVehiclesWithPartners(vehicles, ads, 6);
   }, [vehicles, ads]);
 
   const handlePageChange = useCallback((newPage: number) => {
