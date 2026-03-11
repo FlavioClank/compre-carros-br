@@ -33,7 +33,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, ExternalLink, Image as ImageIcon, Home, Search, Copy, Link } from "lucide-react";
-import { getAdPublicUrl } from "@/lib/ad-utils";
+import { getPartnerPublicUrl } from "@/lib/partner-utils";
 
 const AD_CATEGORIES = [
   { value: "mecanica", label: "Mecânica" },
@@ -372,7 +372,7 @@ export default function AdminAds() {
   }
 
   function copyAdLink(ad: Ad) {
-    const url = getAdPublicUrl(ad);
+    const url = getPartnerPublicUrl(ad);
     navigator.clipboard.writeText(url);
     toast.success("Link copiado: " + url);
   }
@@ -736,7 +736,7 @@ export default function AdminAds() {
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
-                    <a href={getAdPublicUrl(ad)} target="_blank" rel="noopener noreferrer">
+                    <a href={getPartnerPublicUrl(ad)} target="_blank" rel="noopener noreferrer">
                       <Button variant="ghost" size="icon" className="h-6 w-6" title="Abrir página">
                         <Link className="h-3 w-3" />
                       </Button>

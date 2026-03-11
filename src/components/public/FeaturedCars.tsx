@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { CarCardSingle } from "@/components/public/CarCardSingle";
-import { HomeAdCard } from "@/components/public/HomeAdCard";
-import { useAdsRotation } from "@/hooks/useAdsRotation";
+import { HomePartnerCard } from "@/components/public/HomePartnerCard";
+import { usePartnersRotation } from "@/hooks/usePartnersRotation";
 import { useVehiclesPaginatedQuery } from "@/hooks/useVehiclesPaginatedQuery";
-import { interleaveVehiclesWithAds } from "@/lib/interleave-ads";
+import { interleaveVehiclesWithPartners } from "@/lib/interleave-partners";
 import { PaginationControls } from "@/components/public/PaginationControls";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Sparkles } from "lucide-react";
@@ -53,7 +53,7 @@ const CardItem = memo(function CardItem({ item }: { item: ListItem }) {
   if (item.type === "car") {
     return <CarCardSingle car={item.data} />;
   }
-  return <HomeAdCard ad={item.data} />;
+  return <HomePartnerCard item={item.data} />;
 });
 
 const PAGE_SIZE = 30;
@@ -108,7 +108,7 @@ async function fetchHomeCars(page: number) {
 export function FeaturedCars() {
   const [page, setPage] = useState(0);
   const sectionRef = useRef<HTMLDivElement>(null);
-  const { ads, hasAds } = useAdsRotation();
+  const { ads, hasAds } = usePartnersRotation();
   const seed = getHalfHourSeed();
 
   // Reset to page 0 when logo/home is clicked
@@ -144,7 +144,7 @@ export function FeaturedCars() {
     if (shuffledCars.length === 0 && hasAds) {
       return ads.slice(0, 6).map((ad) => ({ type: "ad" as const, data: ad }));
     }
-    return interleaveVehiclesWithAds(shuffledCars, ads, 6);
+    return interleaveVehiclesWithPartners(shuffledCars, ads, 6);
   }, [shuffledCars, ads, hasAds]);
 
   const handlePageChange = useCallback((newPage: number) => {
@@ -193,7 +193,7 @@ export function FeaturedCars() {
             <div className="space-y-3 md:space-y-4">
               {listItems.map((item) => (
                 <CardItem
-                  key={item.type === "car" ? `car-${item.data.id}` : `ad-${item.data.id}`}
+                  key={item.type === "car" ? `car-${item.data.id}` : `promo-${item.data.id}`}
                   item={item}
                 />
               ))}

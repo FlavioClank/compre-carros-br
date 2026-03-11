@@ -6,8 +6,8 @@ import { BrandCarousel } from "@/components/public/BrandCarousel";
 import { FeaturedCars } from "@/components/public/FeaturedCars";
 import { WhyChooseUs } from "@/components/public/WhyChooseUs";
 import { CTASection } from "@/components/public/CTASection";
-import { HomeBannerCarousel } from "@/components/public/HomeBannerCarousel";
-import { InstallAppBanner } from "@/components/public/InstallAppBanner";
+import { HomeShowcase } from "@/components/public/HomeShowcase";
+import { InstallAppSection } from "@/components/public/InstallAppSection";
 import { trackSiteVisit } from "@/lib/analytics";
 import { canonicalUrl } from "@/lib/seo";
 
@@ -25,11 +25,11 @@ const Index = forwardRef<HTMLDivElement>(function Index(_props, ref) {
           <link rel="canonical" href={canonicalUrl("/")} />
           <meta property="og:url" content={canonicalUrl("/")} />
         </Helmet>
-        <HomeBannerCarousel />
+        <HomeShowcase />
         <HeroSection />
         <BrandCarousel />
         <FeaturedCars />
-        <InstallAppBanner />
+        <InstallAppSection />
         <WhyChooseUs />
         <CTASection />
       </PublicLayout>

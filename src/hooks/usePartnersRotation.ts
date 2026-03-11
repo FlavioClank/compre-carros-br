@@ -15,7 +15,7 @@ interface Ad {
   whatsapp_number?: string | null;
 }
 
-export function useAdsRotation() {
+export function usePartnersRotation() {
   const [rawAds, setRawAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [seed, setSeed] = useState<number>(getHalfHourSeed);

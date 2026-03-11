@@ -16,7 +16,7 @@ interface Banner {
   whatsapp_number: string | null;
 }
 
-export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
+export const HomeShowcase = memo(function HomeShowcase() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [autoplayKey, setAutoplayKey] = useState(0);
@@ -101,7 +101,7 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
           <div className="hidden md:block aspect-[16/7] bg-muted">
             <OptimizedImage
               src={desktopSrc}
-              alt="Banner promocional"
+              alt="Promoção destaque"
               width={1920}
               height={840}
               quality={85}
@@ -115,7 +115,7 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
           <div className="block md:hidden aspect-[1/1] bg-muted">
             <OptimizedImage
               src={mobileSrc}
-              alt="Banner promocional"
+              alt="Promoção destaque"
               width={1080}
               height={1080}
               quality={85}
@@ -160,7 +160,7 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
               type="button"
               onClick={handlePrev}
               className="pointer-events-auto inline-flex items-center justify-center h-8 w-8 rounded-full bg-background/30 text-foreground/70 shadow-sm border border-border/30"
-              aria-label="Banner anterior"
+              aria-label="Anterior"
             >
               &#8592;
             </button>
@@ -168,7 +168,7 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
               type="button"
               onClick={handleNext}
               className="pointer-events-auto inline-flex items-center justify-center h-8 w-8 rounded-full bg-background/30 text-foreground/70 shadow-sm border border-border/30"
-              aria-label="Próximo banner"
+              aria-label="Próximo"
             >
               &#8594;
             </button>
@@ -180,7 +180,7 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
               type="button"
               onClick={handlePrev}
               className="pointer-events-auto inline-flex items-center justify-center h-10 w-10 rounded-full bg-background/40 text-foreground/70 shadow-md border border-border/30 hover:bg-background/60"
-              aria-label="Banner anterior"
+              aria-label="Anterior"
             >
               &#8592;
             </button>
@@ -188,7 +188,7 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
               type="button"
               onClick={handleNext}
               className="pointer-events-auto inline-flex items-center justify-center h-10 w-10 rounded-full bg-background/40 text-foreground/70 shadow-md border border-border/30 hover:bg-background/60"
-              aria-label="Próximo banner"
+              aria-label="Próximo"
             >
               &#8594;
             </button>
@@ -216,7 +216,7 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
             type="button"
             onClick={handlePrev}
             className="pointer-events-auto inline-flex items-center justify-center h-8 w-8 rounded-full bg-background/30 text-foreground/70 shadow-sm border border-border/30"
-            aria-label="Banner anterior"
+            aria-label="Anterior"
           >
             &#8592;
           </button>
@@ -224,7 +224,7 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
             type="button"
             onClick={handleNext}
             className="pointer-events-auto inline-flex items-center justify-center h-8 w-8 rounded-full bg-background/30 text-foreground/70 shadow-sm border border-border/30"
-            aria-label="Próximo banner"
+            aria-label="Próximo"
           >
             &#8594;
           </button>
@@ -236,7 +236,7 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
             type="button"
             onClick={handlePrev}
             className="pointer-events-auto inline-flex items-center justify-center h-10 w-10 rounded-full bg-background/40 text-foreground/70 shadow-md border border-border/30 hover:bg-background/60"
-            aria-label="Banner anterior"
+            aria-label="Anterior"
           >
             &#8592;
           </button>
@@ -244,7 +244,7 @@ export const HomeBannerCarousel = memo(function HomeBannerCarousel() {
             type="button"
             onClick={handleNext}
             className="pointer-events-auto inline-flex items-center justify-center h-10 w-10 rounded-full bg-background/40 text-foreground/70 shadow-md border border-border/30 hover:bg-background/60"
-            aria-label="Próximo banner"
+            aria-label="Próximo"
           >
             &#8594;
           </button>

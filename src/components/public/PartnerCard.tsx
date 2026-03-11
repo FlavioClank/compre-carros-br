@@ -5,7 +5,7 @@ import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 import { trackView } from "@/lib/analytics";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 
-interface Ad {
+interface PartnerItem {
   id: string;
   title: string;
   category: string;
@@ -18,40 +18,30 @@ interface Ad {
   whatsapp_number?: string | null;
 }
 
-interface AdCardProps {
-  ad: Ad;
-}
-
-/**
- * AdCard component for displaying ads in search results / listings.
- * Always navigates to /anuncio/:slug page (no direct redirect to WhatsApp).
- * Click tracking happens on the ad detail page when user clicks CTA button.
- */
-export const AdCard = memo(function AdCard({ ad }: AdCardProps) {
+export const PartnerCard = memo(function PartnerCard({ item }: { item: PartnerItem }) {
   const hasTrackedView = useRef(false);
 
-  // Track view when ad is rendered in list (once per mount)
   useEffect(() => {
     if (!hasTrackedView.current) {
-      trackView("ad", ad.id, {
+      trackView("ad", item.id, {
         placement: "search",
-        category: ad.category,
-        title: ad.title,
+        category: item.category,
+        title: item.title,
       });
       hasTrackedView.current = true;
     }
-  }, [ad.id, ad.category, ad.title]);
+  }, [item.id, item.category, item.title]);
 
-  const imageUrl = ad.image_url_search || "/placeholder.svg";
-  const adSlug = ad.slug || ad.id;
+  const imageUrl = item.image_url_search || "/placeholder.svg";
+  const itemSlug = item.slug || item.id;
 
   return (
-    <Link to={`/anuncio/${adSlug}`} className="block">
+    <Link to={`/anuncio/${itemSlug}`} className="block">
       <VehicleCardShell>
         <div className="relative block aspect-[16/10] overflow-hidden">
           <OptimizedImage
             src={imageUrl}
-            alt={`Publicidade: ${ad.title}`}
+            alt={`Publicidade: ${item.title}`}
             width={400}
             height={250}
             quality={75}

@@ -5,10 +5,10 @@ import { citySlugToName, getStateAbbr } from "@/lib/geo-utils";
 import { supabase } from "@/lib/supabase";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { CarCard } from "@/components/public/CarCard";
-import { AdCard } from "@/components/public/AdCard";
-import { useAdsRotation } from "@/hooks/useAdsRotation";
+import { PartnerCard } from "@/components/public/PartnerCard";
+import { usePartnersRotation } from "@/hooks/usePartnersRotation";
 import { useVehiclesPaginatedQuery } from "@/hooks/useVehiclesPaginatedQuery";
-import { interleaveVehiclesWithAds } from "@/lib/interleave-ads";
+import { interleaveVehiclesWithPartners } from "@/lib/interleave-partners";
 import { PaginationControls } from "@/components/public/PaginationControls";
 import { VehicleFilters, VehicleData } from "@/hooks/useVehiclesInfiniteQuery";
 import { Input } from "@/components/ui/input";
@@ -111,7 +111,7 @@ const CardItem = memo(function CardItem({ item }: { item: ListItem }) {
   if (item.type === "car") {
     return <CarCard car={item.data} />;
   }
-  return <AdCard ad={item.data} />;
+  return <PartnerCard item={item.data} />;
 });
 
 export default function Cars() {
@@ -127,7 +127,7 @@ export default function Cars() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [page, setPage] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
-  const { ads, hasAds } = useAdsRotation();
+  const { ads, hasAds } = usePartnersRotation();
 
   // Filters state
   const [search, setSearch] = useState(searchParams.get("busca") || "");
@@ -191,7 +191,7 @@ export default function Cars() {
   // Build list items with intercalated ads (6 per page)
   const listItems = useMemo((): ListItem[] => {
     if (vehicles.length === 0) return [];
-    return interleaveVehiclesWithAds(vehicles, ads, 6);
+    return interleaveVehiclesWithPartners(vehicles, ads, 6);
   }, [vehicles, ads]);
 
   const handlePageChange = useCallback((newPage: number) => {
@@ -734,7 +734,7 @@ export default function Cars() {
               <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {listItems.map((item) => (
                   <CardItem
-                    key={item.type === 'car' ? `car-${item.data.id}` : `ad-${item.data.id}`}
+                    key={item.type === 'car' ? `car-${item.data.id}` : `promo-${item.data.id}`}
                     item={item}
                   />
                 ))}
