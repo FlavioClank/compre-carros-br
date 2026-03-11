@@ -9,7 +9,7 @@ import { ArrowLeft, MessageCircle, ExternalLink, Instagram } from "lucide-react"
 import { generateWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/constants";
 import { trackClick, trackView } from "@/lib/analytics";
 import { format } from "date-fns";
-import { getAdPublicUrl } from "@/lib/ad-utils";
+import { getPartnerPublicUrl } from "@/lib/partner-utils";
 import { absoluteImageUrl } from "@/lib/seo";
 
 interface AdDetail {

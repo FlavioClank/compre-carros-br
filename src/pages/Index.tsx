@@ -6,8 +6,8 @@ import { BrandCarousel } from "@/components/public/BrandCarousel";
 import { FeaturedCars } from "@/components/public/FeaturedCars";
 import { WhyChooseUs } from "@/components/public/WhyChooseUs";
 import { CTASection } from "@/components/public/CTASection";
-import { HomeBannerCarousel } from "@/components/public/HomeBannerCarousel";
-import { InstallAppBanner } from "@/components/public/InstallAppBanner";
+import { HomeShowcase } from "@/components/public/HomeShowcase";
+import { InstallAppSection } from "@/components/public/InstallAppSection";
 import { trackSiteVisit } from "@/lib/analytics";
 import { canonicalUrl } from "@/lib/seo";
 

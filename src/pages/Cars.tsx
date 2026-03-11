@@ -111,7 +111,7 @@ const CardItem = memo(function CardItem({ item }: { item: ListItem }) {
   if (item.type === "car") {
     return <CarCard car={item.data} />;
   }
-  return <AdCard ad={item.data} />;
+  return <PartnerCard item={item.data} />;
 });
 
 export default function Cars() {
