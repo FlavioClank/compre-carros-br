@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef, useState } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -21,110 +21,151 @@ export function ImageLightbox({
   onNext,
   alt = "Imagem ampliada",
 }: ImageLightboxProps) {
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-  const isSwiping = useRef(false);
-  const swipeOffsetRef = useRef(0);
-  const [swipeOffset, setSwipeOffset] = useState(0);
+  // ── Refs for touch tracking (no React state to avoid stale closures) ──
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const currentX = useRef(0);
+  const tracking = useRef(false);   // true once we decide it's a horizontal swipe
+  const decided = useRef(false);    // true once we've committed to swipe OR scroll
+  const imageRef = useRef<HTMLDivElement>(null);
+  const didSwipe = useRef(false);   // prevents backdrop click after swipe
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (!isOpen) return;
-      switch (e.key) {
-        case "Escape":
-          onClose();
-          break;
-        case "ArrowLeft":
-          onPrev();
-          break;
-        case "ArrowRight":
-          onNext();
-          break;
-      }
-    },
-    [isOpen, onClose, onPrev, onNext]
-  );
+  // ── Stable callback refs (avoids useCallback dep issues) ──
+  const onCloseRef = useRef(onClose);
+  const onPrevRef = useRef(onPrev);
+  const onNextRef = useRef(onNext);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+  useEffect(() => { onPrevRef.current = onPrev; }, [onPrev]);
+  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
 
+  // ── Keyboard navigation ──
   useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case "Escape": onCloseRef.current(); break;
+        case "ArrowLeft": onPrevRef.current(); break;
+        case "ArrowRight": onNextRef.current(); break;
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [isOpen]);
 
+  // ── Lock body scroll ──
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
-  // History API for back button
+  // ── History API: back button closes lightbox ──
   useEffect(() => {
     if (!isOpen) return;
     window.history.pushState({ lightbox: true }, "");
-    const handlePopState = () => {
-      onClose();
-    };
-    window.addEventListener("popstate", handlePopState);
+    const handler = () => onCloseRef.current();
+    window.addEventListener("popstate", handler);
     return () => {
-      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("popstate", handler);
       if (window.history.state?.lightbox) {
         window.history.back();
       }
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
-  // Touch handlers for swipe navigation
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-    isSwiping.current = false;
-    swipeOffsetRef.current = 0;
-    setSwipeOffset(0);
-  }, []);
+  // ── Touch handlers (attached via native addEventListener for {passive: false}) ──
+  useEffect(() => {
+    if (!isOpen) return;
+    const el = imageRef.current;
+    if (!el) return;
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (touchStartX.current === null || touchStartY.current === null) return;
-    
-    const deltaX = e.touches[0].clientX - touchStartX.current;
-    const deltaY = e.touches[0].clientY - touchStartY.current;
-    
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
-      isSwiping.current = true;
-      e.preventDefault();
-      swipeOffsetRef.current = deltaX;
-      setSwipeOffset(deltaX);
-    }
-  }, []);
+    const SWIPE_THRESHOLD = 40;
 
-  const handleTouchEnd = useCallback(() => {
-    const SWIPE_THRESHOLD = 50;
-    const offset = swipeOffsetRef.current;
-    
-    if (isSwiping.current && Math.abs(offset) > SWIPE_THRESHOLD) {
-      if (offset < 0) {
-        onNext();
-      } else {
-        onPrev();
+    const onTouchStart = (e: TouchEvent) => {
+      startX.current = e.touches[0].clientX;
+      startY.current = e.touches[0].clientY;
+      currentX.current = 0;
+      tracking.current = false;
+      decided.current = false;
+      didSwipe.current = false;
+      el.style.transition = "none";
+      el.style.transform = "translateX(0px)";
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      const dx = e.touches[0].clientX - startX.current;
+      const dy = e.touches[0].clientY - startY.current;
+
+      // First significant movement decides: horizontal swipe or vertical scroll
+      if (!decided.current && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+        decided.current = true;
+        tracking.current = Math.abs(dx) > Math.abs(dy);
       }
-    }
-    
-    touchStartX.current = null;
-    touchStartY.current = null;
-    isSwiping.current = false;
-    swipeOffsetRef.current = 0;
-    setSwipeOffset(0);
-  }, [onNext, onPrev]);
 
-  // Only close on backdrop click if not swiping
+      if (tracking.current) {
+        e.preventDefault(); // prevent scroll while swiping
+        currentX.current = dx;
+        el.style.transform = `translateX(${dx}px)`;
+      }
+    };
+
+    const onTouchEnd = () => {
+      if (tracking.current) {
+        didSwipe.current = true;
+        const dx = currentX.current;
+
+        if (Math.abs(dx) > SWIPE_THRESHOLD) {
+          // Animate out then navigate
+          const direction = dx < 0 ? -1 : 1;
+          el.style.transition = "transform 0.15s ease-out";
+          el.style.transform = `translateX(${direction * -300}px)`;
+
+          setTimeout(() => {
+            if (dx < 0) {
+              onNextRef.current();
+            } else {
+              onPrevRef.current();
+            }
+            // Reset position instantly (new image will render)
+            el.style.transition = "none";
+            el.style.transform = "translateX(0px)";
+          }, 150);
+        } else {
+          // Snap back
+          el.style.transition = "transform 0.2s ease-out";
+          el.style.transform = "translateX(0px)";
+        }
+      }
+
+      tracking.current = false;
+      decided.current = false;
+      currentX.current = 0;
+    };
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [isOpen]);
+
+  // ── Backdrop click (only if no swipe occurred) ──
   const handleBackdropClick = useCallback(() => {
-    if (!isSwiping.current) {
-      onClose();
-    }
-  }, [onClose]);
+    // Small delay to let didSwipe settle from touchEnd
+    requestAnimationFrame(() => {
+      if (!didSwipe.current) {
+        onCloseRef.current();
+      }
+      didSwipe.current = false;
+    });
+  }, []);
 
   if (!isOpen) return null;
 
@@ -132,9 +173,6 @@ export function ImageLightbox({
     <div
       className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
       onClick={handleBackdropClick}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
     >
       {/* Close button */}
       <Button
@@ -166,20 +204,18 @@ export function ImageLightbox({
         </Button>
       )}
 
-      {/* Main Image with swipe offset */}
+      {/* Image container — touch target */}
       <div
-        className="max-w-[90vw] max-h-[90vh] flex items-center justify-center transition-transform"
-        style={{
-          transform: swipeOffset ? `translateX(${swipeOffset}px)` : undefined,
-          transition: swipeOffset ? 'none' : 'transform 0.2s ease-out',
-        }}
+        ref={imageRef}
+        className="max-w-[90vw] max-h-[90vh] flex items-center justify-center will-change-transform"
         onClick={(e) => e.stopPropagation()}
       >
         <img
           src={images[currentIndex]}
           alt={alt}
-          className="max-w-full max-h-[90vh] object-contain select-none pointer-events-none"
+          className="max-w-full max-h-[90vh] object-contain select-none"
           draggable={false}
+          style={{ pointerEvents: "none" }}
         />
       </div>
 
@@ -201,7 +237,7 @@ export function ImageLightbox({
 
       {/* Counter */}
       {images.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm pointer-events-none">
           {currentIndex + 1} / {images.length}
         </div>
       )}
