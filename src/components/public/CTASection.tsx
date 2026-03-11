@@ -124,7 +124,7 @@ export function CTASection() {
         <div className="container">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 max-w-4xl mx-auto">
             <div className="flex items-center gap-4 text-center md:text-left">
-              <img src={logoImg} alt="CompreCarrosBr" className="h-14 w-14 rounded-xl object-cover shadow-lg" />
+              <img src={logoImg} alt="CompreCarrosBr" className="h-20 w-20 rounded-xl object-cover shadow-lg" />
               <div>
                 <p className="font-display text-xl md:text-2xl font-bold">
                   CompreCarrosBr
