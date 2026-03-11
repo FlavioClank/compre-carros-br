@@ -168,7 +168,7 @@ export const HomeShowcase = memo(function HomeShowcase() {
               type="button"
               onClick={handleNext}
               className="pointer-events-auto inline-flex items-center justify-center h-8 w-8 rounded-full bg-background/30 text-foreground/70 shadow-sm border border-border/30"
-              aria-label="Próximo banner"
+              aria-label="Próximo"
             >
               &#8594;
             </button>
