@@ -728,7 +728,10 @@ export default function Cars() {
                     if (isListening) {
                       stopListening();
                     } else {
-                      startListening((text) => setSearch(text));
+                      startListening((text) => {
+                        const corrected = applyCorrections(text);
+                        setSearch(corrected);
+                      });
                     }
                   }}
                   className={`absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors ${
