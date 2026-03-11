@@ -32,29 +32,29 @@ export function WhyChooseUs() {
           <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
             Por que escolher a <span className="text-accent">CompreCarrosBr</span>?
           </h2>
-          <p className="text-muted-foreground mt-4">
+          <p className="text-muted-foreground mt-4 text-sm md:text-base">
             Somos especialistas em intermediação de veículos, garantindo
             segurança e transparência em cada negociação.
           </p>
         </div>
 
         {/* Features Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
               <div
                 key={feature.title}
-                className="bg-card rounded-2xl p-6 border border-border shadow-card card-hover animate-fade-in opacity-0"
+                className="bg-card rounded-2xl p-5 md:p-6 border border-border shadow-card card-hover text-center animate-fade-in opacity-0"
                 style={{ animationDelay: `${index * 0.1}s`, animationFillMode: "forwards" }}
               >
-                <div className="h-12 w-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+                <div className="h-12 w-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4 mx-auto">
                   <Icon className="h-6 w-6 text-accent" />
                 </div>
-                <h3 className="font-display text-lg font-semibold text-card-foreground mb-2">
+                <h3 className="font-display text-lg md:text-xl font-bold text-card-foreground mb-1">
                   {feature.title}
                 </h3>
-                <p className="text-sm text-muted-foreground">{feature.description}</p>
+                <p className="text-sm md:text-base text-muted-foreground">{feature.description}</p>
               </div>
             );
           })}
