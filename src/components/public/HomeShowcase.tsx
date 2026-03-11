@@ -101,7 +101,7 @@ export const HomeShowcase = memo(function HomeShowcase() {
           <div className="hidden md:block aspect-[16/7] bg-muted">
             <OptimizedImage
               src={desktopSrc}
-              alt="Banner promocional"
+              alt="Promoção destaque"
               width={1920}
               height={840}
               quality={85}
