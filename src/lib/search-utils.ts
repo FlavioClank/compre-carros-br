@@ -116,7 +116,7 @@ const CORRECTIONS: Record<string, string> = {
   "jipe": "jeep",
   "gipe": "jeep",
   "mitsubish": "mitsubishi",
-  "mitsubish": "mitsubishi",
+  "mitsubichi": "mitsubishi",
   "yamaha": "yamaha",
   "iamaha": "yamaha",
   "honda": "honda",
