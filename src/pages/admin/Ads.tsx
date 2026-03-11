@@ -372,7 +372,7 @@ export default function AdminAds() {
   }
 
   function copyAdLink(ad: Ad) {
-    const url = getAdPublicUrl(ad);
+    const url = getPartnerPublicUrl(ad);
     navigator.clipboard.writeText(url);
     toast.success("Link copiado: " + url);
   }
