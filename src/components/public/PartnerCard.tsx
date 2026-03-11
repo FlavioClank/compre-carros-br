@@ -27,7 +27,7 @@ interface AdCardProps {
  * Always navigates to /anuncio/:slug page (no direct redirect to WhatsApp).
  * Click tracking happens on the ad detail page when user clicks CTA button.
  */
-export const AdCard = memo(function AdCard({ ad }: AdCardProps) {
+export const PartnerCard = memo(function PartnerCard({ item }: { item: Ad }) {
   const hasTrackedView = useRef(false);
 
   // Track view when ad is rendered in list (once per mount)
