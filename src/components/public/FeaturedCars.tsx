@@ -144,7 +144,7 @@ export function FeaturedCars() {
     if (shuffledCars.length === 0 && hasAds) {
       return ads.slice(0, 6).map((ad) => ({ type: "ad" as const, data: ad }));
     }
-    return interleaveVehiclesWithAds(shuffledCars, ads, 6);
+    return interleaveVehiclesWithPartners(shuffledCars, ads, 6);
   }, [shuffledCars, ads, hasAds]);
 
   const handlePageChange = useCallback((newPage: number) => {
