@@ -24,6 +24,7 @@ export function ImageLightbox({
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const isSwiping = useRef(false);
+  const swipeOffsetRef = useRef(0);
   const [swipeOffset, setSwipeOffset] = useState(0);
 
   const handleKeyDown = useCallback(
