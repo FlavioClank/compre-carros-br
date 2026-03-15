@@ -57,6 +57,7 @@ const CardItem = memo(function CardItem({ item }: { item: ListItem }) {
 });
 
 const PAGE_SIZE = 30;
+const ADS_PER_PAGE = 6;
 
 async function fetchHomeCars(page: number) {
   const from = page * PAGE_SIZE;
