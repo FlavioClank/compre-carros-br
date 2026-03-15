@@ -140,13 +140,18 @@ export function FeaturedCars() {
     ];
   }, [data?.cars, seed, page]);
 
-  // Interleave 6 ads per page
+  // Interleave ads across pages — offset so page N picks up where page N-1 left off
+  const adStartIndex = useMemo(() => {
+    if (ads.length === 0) return 0;
+    return (page * ADS_PER_PAGE) % ads.length;
+  }, [page, ads.length]);
+
   const listItems = useMemo((): ListItem[] => {
     if (shuffledCars.length === 0 && hasAds) {
-      return ads.slice(0, 6).map((ad) => ({ type: "ad" as const, data: ad }));
+      return ads.slice(0, ADS_PER_PAGE).map((ad) => ({ type: "ad" as const, data: ad }));
     }
-    return interleaveVehiclesWithPartners(shuffledCars, ads, 6);
-  }, [shuffledCars, ads, hasAds]);
+    return interleaveVehiclesWithPartners(shuffledCars, ads, ADS_PER_PAGE, adStartIndex);
+  }, [shuffledCars, ads, hasAds, adStartIndex]);
 
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
