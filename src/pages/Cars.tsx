@@ -254,11 +254,17 @@ export default function Cars() {
     return shuffleSeeded(vehicles, seed + page);
   }, [vehicles, seed, page]);
 
-  // Build list items with intercalated ads (6 per page)
+  // Build list items with intercalated ads — continuous rotation across pages
+  const ADS_PER_PAGE = 6;
+  const adStartIndex = useMemo(() => {
+    if (ads.length === 0) return 0;
+    return (page * ADS_PER_PAGE) % ads.length;
+  }, [page, ads.length]);
+
   const listItems = useMemo((): ListItem[] => {
     if (shuffledVehicles.length === 0) return [];
-    return interleaveVehiclesWithPartners(shuffledVehicles, ads, 6);
-  }, [shuffledVehicles, ads]);
+    return interleaveVehiclesWithPartners(shuffledVehicles, ads, ADS_PER_PAGE, adStartIndex);
+  }, [shuffledVehicles, ads, adStartIndex]);
 
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
