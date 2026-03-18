@@ -372,6 +372,67 @@ export default function Cars() {
     fetchBrandsData();
   }, []);
 
+  // Fetch available models based on brand
+  useEffect(() => {
+    const fetchModels = async () => {
+      let query = supabase
+        .from("cars")
+        .select("model")
+        .eq("status", "available")
+        .eq("garage_is_active", true);
+      if (brandId) query = query.eq("brand_id", brandId);
+      if (category) query = query.eq("category", category);
+      const { data } = await query;
+      if (data) {
+        const unique = [...new Set(data.map((d) => d.model))].sort();
+        setAvailableModels(unique);
+      }
+    };
+    fetchModels();
+  }, [brandId, category]);
+
+  // Fetch available colors from DB
+  useEffect(() => {
+    const fetchColors = async () => {
+      let query = supabase
+        .from("cars")
+        .select("color")
+        .eq("status", "available")
+        .eq("garage_is_active", true);
+      if (category) query = query.eq("category", category);
+      const { data } = await query;
+      if (data) {
+        const normalized = new Map<string, string>();
+        data.forEach((d) => {
+          const norm = normalizeColor(d.color);
+          if (!normalized.has(norm)) normalized.set(norm, norm);
+        });
+        const sorted = [...normalized.values()].sort();
+        setAvailableColors(sorted);
+      }
+    };
+    fetchColors();
+  }, [category]);
+
+  // Sync filters to URL params for persistence
+  useEffect(() => {
+    const params: Record<string, string> = {};
+    if (search) params.busca = search;
+    if (brandId) params.brandId = brandId;
+    if (modelFilter) params.modelo = modelFilter;
+    if (yearFrom) params.ano_de = yearFrom;
+    if (yearTo) params.ano_ate = yearTo;
+    if (priceRange) params.preco = priceRange;
+    if (transmission) params.cambio = transmission;
+    if (fuel) params.combustivel = fuel;
+    if (color) params.cor = color;
+    if (category) params.type = category;
+    if (coolingType) params.refrigeracao = coolingType;
+    if (motorcycleCategory) params.categoria_moto = motorcycleCategory;
+    if (page > 0) params.pagina = String(page);
+    setSearchParams(params, { replace: true });
+  }, [search, brandId, modelFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, category, coolingType, motorcycleCategory, page]);
+
   const handleCategoryChange = (newCategory: string) => {
     setBrandId("");
     setModelFilter("");
