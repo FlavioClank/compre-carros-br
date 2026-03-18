@@ -253,7 +253,7 @@ export default function Cars() {
       garageCity: geoCity || undefined,
       garageState: geoStateAbbr || undefined,
     };
-  }, [search, parsedSearch, brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, category, coolingType, motorcycleCategory, geoCity, geoStateAbbr]);
+  }, [search, parsedSearch, brandId, modelFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, category, coolingType, motorcycleCategory, geoCity, geoStateAbbr]);
 
   // Reset page when filters change
   useEffect(() => {
