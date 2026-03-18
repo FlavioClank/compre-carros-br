@@ -534,6 +534,26 @@ export default function Cars() {
         </Select>
       </div>
 
+      {/* Model */}
+      <div>
+        <label className="text-sm font-medium text-foreground mb-2 block">
+          Modelo
+        </label>
+        <Select value={modelFilter || "all"} onValueChange={(v) => setModelFilter(v === "all" ? "" : v)}>
+          <SelectTrigger className="bg-background">
+            <SelectValue placeholder="Todos" />
+          </SelectTrigger>
+          <SelectContent className="bg-background border-border max-h-[300px]">
+            <SelectItem value="all">Todos</SelectItem>
+            {availableModels.map((m) => (
+              <SelectItem key={m} value={m}>
+                {m}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Year From */}
       <div>
         <label className="text-sm font-medium text-foreground mb-2 block">
