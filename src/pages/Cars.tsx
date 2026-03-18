@@ -82,9 +82,41 @@ const priceRanges = [
   { label: "Acima de R$ 200.000", min: 200000, max: 99999999 },
 ];
 
-const COLORS = [
-  "Preto",
+// Color normalization map - maps variations to main color
+const COLOR_NORMALIZE_MAP: Record<string, string> = {
+  branco: "Branco",
+  branca: "Branco",
+  preto: "Preto",
+  preta: "Preto",
+  cinza: "Cinza",
+  "cinza grafite": "Cinza",
+  "cinza escuro": "Cinza",
+  "cinza claro": "Cinza",
+  prata: "Prata",
+  vermelho: "Vermelho",
+  vermelha: "Vermelho",
+  azul: "Azul",
+  verde: "Verde",
+  amarelo: "Amarelo",
+  amarela: "Amarelo",
+  laranja: "Laranja",
+  marrom: "Marrom",
+  bege: "Bege",
+  dourado: "Dourado",
+  dourada: "Dourado",
+  vinho: "Vinho",
+  bordô: "Vinho",
+  bordo: "Vinho",
+};
+
+function normalizeColor(color: string): string {
+  const lower = color.toLowerCase().trim();
+  return COLOR_NORMALIZE_MAP[lower] || color;
+}
+
+const MAIN_COLORS = [
   "Branco",
+  "Preto",
   "Prata",
   "Cinza",
   "Vermelho",
@@ -96,16 +128,6 @@ const COLORS = [
   "Bege",
   "Dourado",
   "Vinho",
-];
-
-const DOORS_OPTIONS = [
-  { value: "2", label: "2 Portas" },
-  { value: "4", label: "4 Portas" },
-];
-
-const CONDITION_OPTIONS = [
-  { value: "new", label: "Novo" },
-  { value: "used", label: "Usado" },
 ];
 
 // Memoized card wrapper
