@@ -172,6 +172,19 @@ export default function AdminConsortium() {
     }
   };
 
+  const deleteLead = async (leadId: string) => {
+    const { error } = await supabase
+      .from("consortium_leads")
+      .delete()
+      .eq("id", leadId);
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } else {
+      setLeads((prev) => prev.filter((l) => l.id !== leadId));
+      toast({ title: "Lead excluído permanentemente" });
+    }
+  };
+
   const archiveAll = async () => {
     const activeIds = filteredLeads.filter((l) => !l.is_archived).map((l) => l.id);
     if (activeIds.length === 0) return;
