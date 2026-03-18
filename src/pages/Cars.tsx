@@ -242,15 +242,13 @@ export default function Cars() {
       transmission: effectiveTransmission,
       fuel: effectiveFuel,
       color: color || undefined,
-      doors: doors || undefined,
-      condition: condition || undefined,
       category: category || undefined,
       coolingType: coolingType || undefined,
       motorcycleCategory: motorcycleCategory || undefined,
       garageCity: geoCity || undefined,
       garageState: geoStateAbbr || undefined,
     };
-  }, [search, parsedSearch, brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category, coolingType, motorcycleCategory, geoCity, geoStateAbbr]);
+  }, [search, parsedSearch, brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, category, coolingType, motorcycleCategory, geoCity, geoStateAbbr]);
 
   // Reset page when filters change
   useEffect(() => {
