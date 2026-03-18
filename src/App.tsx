@@ -164,6 +164,14 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/consortium"
+                element={
+                  <ProtectedRoute allowedRoles={["super_admin"]}>
+                    <AdminConsortium />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* GARAGE ROUTES - Garage only */}
               <Route

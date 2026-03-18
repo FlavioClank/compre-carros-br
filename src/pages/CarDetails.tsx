@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ConsortiumButton } from "@/components/public/ConsortiumButton";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/lib/supabase";

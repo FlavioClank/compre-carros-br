@@ -189,20 +189,21 @@ export default function Cars() {
   const seed = getHalfHourSeed();
   const { isListening, isSupported, startListening, stopListening } = useSpeechRecognition();
 
-  // Filters state
+  // Filters state — initialize from URL params
   const [search, setSearch] = useState(searchParams.get("busca") || "");
   const [brandId, setBrandId] = useState(searchParams.get("brandId") || "");
+  const [modelFilter, setModelFilter] = useState(searchParams.get("modelo") || "");
   const [yearFrom, setYearFrom] = useState(searchParams.get("ano_de") || "");
   const [yearTo, setYearTo] = useState(searchParams.get("ano_ate") || "");
   const [priceRange, setPriceRange] = useState(searchParams.get("preco") || "");
   const [transmission, setTransmission] = useState(searchParams.get("cambio") || "");
   const [fuel, setFuel] = useState(searchParams.get("combustivel") || "");
   const [color, setColor] = useState(searchParams.get("cor") || "");
-  const [doors, setDoors] = useState(searchParams.get("portas") || "");
-  const [condition, setCondition] = useState(searchParams.get("condicao") || "");
   const [category, setCategory] = useState(searchParams.get("type") || searchParams.get("categoria") || "");
   const [coolingType, setCoolingType] = useState(searchParams.get("refrigeracao") || "");
   const [motorcycleCategory, setMotorcycleCategory] = useState(searchParams.get("categoria_moto") || "");
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [availableColors, setAvailableColors] = useState<string[]>([]);
 
   // All brands combined for smart search matching
   const allBrands = useMemo(() => {

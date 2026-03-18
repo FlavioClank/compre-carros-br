@@ -39,6 +39,7 @@ const menuItems = [
   { icon: Wallet, label: "Gastos", href: "/admin/gastos" },
   { icon: BarChart3, label: "Estatísticas", href: "/admin/stats" },
   { icon: History, label: "Histórico", href: "/admin/history" },
+  { icon: Handshake, label: "Consórcio", href: "/admin/consortium" },
   { icon: FileText, label: "Logs", href: "/admin/logs" },
 ];
 
