@@ -234,7 +234,9 @@ export default function Cars() {
     const effectiveYearTo = yearTo || parsedSearch?.detectedYear || undefined;
     const effectiveFuel = fuel || parsedSearch?.detectedFuel || undefined;
     const effectiveTransmission = transmission || parsedSearch?.detectedTransmission || undefined;
-    const effectiveSearch = parsedSearch?.searchText || (search && !parsedSearch ? search : undefined);
+    const effectiveSearch = modelFilter 
+      ? modelFilter 
+      : (parsedSearch?.searchText || (search && !parsedSearch ? search : undefined));
     
     return {
       search: effectiveSearch || undefined,
