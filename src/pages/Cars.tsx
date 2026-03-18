@@ -441,12 +441,6 @@ export default function Cars() {
     setCoolingType("");
     setMotorcycleCategory("");
     setCategory(newCategory);
-    
-    if (newCategory) {
-      setSearchParams({ type: newCategory });
-    } else {
-      setSearchParams({});
-    }
   };
 
   const clearFilters = () => {
@@ -462,7 +456,7 @@ export default function Cars() {
     setCategory("");
     setCoolingType("");
     setMotorcycleCategory("");
-    setSearchParams({});
+    setPage(0);
   };
 
   const hasFilters = search || brandId || modelFilter || yearFrom || yearTo || priceRange || transmission || fuel || color || category || coolingType || motorcycleCategory;
