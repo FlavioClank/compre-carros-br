@@ -146,7 +146,7 @@ export default function AdminConsortium() {
   const updateLeadStatus = async (leadId: string, newStatus: string) => {
     const { error } = await supabase
       .from("consortium_leads")
-      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .update({ status: newStatus as any, updated_at: new Date().toISOString() })
       .eq("id", leadId);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
