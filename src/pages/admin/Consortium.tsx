@@ -499,7 +499,7 @@ export default function AdminConsortium() {
                         <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                           {new Date(lead.created_at).toLocaleDateString("pt-BR")}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="flex gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -512,6 +512,21 @@ export default function AdminConsortium() {
                               <Archive className="h-4 w-4" />
                             )}
                           </Button>
+                          {lead.is_archived && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                if (window.confirm("Excluir este lead permanentemente?")) {
+                                  deleteLead(lead.id);
+                                }
+                              }}
+                              title="Excluir permanentemente"
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
