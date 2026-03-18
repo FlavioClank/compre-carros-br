@@ -183,7 +183,10 @@ export default function Cars() {
   const [carBrands, setCarBrands] = useState<Brand[]>([]);
   const [motorcycleBrands, setMotorcycleBrands] = useState<Brand[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(() => {
+    const p = parseInt(searchParams.get("pagina") || "0");
+    return isNaN(p) ? 0 : p;
+  });
   const listRef = useRef<HTMLDivElement>(null);
   const { ads, hasAds } = usePartnersRotation();
   const seed = getHalfHourSeed();
