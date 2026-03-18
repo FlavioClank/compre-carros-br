@@ -354,6 +354,83 @@ export type Database = {
           },
         ]
       }
+      consortium_leads: {
+        Row: {
+          birth_date: string
+          cpf: string
+          created_at: string
+          email: string
+          id: string
+          is_archived: boolean
+          name: string
+          phone: string
+          status: Database["public"]["Enums"]["consortium_lead_status"]
+          updated_at: string
+          vehicle_id: string | null
+          vehicle_info: string | null
+        }
+        Insert: {
+          birth_date: string
+          cpf: string
+          created_at?: string
+          email: string
+          id?: string
+          is_archived?: boolean
+          name: string
+          phone: string
+          status?: Database["public"]["Enums"]["consortium_lead_status"]
+          updated_at?: string
+          vehicle_id?: string | null
+          vehicle_info?: string | null
+        }
+        Update: {
+          birth_date?: string
+          cpf?: string
+          created_at?: string
+          email?: string
+          id?: string
+          is_archived?: boolean
+          name?: string
+          phone?: string
+          status?: Database["public"]["Enums"]["consortium_lead_status"]
+          updated_at?: string
+          vehicle_id?: string | null
+          vehicle_info?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consortium_leads_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consortium_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+          whatsapp_number: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+          whatsapp_number?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+          whatsapp_number?: string
+        }
+        Relationships: []
+      }
       garages: {
         Row: {
           address: string | null
@@ -634,6 +711,12 @@ export type Database = {
     Enums: {
       app_role: "super_admin" | "garage"
       car_status: "available" | "sold"
+      consortium_lead_status:
+        | "novo"
+        | "encaminhado"
+        | "em_negociacao"
+        | "fechado"
+        | "nao_fechou"
       fuel_type:
         | "gasoline"
         | "ethanol"
@@ -771,6 +854,13 @@ export const Constants = {
     Enums: {
       app_role: ["super_admin", "garage"],
       car_status: ["available", "sold"],
+      consortium_lead_status: [
+        "novo",
+        "encaminhado",
+        "em_negociacao",
+        "fechado",
+        "nao_fechou",
+      ],
       fuel_type: [
         "gasoline",
         "ethanol",

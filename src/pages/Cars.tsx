@@ -82,9 +82,41 @@ const priceRanges = [
   { label: "Acima de R$ 200.000", min: 200000, max: 99999999 },
 ];
 
-const COLORS = [
-  "Preto",
+// Color normalization map - maps variations to main color
+const COLOR_NORMALIZE_MAP: Record<string, string> = {
+  branco: "Branco",
+  branca: "Branco",
+  preto: "Preto",
+  preta: "Preto",
+  cinza: "Cinza",
+  "cinza grafite": "Cinza",
+  "cinza escuro": "Cinza",
+  "cinza claro": "Cinza",
+  prata: "Prata",
+  vermelho: "Vermelho",
+  vermelha: "Vermelho",
+  azul: "Azul",
+  verde: "Verde",
+  amarelo: "Amarelo",
+  amarela: "Amarelo",
+  laranja: "Laranja",
+  marrom: "Marrom",
+  bege: "Bege",
+  dourado: "Dourado",
+  dourada: "Dourado",
+  vinho: "Vinho",
+  bordô: "Vinho",
+  bordo: "Vinho",
+};
+
+function normalizeColor(color: string): string {
+  const lower = color.toLowerCase().trim();
+  return COLOR_NORMALIZE_MAP[lower] || color;
+}
+
+const MAIN_COLORS = [
   "Branco",
+  "Preto",
   "Prata",
   "Cinza",
   "Vermelho",
@@ -96,16 +128,6 @@ const COLORS = [
   "Bege",
   "Dourado",
   "Vinho",
-];
-
-const DOORS_OPTIONS = [
-  { value: "2", label: "2 Portas" },
-  { value: "4", label: "4 Portas" },
-];
-
-const CONDITION_OPTIONS = [
-  { value: "new", label: "Novo" },
-  { value: "used", label: "Usado" },
 ];
 
 // Memoized card wrapper
@@ -161,26 +183,30 @@ export default function Cars() {
   const [carBrands, setCarBrands] = useState<Brand[]>([]);
   const [motorcycleBrands, setMotorcycleBrands] = useState<Brand[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(() => {
+    const p = parseInt(searchParams.get("pagina") || "0");
+    return isNaN(p) ? 0 : p;
+  });
   const listRef = useRef<HTMLDivElement>(null);
   const { ads, hasAds } = usePartnersRotation();
   const seed = getHalfHourSeed();
   const { isListening, isSupported, startListening, stopListening } = useSpeechRecognition();
 
-  // Filters state
+  // Filters state — initialize from URL params
   const [search, setSearch] = useState(searchParams.get("busca") || "");
   const [brandId, setBrandId] = useState(searchParams.get("brandId") || "");
+  const [modelFilter, setModelFilter] = useState(searchParams.get("modelo") || "");
   const [yearFrom, setYearFrom] = useState(searchParams.get("ano_de") || "");
   const [yearTo, setYearTo] = useState(searchParams.get("ano_ate") || "");
   const [priceRange, setPriceRange] = useState(searchParams.get("preco") || "");
   const [transmission, setTransmission] = useState(searchParams.get("cambio") || "");
   const [fuel, setFuel] = useState(searchParams.get("combustivel") || "");
   const [color, setColor] = useState(searchParams.get("cor") || "");
-  const [doors, setDoors] = useState(searchParams.get("portas") || "");
-  const [condition, setCondition] = useState(searchParams.get("condicao") || "");
   const [category, setCategory] = useState(searchParams.get("type") || searchParams.get("categoria") || "");
   const [coolingType, setCoolingType] = useState(searchParams.get("refrigeracao") || "");
   const [motorcycleCategory, setMotorcycleCategory] = useState(searchParams.get("categoria_moto") || "");
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [availableColors, setAvailableColors] = useState<string[]>([]);
 
   // All brands combined for smart search matching
   const allBrands = useMemo(() => {
@@ -208,7 +234,9 @@ export default function Cars() {
     const effectiveYearTo = yearTo || parsedSearch?.detectedYear || undefined;
     const effectiveFuel = fuel || parsedSearch?.detectedFuel || undefined;
     const effectiveTransmission = transmission || parsedSearch?.detectedTransmission || undefined;
-    const effectiveSearch = parsedSearch?.searchText || (search && !parsedSearch ? search : undefined);
+    const effectiveSearch = modelFilter 
+      ? modelFilter 
+      : (parsedSearch?.searchText || (search && !parsedSearch ? search : undefined));
     
     return {
       search: effectiveSearch || undefined,
@@ -219,15 +247,13 @@ export default function Cars() {
       transmission: effectiveTransmission,
       fuel: effectiveFuel,
       color: color || undefined,
-      doors: doors || undefined,
-      condition: condition || undefined,
       category: category || undefined,
       coolingType: coolingType || undefined,
       motorcycleCategory: motorcycleCategory || undefined,
       garageCity: geoCity || undefined,
       garageState: geoStateAbbr || undefined,
     };
-  }, [search, parsedSearch, brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, category, coolingType, motorcycleCategory, geoCity, geoStateAbbr]);
+  }, [search, parsedSearch, brandId, modelFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, category, coolingType, motorcycleCategory, geoCity, geoStateAbbr]);
 
   // Reset page when filters change
   useEffect(() => {
@@ -315,9 +341,9 @@ export default function Cars() {
       setCategory(urlType);
       if (!urlBrandId) {
         setBrandId("");
+        setModelFilter("");
         setTransmission("");
         setFuel("");
-        setDoors("");
         setCoolingType("");
         setMotorcycleCategory("");
       }
@@ -351,41 +377,95 @@ export default function Cars() {
     fetchBrandsData();
   }, []);
 
+  // Fetch available models based on brand
+  useEffect(() => {
+    const fetchModels = async () => {
+      let query = supabase
+        .from("cars")
+        .select("model")
+        .eq("status", "available")
+        .eq("garage_is_active", true);
+      if (brandId) query = query.eq("brand_id", brandId);
+      if (category) query = query.eq("category", category);
+      const { data } = await query;
+      if (data) {
+        const unique = [...new Set(data.map((d) => d.model))].sort();
+        setAvailableModels(unique);
+      }
+    };
+    fetchModels();
+  }, [brandId, category]);
+
+  // Fetch available colors from DB
+  useEffect(() => {
+    const fetchColors = async () => {
+      let query = supabase
+        .from("cars")
+        .select("color")
+        .eq("status", "available")
+        .eq("garage_is_active", true);
+      if (category) query = query.eq("category", category);
+      const { data } = await query;
+      if (data) {
+        const normalized = new Map<string, string>();
+        data.forEach((d) => {
+          const norm = normalizeColor(d.color);
+          if (!normalized.has(norm)) normalized.set(norm, norm);
+        });
+        const sorted = [...normalized.values()].sort();
+        setAvailableColors(sorted);
+      }
+    };
+    fetchColors();
+  }, [category]);
+
+  // Sync filters to URL params for persistence
+  useEffect(() => {
+    const params: Record<string, string> = {};
+    if (search) params.busca = search;
+    if (brandId) params.brandId = brandId;
+    if (modelFilter) params.modelo = modelFilter;
+    if (yearFrom) params.ano_de = yearFrom;
+    if (yearTo) params.ano_ate = yearTo;
+    if (priceRange) params.preco = priceRange;
+    if (transmission) params.cambio = transmission;
+    if (fuel) params.combustivel = fuel;
+    if (color) params.cor = color;
+    if (category) params.type = category;
+    if (coolingType) params.refrigeracao = coolingType;
+    if (motorcycleCategory) params.categoria_moto = motorcycleCategory;
+    if (page > 0) params.pagina = String(page);
+    setSearchParams(params, { replace: true });
+  }, [search, brandId, modelFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, category, coolingType, motorcycleCategory, page]);
+
   const handleCategoryChange = (newCategory: string) => {
     setBrandId("");
+    setModelFilter("");
     setTransmission("");
     setFuel("");
-    setDoors("");
     setCoolingType("");
     setMotorcycleCategory("");
     setCategory(newCategory);
-    
-    if (newCategory) {
-      setSearchParams({ type: newCategory });
-    } else {
-      setSearchParams({});
-    }
   };
 
   const clearFilters = () => {
     setSearch("");
     setBrandId("");
+    setModelFilter("");
     setYearFrom("");
     setYearTo("");
     setPriceRange("");
     setTransmission("");
     setFuel("");
     setColor("");
-    setDoors("");
-    setCondition("");
     setCategory("");
     setCoolingType("");
     setMotorcycleCategory("");
-    setSearchParams({});
+    setPage(0);
   };
 
-  const hasFilters = search || brandId || yearFrom || yearTo || priceRange || transmission || fuel || color || doors || condition || category || coolingType || motorcycleCategory;
-  const activeFiltersCount = [brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, coolingType, motorcycleCategory].filter(Boolean).length;
+  const hasFilters = search || brandId || modelFilter || yearFrom || yearTo || priceRange || transmission || fuel || color || category || coolingType || motorcycleCategory;
+  const activeFiltersCount = [brandId, modelFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, coolingType, motorcycleCategory].filter(Boolean).length;
 
   const FilterContent = () => (
     <div className="space-y-4">
@@ -438,7 +518,7 @@ export default function Cars() {
         <label className="text-sm font-medium text-foreground mb-2 block">
           Marca
         </label>
-        <Select value={brandId || "all"} onValueChange={(v) => setBrandId(v === "all" ? "" : v)}>
+        <Select value={brandId || "all"} onValueChange={(v) => { setBrandId(v === "all" ? "" : v); setModelFilter(""); }}>
           <SelectTrigger className="bg-background">
             <SelectValue placeholder="Todas" />
           </SelectTrigger>
@@ -447,6 +527,26 @@ export default function Cars() {
             {filteredBrands.map((b) => (
               <SelectItem key={b.id} value={b.id}>
                 {b.displayName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Model */}
+      <div>
+        <label className="text-sm font-medium text-foreground mb-2 block">
+          Modelo
+        </label>
+        <Select value={modelFilter || "all"} onValueChange={(v) => setModelFilter(v === "all" ? "" : v)}>
+          <SelectTrigger className="bg-background">
+            <SelectValue placeholder="Todos" />
+          </SelectTrigger>
+          <SelectContent className="bg-background border-border max-h-[300px]">
+            <SelectItem value="all">Todos</SelectItem>
+            {availableModels.map((m) => (
+              <SelectItem key={m} value={m}>
+                {m}
               </SelectItem>
             ))}
           </SelectContent>
@@ -536,25 +636,6 @@ export default function Cars() {
             </Select>
           </div>
 
-          {/* Doors */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Portas
-            </label>
-            <Select value={doors || "all"} onValueChange={(v) => setDoors(v === "all" ? "" : v)}>
-              <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Qualquer" />
-              </SelectTrigger>
-              <SelectContent className="bg-background border-border">
-                <SelectItem value="all">Qualquer</SelectItem>
-                {DOORS_OPTIONS.map((d) => (
-                  <SelectItem key={d.value} value={d.value}>
-                    {d.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </>
       )}
 
@@ -634,40 +715,44 @@ export default function Cars() {
           </SelectTrigger>
           <SelectContent className="bg-background border-border">
             <SelectItem value="all">Qualquer</SelectItem>
-            {COLORS.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Condition */}
-      <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
-          Condição
-        </label>
-        <Select value={condition || "all"} onValueChange={(v) => setCondition(v === "all" ? "" : v)}>
-          <SelectTrigger className="bg-background">
-            <SelectValue placeholder="Qualquer" />
-          </SelectTrigger>
-          <SelectContent className="bg-background border-border">
-            <SelectItem value="all">Qualquer</SelectItem>
-            {CONDITION_OPTIONS.map((c) => (
-              <SelectItem key={c.value} value={c.value}>
-                {c.label}
-              </SelectItem>
-            ))}
+            {availableColors.length > 0
+              ? availableColors.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))
+              : MAIN_COLORS.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
           </SelectContent>
         </Select>
       </div>
 
       {hasFilters && (
-        <div className="pt-4 border-t border-border">
+        <div className="pt-4 border-t border-border space-y-2">
           <Button variant="ghost" size="sm" onClick={clearFilters} className="w-full gap-2">
             <X className="h-4 w-4" />
             Limpar filtros
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setIsFilterOpen(false)}
+            className="w-full lg:hidden bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Aplicar Filtro
+          </Button>
+        </div>
+      )}
+      {!hasFilters && (
+        <div className="pt-4 lg:hidden">
+          <Button
+            size="sm"
+            onClick={() => setIsFilterOpen(false)}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Aplicar Filtro
           </Button>
         </div>
       )}
