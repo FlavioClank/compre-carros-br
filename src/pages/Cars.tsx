@@ -391,22 +391,21 @@ export default function Cars() {
   const clearFilters = () => {
     setSearch("");
     setBrandId("");
+    setModelFilter("");
     setYearFrom("");
     setYearTo("");
     setPriceRange("");
     setTransmission("");
     setFuel("");
     setColor("");
-    setDoors("");
-    setCondition("");
     setCategory("");
     setCoolingType("");
     setMotorcycleCategory("");
     setSearchParams({});
   };
 
-  const hasFilters = search || brandId || yearFrom || yearTo || priceRange || transmission || fuel || color || doors || condition || category || coolingType || motorcycleCategory;
-  const activeFiltersCount = [brandId, yearFrom, yearTo, priceRange, transmission, fuel, color, doors, condition, coolingType, motorcycleCategory].filter(Boolean).length;
+  const hasFilters = search || brandId || modelFilter || yearFrom || yearTo || priceRange || transmission || fuel || color || category || coolingType || motorcycleCategory;
+  const activeFiltersCount = [brandId, modelFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, coolingType, motorcycleCategory].filter(Boolean).length;
 
   const FilterContent = () => (
     <div className="space-y-4">
