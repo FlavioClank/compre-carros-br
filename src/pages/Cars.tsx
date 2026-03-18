@@ -336,9 +336,9 @@ export default function Cars() {
       setCategory(urlType);
       if (!urlBrandId) {
         setBrandId("");
+        setModelFilter("");
         setTransmission("");
         setFuel("");
-        setDoors("");
         setCoolingType("");
         setMotorcycleCategory("");
       }
