@@ -21,6 +21,7 @@ import {
   CreditCard,
   Wallet,
   Globe,
+  Handshake,
 } from "lucide-react";
 
 interface AdminLayoutProps {
