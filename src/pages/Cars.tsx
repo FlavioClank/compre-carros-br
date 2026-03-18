@@ -556,25 +556,6 @@ export default function Cars() {
             </Select>
           </div>
 
-          {/* Doors */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Portas
-            </label>
-            <Select value={doors || "all"} onValueChange={(v) => setDoors(v === "all" ? "" : v)}>
-              <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Qualquer" />
-              </SelectTrigger>
-              <SelectContent className="bg-background border-border">
-                <SelectItem value="all">Qualquer</SelectItem>
-                {DOORS_OPTIONS.map((d) => (
-                  <SelectItem key={d.value} value={d.value}>
-                    {d.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </>
       )}
 
