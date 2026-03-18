@@ -635,40 +635,44 @@ export default function Cars() {
           </SelectTrigger>
           <SelectContent className="bg-background border-border">
             <SelectItem value="all">Qualquer</SelectItem>
-            {COLORS.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Condition */}
-      <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
-          Condição
-        </label>
-        <Select value={condition || "all"} onValueChange={(v) => setCondition(v === "all" ? "" : v)}>
-          <SelectTrigger className="bg-background">
-            <SelectValue placeholder="Qualquer" />
-          </SelectTrigger>
-          <SelectContent className="bg-background border-border">
-            <SelectItem value="all">Qualquer</SelectItem>
-            {CONDITION_OPTIONS.map((c) => (
-              <SelectItem key={c.value} value={c.value}>
-                {c.label}
-              </SelectItem>
-            ))}
+            {availableColors.length > 0
+              ? availableColors.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))
+              : MAIN_COLORS.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
           </SelectContent>
         </Select>
       </div>
 
       {hasFilters && (
-        <div className="pt-4 border-t border-border">
+        <div className="pt-4 border-t border-border space-y-2">
           <Button variant="ghost" size="sm" onClick={clearFilters} className="w-full gap-2">
             <X className="h-4 w-4" />
             Limpar filtros
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setIsFilterOpen(false)}
+            className="w-full lg:hidden bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Aplicar Filtro
+          </Button>
+        </div>
+      )}
+      {!hasFilters && (
+        <div className="pt-4 lg:hidden">
+          <Button
+            size="sm"
+            onClick={() => setIsFilterOpen(false)}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Aplicar Filtro
           </Button>
         </div>
       )}
