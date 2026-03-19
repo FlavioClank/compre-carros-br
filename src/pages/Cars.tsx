@@ -492,8 +492,8 @@ export default function Cars() {
     setPage(0);
   };
 
-  const hasFilters = search || brandId || modelFilter || yearFrom || yearTo || priceRange || transmission || fuel || color || category || coolingType || motorcycleCategory;
-  const activeFiltersCount = [brandId, modelFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, coolingType, motorcycleCategory].filter(Boolean).length;
+  const hasFilters = search || brandId || modelFilter || versionFilter || yearFrom || yearTo || priceRange || transmission || fuel || color || category || coolingType || motorcycleCategory;
+  const activeFiltersCount = [brandId, modelFilter, versionFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, coolingType, motorcycleCategory].filter(Boolean).length;
 
   const FilterContent = () => (
     <div className="space-y-4">
