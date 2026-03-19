@@ -547,7 +547,7 @@ export default function Cars() {
         <label className="text-sm font-bold text-foreground mb-2 block">
           Marca
         </label>
-        <Select value={brandId || "all"} onValueChange={(v) => { setBrandId(v === "all" ? "" : v); setModelFilter(""); }}>
+        <Select value={brandId || "all"} onValueChange={(v) => { setBrandId(v === "all" ? "" : v); setModelFilter(""); setVersionFilter(""); }}>
           <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Todas" />
           </SelectTrigger>
