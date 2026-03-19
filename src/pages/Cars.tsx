@@ -641,7 +641,7 @@ export default function Cars() {
 
       {/* Fuel */}
       <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
+        <label className="text-sm font-bold text-foreground mb-2 block">
           Combustível
         </label>
         <Select value={fuel || "all"} onValueChange={(v) => setFuel(v === "all" ? "" : v)}>
