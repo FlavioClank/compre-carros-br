@@ -522,7 +522,7 @@ export default function Cars() {
           <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Todas" />
           </SelectTrigger>
-          <SelectContent className="bg-background border-border">
+          <SelectContent className="bg-background border-border font-bold">
             <SelectItem value="all">Todas</SelectItem>
             {filteredBrands.map((b) => (
               <SelectItem key={b.id} value={b.id}>
