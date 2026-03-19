@@ -399,6 +399,28 @@ export default function Cars() {
     fetchModels();
   }, [brandId, category]);
 
+  // Fetch available versions based on brand + model
+  useEffect(() => {
+    if (!brandId || !modelFilter) {
+      setAvailableVersions([]);
+      return;
+    }
+    const fetchVersions = async () => {
+      const { data } = await supabase
+        .from("cars")
+        .select("version")
+        .eq("status", "available")
+        .eq("garage_is_active", true)
+        .eq("brand_id", brandId)
+        .eq("model", modelFilter)
+        .not("version", "is", null);
+      if (data) {
+        const unique = [...new Set(data.map((d) => d.version).filter(Boolean) as string[])].sort();
+        setAvailableVersions(unique);
+      }
+    };
+    fetchVersions();
+
   // Fetch available colors from DB
   useEffect(() => {
     const fetchColors = async () => {
