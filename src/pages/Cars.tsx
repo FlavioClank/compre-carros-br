@@ -535,7 +535,7 @@ export default function Cars() {
 
       {/* Model */}
       <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
+        <label className="text-sm font-bold text-foreground mb-2 block">
           Modelo
         </label>
         <Select value={modelFilter || "all"} onValueChange={(v) => setModelFilter(v === "all" ? "" : v)}>
