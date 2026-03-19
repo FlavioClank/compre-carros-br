@@ -276,6 +276,7 @@ export default function Cars() {
   const vehicles = data?.vehicles ?? [];
   const totalCount = data?.totalCount ?? 0;
   const totalPages = data?.totalPages ?? 1;
+  const searchWarning = data?.warning ?? null;
 
   // Shuffle vehicles deterministically to mix garages
   const shuffledVehicles = useMemo(() => {
