@@ -34,7 +34,7 @@ async function fetchVehiclesPage({
   }
 
   // Use the ranked search RPC for relevance-ordered results
-  const { data, error } = await supabase.rpc("search_cars_ranked", {
+  const rpcParams: Record<string, any> = {
     p_search: filters.search || null,
     p_brand_id: filters.brandId || null,
     p_category: filters.category || null,
@@ -53,7 +53,9 @@ async function fetchVehiclesPage({
     p_limit: PAGE_SIZE,
     p_offset: offset,
     p_version: filters.version || null,
-  });
+  };
+
+  const { data, error } = await supabase.rpc("search_cars_ranked", rpcParams as any);
 
   if (error) throw error;
 
