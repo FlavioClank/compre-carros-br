@@ -579,7 +579,7 @@ export default function Cars() {
           Ano até
         </label>
         <Select value={yearTo || "all"} onValueChange={(v) => setYearTo(v === "all" ? "" : v)}>
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Qualquer" />
           </SelectTrigger>
           <SelectContent className="bg-background border-border">
