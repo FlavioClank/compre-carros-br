@@ -645,7 +645,7 @@ export default function Cars() {
           Combustível
         </label>
         <Select value={fuel || "all"} onValueChange={(v) => setFuel(v === "all" ? "" : v)}>
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Qualquer" />
           </SelectTrigger>
           <SelectContent className="bg-background border-border">
