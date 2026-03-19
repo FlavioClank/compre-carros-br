@@ -713,7 +713,7 @@ export default function Cars() {
           <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Qualquer" />
           </SelectTrigger>
-          <SelectContent className="bg-background border-border">
+          <SelectContent className="bg-background border-border font-bold">
             <SelectItem value="all">Qualquer</SelectItem>
             {availableColors.length > 0
               ? availableColors.map((c) => (
