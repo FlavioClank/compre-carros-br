@@ -471,7 +471,7 @@ export default function Cars() {
     <div className="space-y-4">
       {/* Category Selector */}
       <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
+        <label className="text-sm font-bold text-foreground mb-2 block">
           Tipo de Veículo
         </label>
         <div className="grid grid-cols-3 gap-2">
