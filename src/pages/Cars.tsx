@@ -599,7 +599,7 @@ export default function Cars() {
           Faixa de Preço
         </label>
         <Select value={priceRange || "all"} onValueChange={(v) => setPriceRange(v === "all" ? "" : v)}>
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Qualquer" />
           </SelectTrigger>
           <SelectContent className="bg-background border-border">
