@@ -969,6 +969,12 @@ export default function Cars() {
 
               {/* Cars Grid */}
               <div ref={listRef} />
+              {searchWarning && (
+                <div className="mb-4 rounded-xl border border-border/50 bg-card/70 p-4">
+                  <p className="font-medium text-foreground">Busca avançada temporariamente indisponível.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{searchWarning}</p>
+                </div>
+              )}
               {isLoading ? (
                 <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
                   {Array.from({ length: 6 }).map((_, i) => (
