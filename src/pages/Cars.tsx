@@ -618,7 +618,7 @@ export default function Cars() {
         <>
           {/* Transmission */}
           <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
+            <label className="text-sm font-bold text-foreground mb-2 block">
               Câmbio
             </label>
             <Select value={transmission || "all"} onValueChange={(v) => setTransmission(v === "all" ? "" : v)}>
