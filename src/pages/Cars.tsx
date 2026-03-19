@@ -668,7 +668,7 @@ export default function Cars() {
               Refrigeração
             </label>
             <Select value={coolingType || "all"} onValueChange={(v) => setCoolingType(v === "all" ? "" : v)}>
-              <SelectTrigger className="bg-background">
+              <SelectTrigger className="bg-background font-bold">
                 <SelectValue placeholder="Qualquer" />
               </SelectTrigger>
               <SelectContent className="bg-background border-border">
