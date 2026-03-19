@@ -450,6 +450,7 @@ export default function Cars() {
     if (search) params.busca = search;
     if (brandId) params.brandId = brandId;
     if (modelFilter) params.modelo = modelFilter;
+    if (versionFilter) params.versao = versionFilter;
     if (yearFrom) params.ano_de = yearFrom;
     if (yearTo) params.ano_ate = yearTo;
     if (priceRange) params.preco = priceRange;
@@ -461,7 +462,7 @@ export default function Cars() {
     if (motorcycleCategory) params.categoria_moto = motorcycleCategory;
     if (page > 0) params.pagina = String(page);
     setSearchParams(params, { replace: true });
-  }, [search, brandId, modelFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, category, coolingType, motorcycleCategory, page]);
+  }, [search, brandId, modelFilter, versionFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, category, coolingType, motorcycleCategory, page]);
 
   const handleCategoryChange = (newCategory: string) => {
     setBrandId("");
