@@ -567,7 +567,7 @@ export default function Cars() {
         <label className="text-sm font-bold text-foreground mb-2 block">
           Modelo
         </label>
-        <Select value={modelFilter || "all"} onValueChange={(v) => setModelFilter(v === "all" ? "" : v)}>
+        <Select value={modelFilter || "all"} onValueChange={(v) => { setModelFilter(v === "all" ? "" : v); setVersionFilter(""); }}>
           <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Todos" />
           </SelectTrigger>
@@ -581,6 +581,28 @@ export default function Cars() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Version - visible only when brand AND model are selected */}
+      {brandId && modelFilter && availableVersions.length > 0 && (
+        <div>
+          <label className="text-sm font-bold text-foreground mb-2 block">
+            Versão
+          </label>
+          <Select value={versionFilter || "all"} onValueChange={(v) => setVersionFilter(v === "all" ? "" : v)}>
+            <SelectTrigger className="bg-background font-bold">
+              <SelectValue placeholder="Todas" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border-border font-bold max-h-[300px]">
+              <SelectItem value="all">Todas</SelectItem>
+              {availableVersions.map((v) => (
+                <SelectItem key={v} value={v}>
+                  {v}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Year From */}
       <div>
