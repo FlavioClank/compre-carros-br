@@ -622,7 +622,7 @@ export default function Cars() {
               Câmbio
             </label>
             <Select value={transmission || "all"} onValueChange={(v) => setTransmission(v === "all" ? "" : v)}>
-              <SelectTrigger className="bg-background">
+              <SelectTrigger className="bg-background font-bold">
                 <SelectValue placeholder="Qualquer" />
               </SelectTrigger>
               <SelectContent className="bg-background border-border">
