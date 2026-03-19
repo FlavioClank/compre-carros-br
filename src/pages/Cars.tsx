@@ -602,7 +602,7 @@ export default function Cars() {
           <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Qualquer" />
           </SelectTrigger>
-          <SelectContent className="bg-background border-border">
+          <SelectContent className="bg-background border-border font-bold">
             <SelectItem value="all">Qualquer</SelectItem>
             {priceRanges.map((r) => (
               <SelectItem key={r.label} value={r.label}>
