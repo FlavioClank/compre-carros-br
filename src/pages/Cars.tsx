@@ -861,7 +861,7 @@ export default function Cars() {
                 placeholder="Buscar marca, modelo, ano..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-12 pr-12 h-12 bg-card border-2 border-primary/50 focus:border-primary shadow-lg ring-1 ring-primary/20"
+                className="pl-12 pr-12 h-14 bg-card border-2 border-primary/50 shadow-lg focus:ring-0 focus:ring-offset-0 focus:border-primary/50 text-base font-medium rounded-xl"
               />
               {isSupported && (
                 <button
