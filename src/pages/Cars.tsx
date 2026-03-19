@@ -519,10 +519,10 @@ export default function Cars() {
           Marca
         </label>
         <Select value={brandId || "all"} onValueChange={(v) => { setBrandId(v === "all" ? "" : v); setModelFilter(""); }}>
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Todas" />
           </SelectTrigger>
-          <SelectContent className="bg-background border-border">
+          <SelectContent className="bg-background border-border font-bold">
             <SelectItem value="all">Todas</SelectItem>
             {filteredBrands.map((b) => (
               <SelectItem key={b.id} value={b.id}>
@@ -539,10 +539,10 @@ export default function Cars() {
           Modelo
         </label>
         <Select value={modelFilter || "all"} onValueChange={(v) => setModelFilter(v === "all" ? "" : v)}>
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Todos" />
           </SelectTrigger>
-          <SelectContent className="bg-background border-border max-h-[300px]">
+          <SelectContent className="bg-background border-border font-bold max-h-[300px]">
             <SelectItem value="all">Todos</SelectItem>
             {availableModels.map((m) => (
               <SelectItem key={m} value={m}>
@@ -559,10 +559,10 @@ export default function Cars() {
           Ano de
         </label>
         <Select value={yearFrom || "all"} onValueChange={(v) => setYearFrom(v === "all" ? "" : v)}>
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Qualquer" />
           </SelectTrigger>
-          <SelectContent className="bg-background border-border">
+          <SelectContent className="bg-background border-border font-bold">
             <SelectItem value="all">Qualquer</SelectItem>
             {years.map((y) => (
               <SelectItem key={y} value={y.toString()}>
@@ -579,10 +579,10 @@ export default function Cars() {
           Ano até
         </label>
         <Select value={yearTo || "all"} onValueChange={(v) => setYearTo(v === "all" ? "" : v)}>
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Qualquer" />
           </SelectTrigger>
-          <SelectContent className="bg-background border-border">
+          <SelectContent className="bg-background border-border font-bold">
             <SelectItem value="all">Qualquer</SelectItem>
             {years.map((y) => (
               <SelectItem key={y} value={y.toString()}>
@@ -599,10 +599,10 @@ export default function Cars() {
           Faixa de Preço
         </label>
         <Select value={priceRange || "all"} onValueChange={(v) => setPriceRange(v === "all" ? "" : v)}>
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Qualquer" />
           </SelectTrigger>
-          <SelectContent className="bg-background border-border">
+          <SelectContent className="bg-background border-border font-bold">
             <SelectItem value="all">Qualquer</SelectItem>
             {priceRanges.map((r) => (
               <SelectItem key={r.label} value={r.label}>
@@ -622,10 +622,10 @@ export default function Cars() {
               Câmbio
             </label>
             <Select value={transmission || "all"} onValueChange={(v) => setTransmission(v === "all" ? "" : v)}>
-              <SelectTrigger className="bg-background">
+              <SelectTrigger className="bg-background font-bold">
                 <SelectValue placeholder="Qualquer" />
               </SelectTrigger>
-              <SelectContent className="bg-background border-border">
+              <SelectContent className="bg-background border-border font-bold">
                 <SelectItem value="all">Qualquer</SelectItem>
                 {Object.entries(TRANSMISSION_LABELS).map(([key, label]) => (
                   <SelectItem key={key} value={key}>
@@ -645,10 +645,10 @@ export default function Cars() {
           Combustível
         </label>
         <Select value={fuel || "all"} onValueChange={(v) => setFuel(v === "all" ? "" : v)}>
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Qualquer" />
           </SelectTrigger>
-          <SelectContent className="bg-background border-border">
+          <SelectContent className="bg-background border-border font-bold">
             <SelectItem value="all">Qualquer</SelectItem>
             {Object.entries(category === "motorcycle" ? MOTORCYCLE_FUEL_LABELS : (category === "car" ? CAR_FUEL_LABELS : FUEL_LABELS)).map(([key, label]) => (
               <SelectItem key={key} value={key}>
@@ -668,10 +668,10 @@ export default function Cars() {
               Refrigeração
             </label>
             <Select value={coolingType || "all"} onValueChange={(v) => setCoolingType(v === "all" ? "" : v)}>
-              <SelectTrigger className="bg-background">
+              <SelectTrigger className="bg-background font-bold">
                 <SelectValue placeholder="Qualquer" />
               </SelectTrigger>
-              <SelectContent className="bg-background border-border">
+              <SelectContent className="bg-background border-border font-bold">
                 <SelectItem value="all">Qualquer</SelectItem>
                 {Object.entries(COOLING_TYPE_LABELS).map(([key, label]) => (
                   <SelectItem key={key} value={key}>
@@ -688,10 +688,10 @@ export default function Cars() {
               Categoria da Moto
             </label>
             <Select value={motorcycleCategory || "all"} onValueChange={(v) => setMotorcycleCategory(v === "all" ? "" : v)}>
-              <SelectTrigger className="bg-background">
+              <SelectTrigger className="bg-background font-bold">
                 <SelectValue placeholder="Qualquer" />
               </SelectTrigger>
-              <SelectContent className="bg-background border-border">
+              <SelectContent className="bg-background border-border font-bold">
                 <SelectItem value="all">Qualquer</SelectItem>
                 {Object.entries(MOTORCYCLE_CATEGORY_LABELS).map(([key, label]) => (
                   <SelectItem key={key} value={key}>
@@ -710,10 +710,10 @@ export default function Cars() {
           Cor
         </label>
         <Select value={color || "all"} onValueChange={(v) => setColor(v === "all" ? "" : v)}>
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Qualquer" />
           </SelectTrigger>
-          <SelectContent className="bg-background border-border">
+          <SelectContent className="bg-background border-border font-bold">
             <SelectItem value="all">Qualquer</SelectItem>
             {availableColors.length > 0
               ? availableColors.map((c) => (
