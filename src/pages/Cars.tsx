@@ -420,6 +420,7 @@ export default function Cars() {
       }
     };
     fetchVersions();
+  }, [brandId, modelFilter]);
 
   // Fetch available colors from DB
   useEffect(() => {
