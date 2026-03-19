@@ -471,7 +471,7 @@ export default function Cars() {
     <div className="space-y-4">
       {/* Category Selector */}
       <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
+        <label className="text-sm font-bold text-foreground mb-2 block">
           Tipo de Veículo
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -515,7 +515,7 @@ export default function Cars() {
 
       {/* Brand */}
       <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
+        <label className="text-sm font-bold text-foreground mb-2 block">
           Marca
         </label>
         <Select value={brandId || "all"} onValueChange={(v) => { setBrandId(v === "all" ? "" : v); setModelFilter(""); }}>
@@ -535,7 +535,7 @@ export default function Cars() {
 
       {/* Model */}
       <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
+        <label className="text-sm font-bold text-foreground mb-2 block">
           Modelo
         </label>
         <Select value={modelFilter || "all"} onValueChange={(v) => setModelFilter(v === "all" ? "" : v)}>
@@ -555,7 +555,7 @@ export default function Cars() {
 
       {/* Year From */}
       <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
+        <label className="text-sm font-bold text-foreground mb-2 block">
           Ano de
         </label>
         <Select value={yearFrom || "all"} onValueChange={(v) => setYearFrom(v === "all" ? "" : v)}>
@@ -575,7 +575,7 @@ export default function Cars() {
 
       {/* Year To */}
       <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
+        <label className="text-sm font-bold text-foreground mb-2 block">
           Ano até
         </label>
         <Select value={yearTo || "all"} onValueChange={(v) => setYearTo(v === "all" ? "" : v)}>
@@ -595,7 +595,7 @@ export default function Cars() {
 
       {/* Price Range */}
       <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
+        <label className="text-sm font-bold text-foreground mb-2 block">
           Faixa de Preço
         </label>
         <Select value={priceRange || "all"} onValueChange={(v) => setPriceRange(v === "all" ? "" : v)}>
@@ -618,7 +618,7 @@ export default function Cars() {
         <>
           {/* Transmission */}
           <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
+            <label className="text-sm font-bold text-foreground mb-2 block">
               Câmbio
             </label>
             <Select value={transmission || "all"} onValueChange={(v) => setTransmission(v === "all" ? "" : v)}>
@@ -641,7 +641,7 @@ export default function Cars() {
 
       {/* Fuel */}
       <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
+        <label className="text-sm font-bold text-foreground mb-2 block">
           Combustível
         </label>
         <Select value={fuel || "all"} onValueChange={(v) => setFuel(v === "all" ? "" : v)}>
@@ -664,7 +664,7 @@ export default function Cars() {
         <>
           {/* Cooling Type */}
           <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
+            <label className="text-sm font-bold text-foreground mb-2 block">
               Refrigeração
             </label>
             <Select value={coolingType || "all"} onValueChange={(v) => setCoolingType(v === "all" ? "" : v)}>
@@ -684,7 +684,7 @@ export default function Cars() {
 
           {/* Motorcycle Category */}
           <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
+            <label className="text-sm font-bold text-foreground mb-2 block">
               Categoria da Moto
             </label>
             <Select value={motorcycleCategory || "all"} onValueChange={(v) => setMotorcycleCategory(v === "all" ? "" : v)}>
@@ -706,7 +706,7 @@ export default function Cars() {
 
       {/* Color */}
       <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
+        <label className="text-sm font-bold text-foreground mb-2 block">
           Cor
         </label>
         <Select value={color || "all"} onValueChange={(v) => setColor(v === "all" ? "" : v)}>
