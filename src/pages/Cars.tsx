@@ -855,13 +855,13 @@ export default function Cars() {
           {/* Search + Category Bar (not sticky) */}
           <div className="flex flex-col md:flex-row gap-3 mb-4">
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
               <Input
                 type="text"
                 placeholder="Buscar marca, modelo, ano..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-12 pr-12 h-12 bg-card border-border"
+                className="pl-12 pr-12 h-14 bg-card border-2 border-primary/40 focus:border-primary shadow-md text-base font-medium rounded-xl"
               />
               {isSupported && (
                 <button
@@ -876,14 +876,14 @@ export default function Cars() {
                       });
                     }
                   }}
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors ${
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors ${
                     isListening 
                       ? "bg-destructive/10 text-destructive animate-pulse" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      : "bg-primary/10 text-primary hover:bg-primary/20"
                   }`}
                   title={isListening ? "Parar gravação" : "Buscar por voz"}
                 >
-                  {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                  {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                 </button>
               )}
             </div>
