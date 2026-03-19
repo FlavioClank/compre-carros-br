@@ -595,7 +595,7 @@ export default function Cars() {
 
       {/* Price Range */}
       <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
+        <label className="text-sm font-bold text-foreground mb-2 block">
           Faixa de Preço
         </label>
         <Select value={priceRange || "all"} onValueChange={(v) => setPriceRange(v === "all" ? "" : v)}>
