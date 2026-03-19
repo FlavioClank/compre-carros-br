@@ -52,6 +52,7 @@ async function fetchVehiclesPage({
     p_garage_ids: garageIds,
     p_limit: PAGE_SIZE,
     p_offset: offset,
+    p_version: filters.version || null,
   });
 
   if (error) throw error;

@@ -205,7 +205,9 @@ export default function Cars() {
   const [category, setCategory] = useState(searchParams.get("type") || searchParams.get("categoria") || "");
   const [coolingType, setCoolingType] = useState(searchParams.get("refrigeracao") || "");
   const [motorcycleCategory, setMotorcycleCategory] = useState(searchParams.get("categoria_moto") || "");
+  const [versionFilter, setVersionFilter] = useState(searchParams.get("versao") || "");
   const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [availableVersions, setAvailableVersions] = useState<string[]>([]);
   const [availableColors, setAvailableColors] = useState<string[]>([]);
 
   // All brands combined for smart search matching
@@ -252,8 +254,9 @@ export default function Cars() {
       motorcycleCategory: motorcycleCategory || undefined,
       garageCity: geoCity || undefined,
       garageState: geoStateAbbr || undefined,
+      version: versionFilter || undefined,
     };
-  }, [search, parsedSearch, brandId, modelFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, category, coolingType, motorcycleCategory, geoCity, geoStateAbbr]);
+  }, [search, parsedSearch, brandId, modelFilter, versionFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, category, coolingType, motorcycleCategory, geoCity, geoStateAbbr]);
 
   // Reset page when filters change
   useEffect(() => {
@@ -396,6 +399,29 @@ export default function Cars() {
     fetchModels();
   }, [brandId, category]);
 
+  // Fetch available versions based on brand + model
+  useEffect(() => {
+    if (!brandId || !modelFilter) {
+      setAvailableVersions([]);
+      return;
+    }
+    const fetchVersions = async () => {
+      const { data } = await supabase
+        .from("cars")
+        .select("version")
+        .eq("status", "available")
+        .eq("garage_is_active", true)
+        .eq("brand_id", brandId)
+        .eq("model", modelFilter)
+        .not("version", "is", null);
+      if (data) {
+        const unique = [...new Set(data.map((d) => d.version).filter(Boolean) as string[])].sort();
+        setAvailableVersions(unique);
+      }
+    };
+    fetchVersions();
+  }, [brandId, modelFilter]);
+
   // Fetch available colors from DB
   useEffect(() => {
     const fetchColors = async () => {
@@ -425,6 +451,7 @@ export default function Cars() {
     if (search) params.busca = search;
     if (brandId) params.brandId = brandId;
     if (modelFilter) params.modelo = modelFilter;
+    if (versionFilter) params.versao = versionFilter;
     if (yearFrom) params.ano_de = yearFrom;
     if (yearTo) params.ano_ate = yearTo;
     if (priceRange) params.preco = priceRange;
@@ -436,11 +463,12 @@ export default function Cars() {
     if (motorcycleCategory) params.categoria_moto = motorcycleCategory;
     if (page > 0) params.pagina = String(page);
     setSearchParams(params, { replace: true });
-  }, [search, brandId, modelFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, category, coolingType, motorcycleCategory, page]);
+  }, [search, brandId, modelFilter, versionFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, category, coolingType, motorcycleCategory, page]);
 
   const handleCategoryChange = (newCategory: string) => {
     setBrandId("");
     setModelFilter("");
+    setVersionFilter("");
     setTransmission("");
     setFuel("");
     setCoolingType("");
@@ -452,6 +480,7 @@ export default function Cars() {
     setSearch("");
     setBrandId("");
     setModelFilter("");
+    setVersionFilter("");
     setYearFrom("");
     setYearTo("");
     setPriceRange("");
@@ -464,8 +493,8 @@ export default function Cars() {
     setPage(0);
   };
 
-  const hasFilters = search || brandId || modelFilter || yearFrom || yearTo || priceRange || transmission || fuel || color || category || coolingType || motorcycleCategory;
-  const activeFiltersCount = [brandId, modelFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, coolingType, motorcycleCategory].filter(Boolean).length;
+  const hasFilters = search || brandId || modelFilter || versionFilter || yearFrom || yearTo || priceRange || transmission || fuel || color || category || coolingType || motorcycleCategory;
+  const activeFiltersCount = [brandId, modelFilter, versionFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, coolingType, motorcycleCategory].filter(Boolean).length;
 
   const FilterContent = () => (
     <div className="space-y-4">
@@ -518,7 +547,7 @@ export default function Cars() {
         <label className="text-sm font-bold text-foreground mb-2 block">
           Marca
         </label>
-        <Select value={brandId || "all"} onValueChange={(v) => { setBrandId(v === "all" ? "" : v); setModelFilter(""); }}>
+        <Select value={brandId || "all"} onValueChange={(v) => { setBrandId(v === "all" ? "" : v); setModelFilter(""); setVersionFilter(""); }}>
           <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Todas" />
           </SelectTrigger>
@@ -538,7 +567,7 @@ export default function Cars() {
         <label className="text-sm font-bold text-foreground mb-2 block">
           Modelo
         </label>
-        <Select value={modelFilter || "all"} onValueChange={(v) => setModelFilter(v === "all" ? "" : v)}>
+        <Select value={modelFilter || "all"} onValueChange={(v) => { setModelFilter(v === "all" ? "" : v); setVersionFilter(""); }}>
           <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Todos" />
           </SelectTrigger>
@@ -552,6 +581,28 @@ export default function Cars() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Version - visible only when brand AND model are selected */}
+      {brandId && modelFilter && availableVersions.length > 0 && (
+        <div>
+          <label className="text-sm font-bold text-foreground mb-2 block">
+            Versão
+          </label>
+          <Select value={versionFilter || "all"} onValueChange={(v) => setVersionFilter(v === "all" ? "" : v)}>
+            <SelectTrigger className="bg-background font-bold">
+              <SelectValue placeholder="Todas" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border-border font-bold max-h-[300px]">
+              <SelectItem value="all">Todas</SelectItem>
+              {availableVersions.map((v) => (
+                <SelectItem key={v} value={v}>
+                  {v}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Year From */}
       <div>
