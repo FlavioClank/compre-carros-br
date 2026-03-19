@@ -254,6 +254,7 @@ export default function Cars() {
       motorcycleCategory: motorcycleCategory || undefined,
       garageCity: geoCity || undefined,
       garageState: geoStateAbbr || undefined,
+      version: versionFilter || undefined,
     };
   }, [search, parsedSearch, brandId, modelFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, category, coolingType, motorcycleCategory, geoCity, geoStateAbbr]);
 
