@@ -691,7 +691,7 @@ export default function Cars() {
               <SelectTrigger className="bg-background font-bold">
                 <SelectValue placeholder="Qualquer" />
               </SelectTrigger>
-              <SelectContent className="bg-background border-border">
+              <SelectContent className="bg-background border-border font-bold">
                 <SelectItem value="all">Qualquer</SelectItem>
                 {Object.entries(MOTORCYCLE_CATEGORY_LABELS).map(([key, label]) => (
                   <SelectItem key={key} value={key}>
