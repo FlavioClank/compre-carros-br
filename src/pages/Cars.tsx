@@ -706,7 +706,7 @@ export default function Cars() {
 
       {/* Color */}
       <div>
-        <label className="text-sm font-medium text-foreground mb-2 block">
+        <label className="text-sm font-bold text-foreground mb-2 block">
           Cor
         </label>
         <Select value={color || "all"} onValueChange={(v) => setColor(v === "all" ? "" : v)}>
