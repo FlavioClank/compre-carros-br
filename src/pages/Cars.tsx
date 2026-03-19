@@ -710,7 +710,7 @@ export default function Cars() {
           Cor
         </label>
         <Select value={color || "all"} onValueChange={(v) => setColor(v === "all" ? "" : v)}>
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Qualquer" />
           </SelectTrigger>
           <SelectContent className="bg-background border-border">
