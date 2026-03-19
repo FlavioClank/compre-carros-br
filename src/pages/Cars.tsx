@@ -542,7 +542,7 @@ export default function Cars() {
           <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Todos" />
           </SelectTrigger>
-          <SelectContent className="bg-background border-border max-h-[300px]">
+          <SelectContent className="bg-background border-border font-bold max-h-[300px]">
             <SelectItem value="all">Todos</SelectItem>
             {availableModels.map((m) => (
               <SelectItem key={m} value={m}>
