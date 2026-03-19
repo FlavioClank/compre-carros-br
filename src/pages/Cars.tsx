@@ -539,7 +539,7 @@ export default function Cars() {
           Modelo
         </label>
         <Select value={modelFilter || "all"} onValueChange={(v) => setModelFilter(v === "all" ? "" : v)}>
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-background font-bold">
             <SelectValue placeholder="Todos" />
           </SelectTrigger>
           <SelectContent className="bg-background border-border max-h-[300px]">
