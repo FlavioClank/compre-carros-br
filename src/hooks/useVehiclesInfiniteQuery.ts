@@ -19,6 +19,7 @@ export interface VehicleFilters {
   motorcycleCategory?: string;
   garageCity?: string;
   garageState?: string;
+  version?: string;
 }
 
 export interface VehicleData {

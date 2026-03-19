@@ -205,7 +205,9 @@ export default function Cars() {
   const [category, setCategory] = useState(searchParams.get("type") || searchParams.get("categoria") || "");
   const [coolingType, setCoolingType] = useState(searchParams.get("refrigeracao") || "");
   const [motorcycleCategory, setMotorcycleCategory] = useState(searchParams.get("categoria_moto") || "");
+  const [versionFilter, setVersionFilter] = useState(searchParams.get("versao") || "");
   const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [availableVersions, setAvailableVersions] = useState<string[]>([]);
   const [availableColors, setAvailableColors] = useState<string[]>([]);
 
   // All brands combined for smart search matching
