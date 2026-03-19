@@ -1006,6 +1006,22 @@ export default function Cars() {
                     onPageChange={handlePageChange}
                     isLoading={isFetching}
                   />
+                  {hasFilters && (
+                    <div className="lg:hidden mt-6 flex justify-center">
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="w-full max-w-sm gap-2"
+                        onClick={() => {
+                          clearFilters();
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                        Limpar filtros e buscar novamente
+                      </Button>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="text-center py-16 bg-card/50 rounded-xl border border-border/50">
