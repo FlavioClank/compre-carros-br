@@ -467,6 +467,7 @@ export default function Cars() {
   const handleCategoryChange = (newCategory: string) => {
     setBrandId("");
     setModelFilter("");
+    setVersionFilter("");
     setTransmission("");
     setFuel("");
     setCoolingType("");
