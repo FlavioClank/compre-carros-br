@@ -664,7 +664,7 @@ export default function Cars() {
         <>
           {/* Cooling Type */}
           <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
+            <label className="text-sm font-bold text-foreground mb-2 block">
               Refrigeração
             </label>
             <Select value={coolingType || "all"} onValueChange={(v) => setCoolingType(v === "all" ? "" : v)}>
