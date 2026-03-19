@@ -684,7 +684,7 @@ export default function Cars() {
 
           {/* Motorcycle Category */}
           <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
+            <label className="text-sm font-bold text-foreground mb-2 block">
               Categoria da Moto
             </label>
             <Select value={motorcycleCategory || "all"} onValueChange={(v) => setMotorcycleCategory(v === "all" ? "" : v)}>
