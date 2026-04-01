@@ -9,7 +9,7 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { CarCard } from "@/components/public/CarCard";
 import { PartnerCard } from "@/components/public/PartnerCard";
 import { usePartnersRotation } from "@/hooks/usePartnersRotation";
-import { useVehiclesPaginatedQuery } from "@/hooks/useVehiclesPaginatedQuery";
+import { PAGE_SIZE, useVehiclesPaginatedQuery } from "@/hooks/useVehiclesPaginatedQuery";
 import { interleaveVehiclesWithPartners } from "@/lib/interleave-partners";
 import { PaginationControls } from "@/components/public/PaginationControls";
 import { VehicleFilters, VehicleData } from "@/hooks/useVehiclesInfiniteQuery";
@@ -30,13 +30,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Search, SlidersHorizontal, X, Car, Bike, Loader2, Mic, MicOff } from "lucide-react";
-import { 
-  FUEL_LABELS, 
-  TRANSMISSION_LABELS, 
-  CAR_FUEL_LABELS, 
+import {
+  FUEL_LABELS,
+  TRANSMISSION_LABELS,
+  CAR_FUEL_LABELS,
   MOTORCYCLE_FUEL_LABELS,
   COOLING_TYPE_LABELS,
-  MOTORCYCLE_CATEGORY_LABELS 
+  MOTORCYCLE_CATEGORY_LABELS,
 } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 import { canonicalUrl } from "@/lib/seo";
@@ -66,7 +66,7 @@ interface Ad {
   whatsapp_number?: string | null;
 }
 
-type ListItem = 
+type ListItem =
   | { type: "car"; data: VehicleData }
   | { type: "ad"; data: Ad };
 
@@ -82,7 +82,6 @@ const priceRanges = [
   { label: "Acima de R$ 200.000", min: 200000, max: 99999999 },
 ];
 
-// Color normalization map - maps variations to main color
 const COLOR_NORMALIZE_MAP: Record<string, string> = {
   branco: "Branco",
   branca: "Branco",
@@ -130,7 +129,6 @@ const MAIN_COLORS = [
   "Vinho",
 ];
 
-// Memoized card wrapper
 const CardItem = memo(function CardItem({ item }: { item: ListItem }) {
   if (item.type === "car") {
     return <CarCard car={item.data} />;
@@ -138,31 +136,36 @@ const CardItem = memo(function CardItem({ item }: { item: ListItem }) {
   return <PartnerCard item={item.data} />;
 });
 
-// Voice search support
 const useSpeechRecognition = () => {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
 
-  const isSupported = typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+  const isSupported =
+    typeof window !== "undefined" &&
+    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
 
-  const startListening = useCallback((onResult: (text: string) => void) => {
-    if (!isSupported) return;
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = "pt-BR";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.onresult = (event: any) => {
-      const text = event.results[0][0].transcript;
-      onResult(text);
-      setIsListening(false);
-    };
-    recognition.onerror = () => setIsListening(false);
-    recognition.onend = () => setIsListening(false);
-    recognitionRef.current = recognition;
-    recognition.start();
-    setIsListening(true);
-  }, [isSupported]);
+  const startListening = useCallback(
+    (onResult: (text: string) => void) => {
+      if (!isSupported) return;
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.lang = "pt-BR";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.onresult = (event: any) => {
+        const text = event.results[0][0].transcript;
+        onResult(text);
+        setIsListening(false);
+      };
+      recognition.onerror = () => setIsListening(false);
+      recognition.onend = () => setIsListening(false);
+      recognitionRef.current = recognition;
+      recognition.start();
+      setIsListening(true);
+    },
+    [isSupported],
+  );
 
   const stopListening = useCallback(() => {
     recognitionRef.current?.stop();
@@ -175,11 +178,10 @@ const useSpeechRecognition = () => {
 export default function Cars() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { estado, cidade } = useParams<{ estado?: string; cidade?: string }>();
-  
-  // Geo context from URL params
+
   const geoCity = cidade ? citySlugToName(cidade) : "";
   const geoStateAbbr = estado ? getStateAbbr(estado) : "";
-  
+
   const [carBrands, setCarBrands] = useState<Brand[]>([]);
   const [motorcycleBrands, setMotorcycleBrands] = useState<Brand[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -192,7 +194,6 @@ export default function Cars() {
   const seed = getHalfHourSeed();
   const { isListening, isSupported, startListening, stopListening } = useSpeechRecognition();
 
-  // Filters state — initialize from URL params
   const [search, setSearch] = useState(searchParams.get("busca") || "");
   const [brandId, setBrandId] = useState(searchParams.get("brandId") || "");
   const [modelFilter, setModelFilter] = useState(searchParams.get("modelo") || "");
@@ -210,7 +211,6 @@ export default function Cars() {
   const [availableVersions, setAvailableVersions] = useState<string[]>([]);
   const [availableColors, setAvailableColors] = useState<string[]>([]);
 
-  // All brands combined for smart search matching
   const allBrands = useMemo(() => {
     const map = new Map<string, { id: string; name: string }>();
     carBrands.forEach((b) => map.set(b.id, { id: b.id, name: b.name }));
@@ -218,28 +218,25 @@ export default function Cars() {
     return Array.from(map.values());
   }, [carBrands, motorcycleBrands]);
 
-  // Parse search text into structured filters
   const parsedSearch = useMemo(() => {
     if (!search) return null;
     return parseSearchQuery(search, allBrands);
   }, [search, allBrands]);
 
-  // Build filters object for query — merge manual filters with smart-parsed ones
   const filters = useMemo((): VehicleFilters => {
-    const priceRangeObj = priceRange 
-      ? priceRanges.find((r) => r.label === priceRange) 
+    const priceRangeObj = priceRange
+      ? priceRanges.find((r) => r.label === priceRange)
       : undefined;
 
-    // Smart search: use parsed values only when user hasn't manually set filter
     const effectiveBrandId = brandId || parsedSearch?.detectedBrandId || undefined;
     const effectiveYearFrom = yearFrom || parsedSearch?.detectedYear || undefined;
     const effectiveYearTo = yearTo || parsedSearch?.detectedYear || undefined;
     const effectiveFuel = fuel || parsedSearch?.detectedFuel || undefined;
     const effectiveTransmission = transmission || parsedSearch?.detectedTransmission || undefined;
-    const effectiveSearch = modelFilter 
-      ? modelFilter 
-      : (parsedSearch?.searchText || (search && !parsedSearch ? search : undefined));
-    
+    const effectiveSearch = modelFilter
+      ? modelFilter
+      : parsedSearch?.searchText || (search && !parsedSearch ? search : undefined);
+
     return {
       search: effectiveSearch || undefined,
       brandId: effectiveBrandId,
@@ -256,21 +253,35 @@ export default function Cars() {
       garageState: geoStateAbbr || undefined,
       version: versionFilter || undefined,
     };
-  }, [search, parsedSearch, brandId, modelFilter, versionFilter, yearFrom, yearTo, priceRange, transmission, fuel, color, category, coolingType, motorcycleCategory, geoCity, geoStateAbbr]);
+  }, [
+    search,
+    parsedSearch,
+    brandId,
+    modelFilter,
+    versionFilter,
+    yearFrom,
+    yearTo,
+    priceRange,
+    transmission,
+    fuel,
+    color,
+    category,
+    coolingType,
+    motorcycleCategory,
+    geoCity,
+    geoStateAbbr,
+  ]);
 
-  // Reset page when filters change
   useEffect(() => {
     setPage(0);
   }, [filters]);
 
-  // Reset to page 0 when logo is clicked while on search page
   useEffect(() => {
     const handleReset = () => setPage(0);
     window.addEventListener("reset-search", handleReset);
     return () => window.removeEventListener("reset-search", handleReset);
   }, []);
 
-  // Paginated query for vehicles
   const { data, isLoading, isError, isFetching } = useVehiclesPaginatedQuery(page, filters);
 
   const vehicles = data?.vehicles ?? [];
@@ -278,22 +289,29 @@ export default function Cars() {
   const totalPages = data?.totalPages ?? 1;
   const searchWarning = data?.warning ?? null;
 
-  // Shuffle vehicles deterministically to mix garages
   const shuffledVehicles = useMemo(() => {
     if (vehicles.length === 0) return [];
     return shuffleSeeded(vehicles, seed + page);
   }, [vehicles, seed, page]);
 
-  // Build list items with intercalated ads — continuous rotation across pages
-  const ADS_PER_PAGE = 6;
+  const AD_INTERVAL = 4;
+  const MAX_ADS_PER_PAGE = 8;
+  const adsPerFullPage = Math.min(MAX_ADS_PER_PAGE, Math.floor(PAGE_SIZE / AD_INTERVAL));
+
   const adStartIndex = useMemo(() => {
     if (ads.length === 0) return 0;
-    return (page * ADS_PER_PAGE) % ads.length;
-  }, [page, ads.length]);
+    return (page * adsPerFullPage) % ads.length;
+  }, [page, ads.length, adsPerFullPage]);
 
   const listItems = useMemo((): ListItem[] => {
     if (shuffledVehicles.length === 0) return [];
-    return interleaveVehiclesWithPartners(shuffledVehicles, ads, ADS_PER_PAGE, adStartIndex);
+    return interleaveVehiclesWithPartners(
+      shuffledVehicles,
+      ads,
+      MAX_ADS_PER_PAGE,
+      adStartIndex,
+      AD_INTERVAL,
+    );
   }, [shuffledVehicles, ads, adStartIndex]);
 
   const handlePageChange = useCallback((newPage: number) => {
