@@ -26,19 +26,19 @@ export function shuffleSeeded<T>(arr: T[], seed: number): T[] {
 }
 
 /**
- * Get the current 30-minute window seed
- * Same seed for all users during the same 30-minute window
+ * Get the current 5-minute window seed
+ * Same seed for all users during the same 5-minute window
  */
 export function getHalfHourSeed(): number {
-  return Math.floor(Date.now() / 1800000); // 1800000ms = 30 minutes
+  return Math.floor(Date.now() / 300000); // 300000ms = 5 minutes
 }
 
 /**
- * Calculate milliseconds until the next 30-minute window
+ * Calculate milliseconds until the next 5-minute window
  */
 export function getMsUntilNextWindow(): number {
   const now = Date.now();
-  const windowMs = 1800000;
+  const windowMs = 300000;
   const nextWindow = Math.ceil(now / windowMs) * windowMs;
   return nextWindow - now;
 }
