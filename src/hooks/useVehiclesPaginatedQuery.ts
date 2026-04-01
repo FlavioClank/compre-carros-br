@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { VehicleFilters, VehicleData } from "@/hooks/useVehiclesInfiniteQuery";
 
-const PAGE_SIZE = 30;
+const PAGE_SIZE = 32;
 
 interface PaginatedResult {
   vehicles: VehicleData[];
