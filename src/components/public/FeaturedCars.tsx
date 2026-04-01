@@ -56,8 +56,10 @@ const CardItem = memo(function CardItem({ item }: { item: ListItem }) {
   return <HomePartnerCard item={item.data} />;
 });
 
-const PAGE_SIZE = 30;
-const ADS_PER_PAGE = 6;
+const PAGE_SIZE = 32;
+const AD_INTERVAL = 4;
+const MAX_ADS_PER_PAGE = 8;
+const ADS_PER_PAGE = Math.min(MAX_ADS_PER_PAGE, Math.floor(PAGE_SIZE / AD_INTERVAL));
 
 async function fetchHomeCars(page: number) {
   const from = page * PAGE_SIZE;
@@ -150,7 +152,7 @@ export function FeaturedCars() {
     if (shuffledCars.length === 0 && hasAds) {
       return ads.slice(0, ADS_PER_PAGE).map((ad) => ({ type: "ad" as const, data: ad }));
     }
-    return interleaveVehiclesWithPartners(shuffledCars, ads, ADS_PER_PAGE, adStartIndex);
+    return interleaveVehiclesWithPartners(shuffledCars, ads, MAX_ADS_PER_PAGE, adStartIndex, AD_INTERVAL);
   }, [shuffledCars, ads, hasAds, adStartIndex]);
 
   const handlePageChange = useCallback((newPage: number) => {
