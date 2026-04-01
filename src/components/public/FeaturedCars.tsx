@@ -152,7 +152,7 @@ export function FeaturedCars() {
     if (shuffledCars.length === 0 && hasAds) {
       return ads.slice(0, ADS_PER_PAGE).map((ad) => ({ type: "ad" as const, data: ad }));
     }
-    return interleaveVehiclesWithPartners(shuffledCars, ads, ADS_PER_PAGE, adStartIndex);
+    return interleaveVehiclesWithPartners(shuffledCars, ads, MAX_ADS_PER_PAGE, adStartIndex, AD_INTERVAL);
   }, [shuffledCars, ads, hasAds, adStartIndex]);
 
   const handlePageChange = useCallback((newPage: number) => {
