@@ -12,7 +12,7 @@ export function interleaveVehiclesWithPartners<V, A>(
   ads: A[],
   maxAds = 6,
   adStartIndex = 0,
-  interval = 5,
+  interval = 4,
 ): Array<{ type: "car"; data: V } | { type: "ad"; data: A }> {
   const items: Array<{ type: "car"; data: V } | { type: "ad"; data: A }> = [];
 
