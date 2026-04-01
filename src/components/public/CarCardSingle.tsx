@@ -84,7 +84,7 @@ export const CarCardSingle = memo(function CarCardSingle({ car }: CarCardSingleP
           {car.is_featured && (
             <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5 bg-accent text-accent-foreground px-1.5 py-0.5 rounded-full text-[10px] md:text-xs font-semibold z-10">
               <Sparkles className="h-2.5 w-2.5 md:h-3 md:w-3" />
-              Destaque
+              Oferta do Dia
             </div>
           )}
 
