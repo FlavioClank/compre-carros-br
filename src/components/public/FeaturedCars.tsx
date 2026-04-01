@@ -170,7 +170,7 @@ export function FeaturedCars() {
           <div>
             <div className="flex items-center gap-1.5 mb-1">
               <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-              <span className="text-xs md:text-sm font-semibold text-primary uppercase tracking-wider">Destaques</span>
+              <span className="text-xs md:text-sm font-semibold text-primary uppercase tracking-wider">Ofertas do Dia</span>
             </div>
             <h2 className="font-display text-xl md:text-2xl font-bold text-foreground">
               Veículos <span className="text-gradient">disponíveis</span>
