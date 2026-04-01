@@ -58,7 +58,7 @@ export function usePartnersRotation() {
       const interval = setInterval(() => {
         setSeed(getHalfHourSeed());
         currentIndexRef.current = 0;
-      }, 1800000); // 30 minutes
+      }, 300000); // 5 minutes
       
       return () => clearInterval(interval);
     }, msUntilNext);
