@@ -15,6 +15,10 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
+      selfDestroying: true,
+      devOptions: {
+        enabled: false,
+      },
       includeAssets: ["favicon.jpeg", "apple-touch-icon.png", "logos/*.png"],
       workbox: {
         navigateFallbackDenylist: [/^\/~oauth/],
