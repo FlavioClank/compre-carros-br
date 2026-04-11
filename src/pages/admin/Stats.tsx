@@ -51,15 +51,41 @@ const todayStart = startOfDay(now).toISOString();
 const weekStart = subDays(startOfDay(now), 7).toISOString();
 const monthStart = startOfMonth(now).toISOString();
 
+const ACTION_ALIASES = {
+  site: {
+    visit: ["visit", "site_view"],
+    click: ["click", "site_click"],
+  },
+  ad: {
+    visit: ["visit", "ad_view"],
+    click: ["click", "ad_click"],
+  },
+  vehicle: {
+    visit: ["visit", "vehicle_view"],
+    click: ["click", "vehicle_click"],
+  },
+  car: {
+    visit: ["visit", "car_view"],
+    click: ["click", "car_click"],
+  },
+} as const;
+
+function getActionAliases(entityType: string, action: string) {
+  const aliases = ACTION_ALIASES[entityType as keyof typeof ACTION_ALIASES];
+  if (!aliases) return [action];
+  return [...new Set(aliases[action as keyof typeof aliases] ?? [action])];
+}
+
 function useSummaryCount(entityType: string, action: string, since: string) {
   return useQuery({
     queryKey: ["stats-count", entityType, action, since],
     queryFn: async () => {
+      const actions = getActionAliases(entityType, action);
       const { count, error } = await supabase
         .from("action_logs")
         .select("*", { count: "exact", head: true })
         .eq("entity_type", entityType)
-        .eq("action", action)
+        .in("action", actions)
         .gte("created_at", since);
       if (error) throw error;
       return count || 0;
@@ -141,11 +167,12 @@ function SiteTab() {
     queryKey: ["stats-site-daily-30"],
     queryFn: async () => {
       const from = subDays(startOfDay(now), 30).toISOString();
+      const siteVisitActions = getActionAliases("site", "visit");
       const { data, error } = await supabase
         .from("action_logs")
         .select("created_at")
-        .eq("action", "visit")
         .eq("entity_type", "site")
+        .in("action", siteVisitActions)
         .gte("created_at", from);
       if (error) throw error;
 
@@ -215,19 +242,21 @@ function AdsTab() {
       if (!ads?.length) return [];
 
       const adIds = ads.map((a) => a.id);
+      const adClickActions = getActionAliases("ad", "click");
+      const adViewActions = getActionAliases("ad", "visit");
 
       // Fetch all clicks and views for these ads in parallel
       const [clicksRes, viewsRes] = await Promise.all([
         supabase
           .from("action_logs")
           .select("entity_id, created_at")
-          .eq("action", "click")
+          .in("action", adClickActions)
           .eq("entity_type", "ad")
           .in("entity_id", adIds),
         supabase
           .from("action_logs")
           .select("entity_id, created_at")
-          .eq("action", "visit")
+          .in("action", adViewActions)
           .eq("entity_type", "ad")
           .in("entity_id", adIds),
       ]);
@@ -272,10 +301,11 @@ function AdsTab() {
   const { data: recentClicks } = useQuery({
     queryKey: ["stats-recent-ad-clicks"],
     queryFn: async () => {
+      const adClickActions = getActionAliases("ad", "click");
       const { data: clicks, error } = await supabase
         .from("action_logs")
         .select("id, created_at, entity_id, details")
-        .eq("action", "click")
+        .in("action", adClickActions)
         .eq("entity_type", "ad")
         .order("created_at", { ascending: false })
         .limit(20);
@@ -444,20 +474,22 @@ function GaragesTab() {
       if (!cars?.length) return { vehicles: [], totalViews: 0, totalLeads: 0 };
 
       const carIds = cars.map((c: any) => c.id);
+      const vehicleViewActions = getActionAliases("vehicle", "visit");
+      const vehicleClickActions = getActionAliases("vehicle", "click");
 
       // Get views and clicks in parallel (this month)
       const [viewsRes, clicksRes] = await Promise.all([
         supabase
           .from("action_logs")
           .select("entity_id")
-          .eq("action", "visit")
+          .in("action", vehicleViewActions)
           .eq("entity_type", "vehicle")
           .in("entity_id", carIds)
           .gte("created_at", monthStart),
         supabase
           .from("action_logs")
           .select("entity_id")
-          .eq("action", "click")
+          .in("action", vehicleClickActions)
           .eq("entity_type", "vehicle")
           .in("entity_id", carIds)
           .gte("created_at", monthStart),
