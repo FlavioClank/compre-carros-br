@@ -1,0 +1,1 @@
+ALTER TABLE public.ad_billing ALTER COLUMN id SET DEFAULT gen_random_uuid();
