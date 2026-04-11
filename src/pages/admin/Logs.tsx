@@ -31,6 +31,9 @@ const actionColors: Record<string, string> = {
   login: "bg-primary text-primary-foreground",
   logout: "bg-secondary text-secondary-foreground",
   sold: "bg-warning text-warning-foreground",
+  visit: "bg-blue-500 text-white",
+  click: "bg-orange-500 text-white",
+  change_garage_email: "bg-accent text-accent-foreground",
 };
 
 const entityLabels: Record<string, string> = {
@@ -39,6 +42,9 @@ const entityLabels: Record<string, string> = {
   brand: "Marca",
   user: "Usuário",
   sale: "Venda",
+  site: "Site",
+  ad: "Anúncio",
+  vehicle: "Veículo",
 };
 
 export default function AdminLogs() {
