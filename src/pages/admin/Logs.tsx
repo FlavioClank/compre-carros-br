@@ -31,6 +31,9 @@ const actionColors: Record<string, string> = {
   login: "bg-primary text-primary-foreground",
   logout: "bg-secondary text-secondary-foreground",
   sold: "bg-warning text-warning-foreground",
+  visit: "bg-blue-500 text-white",
+  click: "bg-orange-500 text-white",
+  change_garage_email: "bg-accent text-accent-foreground",
 };
 
 const entityLabels: Record<string, string> = {
@@ -39,6 +42,9 @@ const entityLabels: Record<string, string> = {
   brand: "Marca",
   user: "Usuário",
   sale: "Venda",
+  site: "Site",
+  ad: "Anúncio",
+  vehicle: "Veículo",
 };
 
 export default function AdminLogs() {
@@ -104,27 +110,32 @@ export default function AdminLogs() {
                 <SelectTrigger className="w-full md:w-48">
                   <SelectValue placeholder="Entidade" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as Entidades</SelectItem>
-                  <SelectItem value="car">Veículo</SelectItem>
-                  <SelectItem value="garage">Garagem</SelectItem>
-                  <SelectItem value="brand">Marca</SelectItem>
-                  <SelectItem value="user">Usuário</SelectItem>
-                  <SelectItem value="sale">Venda</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={actionFilter} onValueChange={setActionFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Ação" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as Ações</SelectItem>
-                  <SelectItem value="create">Criar</SelectItem>
-                  <SelectItem value="update">Atualizar</SelectItem>
-                  <SelectItem value="delete">Excluir</SelectItem>
-                  <SelectItem value="login">Login</SelectItem>
-                  <SelectItem value="sold">Vendido</SelectItem>
-                </SelectContent>
+                 <SelectContent>
+                   <SelectItem value="all">Todas as Entidades</SelectItem>
+                   <SelectItem value="site">Site</SelectItem>
+                   <SelectItem value="ad">Anúncio</SelectItem>
+                   <SelectItem value="vehicle">Veículo</SelectItem>
+                   <SelectItem value="car">Veículo (legado)</SelectItem>
+                   <SelectItem value="garage">Garagem</SelectItem>
+                   <SelectItem value="brand">Marca</SelectItem>
+                   <SelectItem value="user">Usuário</SelectItem>
+                   <SelectItem value="sale">Venda</SelectItem>
+                 </SelectContent>
+               </Select>
+               <Select value={actionFilter} onValueChange={setActionFilter}>
+                 <SelectTrigger className="w-full md:w-48">
+                   <SelectValue placeholder="Ação" />
+                 </SelectTrigger>
+                 <SelectContent>
+                   <SelectItem value="all">Todas as Ações</SelectItem>
+                   <SelectItem value="visit">Visita</SelectItem>
+                   <SelectItem value="click">Clique</SelectItem>
+                   <SelectItem value="create">Criar</SelectItem>
+                   <SelectItem value="update">Atualizar</SelectItem>
+                   <SelectItem value="delete">Excluir</SelectItem>
+                   <SelectItem value="login">Login</SelectItem>
+                   <SelectItem value="sold">Vendido</SelectItem>
+                 </SelectContent>
               </Select>
             </div>
           </CardContent>
