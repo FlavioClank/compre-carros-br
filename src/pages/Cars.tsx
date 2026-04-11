@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback, memo, useRef } from "react";
 import { parseSearchQuery, applyCorrections } from "@/lib/search-utils";
-import { shuffleSeeded, getHalfHourSeed } from "@/lib/shuffle";
+import { shuffleSeeded, get30MinSeed } from "@/lib/shuffle";
 import { Helmet } from "react-helmet-async";
 import { useSearchParams, useParams } from "react-router-dom";
 import { citySlugToName, getStateAbbr } from "@/lib/geo-utils";
@@ -191,7 +191,7 @@ export default function Cars() {
   });
   const listRef = useRef<HTMLDivElement>(null);
   const { ads, hasAds } = usePartnersRotation();
-  const seed = getHalfHourSeed();
+  const seed = get30MinSeed();
   const { isListening, isSupported, startListening, stopListening } = useSpeechRecognition();
 
   const [search, setSearch] = useState(searchParams.get("busca") || "");

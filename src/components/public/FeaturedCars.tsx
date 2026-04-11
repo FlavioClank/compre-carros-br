@@ -5,13 +5,12 @@ import { supabase } from "@/lib/supabase";
 import { CarCardSingle } from "@/components/public/CarCardSingle";
 import { HomePartnerCard } from "@/components/public/HomePartnerCard";
 import { usePartnersRotation } from "@/hooks/usePartnersRotation";
-import { useVehiclesPaginatedQuery } from "@/hooks/useVehiclesPaginatedQuery";
 import { interleaveVehiclesWithPartners } from "@/lib/interleave-partners";
 import { PaginationControls } from "@/components/public/PaginationControls";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { shuffleSeeded, getHalfHourSeed } from "@/lib/shuffle";
+import { shuffleSeeded, get30MinSeed } from "@/lib/shuffle";
 
 interface Car {
   id: string;
@@ -112,7 +111,27 @@ export function FeaturedCars() {
   const [page, setPage] = useState(0);
   const sectionRef = useRef<HTMLDivElement>(null);
   const { ads, hasAds } = usePartnersRotation();
-  const seed = getHalfHourSeed();
+
+  // 30-minute seed for car shuffling (cars stay stable for 30min)
+  const [carSeed, setCarSeed] = useState<number>(get30MinSeed);
+
+  // Update car seed every 30 minutes
+  useEffect(() => {
+    const now = Date.now();
+    const windowMs = 1800000;
+    const nextWindow = Math.ceil(now / windowMs) * windowMs;
+    const msUntilNext = nextWindow - now;
+
+    const timeout = setTimeout(() => {
+      setCarSeed(get30MinSeed());
+      const interval = setInterval(() => {
+        setCarSeed(get30MinSeed());
+      }, 1800000);
+      return () => clearInterval(interval);
+    }, msUntilNext);
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   // Reset to page 0 when logo/home is clicked
   useEffect(() => {
@@ -120,6 +139,7 @@ export function FeaturedCars() {
     window.addEventListener("reset-home", handleReset);
     return () => window.removeEventListener("reset-home", handleReset);
   }, []);
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["featured-cars-paginated", page],
     queryFn: () => fetchHomeCars(page),
@@ -131,18 +151,18 @@ export function FeaturedCars() {
   const totalCars = data?.totalCount ?? 0;
   const totalPages = data?.totalPages ?? 1;
 
-  // Shuffle cars deterministically, keeping featured first
+  // Shuffle cars deterministically with 30-minute seed
   const shuffledCars = useMemo(() => {
     if (!data?.cars) return [];
     const featured = data.cars.filter(c => c.is_featured);
     const regular = data.cars.filter(c => !c.is_featured);
     return [
-      ...shuffleSeeded(featured, seed + page),
-      ...shuffleSeeded(regular, seed + page),
+      ...shuffleSeeded(featured, carSeed + page),
+      ...shuffleSeeded(regular, carSeed + page),
     ];
-  }, [data?.cars, seed, page]);
+  }, [data?.cars, carSeed, page]);
 
-  // Interleave ads across pages — offset so page N picks up where page N-1 left off
+  // Interleave ads across pages
   const adStartIndex = useMemo(() => {
     if (ads.length === 0) return 0;
     return (page * ADS_PER_PAGE) % ads.length;

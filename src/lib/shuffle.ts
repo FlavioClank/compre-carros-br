@@ -26,11 +26,22 @@ export function shuffleSeeded<T>(arr: T[], seed: number): T[] {
 }
 
 /**
- * Get the current 5-minute window seed
- * Same seed for all users during the same 5-minute window
+ * Get the current 5-minute window seed (for ad rotation)
  */
-export function getHalfHourSeed(): number {
+export function get5MinSeed(): number {
   return Math.floor(Date.now() / 300000); // 300000ms = 5 minutes
+}
+
+/**
+ * Get the current 30-minute window seed (for car shuffling)
+ */
+export function get30MinSeed(): number {
+  return Math.floor(Date.now() / 1800000); // 1800000ms = 30 minutes
+}
+
+/** @deprecated Use get5MinSeed() instead */
+export function getHalfHourSeed(): number {
+  return get5MinSeed();
 }
 
 /**
@@ -41,4 +52,24 @@ export function getMsUntilNextWindow(): number {
   const windowMs = 300000;
   const nextWindow = Math.ceil(now / windowMs) * windowMs;
   return nextWindow - now;
+}
+
+/**
+ * Calculate milliseconds until the next 30-minute window
+ */
+export function getMsUntilNext30MinWindow(): number {
+  const now = Date.now();
+  const windowMs = 1800000;
+  const nextWindow = Math.ceil(now / windowMs) * windowMs;
+  return nextWindow - now;
+}
+
+/**
+ * Rotate array by N positions (shift forward: last becomes first)
+ * Used for ad queue rotation every 5 minutes
+ */
+export function rotateArray<T>(arr: T[], positions: number): T[] {
+  if (arr.length === 0) return arr;
+  const n = ((positions % arr.length) + arr.length) % arr.length;
+  return [...arr.slice(-n), ...arr.slice(0, -n)];
 }

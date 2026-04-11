@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
-import { shuffleSeeded, getHalfHourSeed, getMsUntilNextWindow } from "@/lib/shuffle";
+import { rotateArray, get5MinSeed, getMsUntilNextWindow } from "@/lib/shuffle";
 
 interface Ad {
   id: string;
@@ -18,10 +18,10 @@ interface Ad {
 export function usePartnersRotation() {
   const [rawAds, setRawAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [seed, setSeed] = useState<number>(getHalfHourSeed);
+  const [rotationTick, setRotationTick] = useState<number>(get5MinSeed);
   const currentIndexRef = useRef(0);
 
-  // Fetch ads on mount
+  // Fetch ads on mount (ordered by created_at — stable base order)
   useEffect(() => {
     async function fetchAds() {
       try {
@@ -45,32 +45,32 @@ export function usePartnersRotation() {
     fetchAds();
   }, []);
 
-  // Update seed every 30 minutes
+  // Update rotation tick every 5 minutes
   useEffect(() => {
-    // Set timeout until next 30-min window
     const msUntilNext = getMsUntilNextWindow();
-    
+
     const timeout = setTimeout(() => {
-      setSeed(getHalfHourSeed());
+      setRotationTick(get5MinSeed());
       currentIndexRef.current = 0;
-      
-      // Then set interval for subsequent updates
+
       const interval = setInterval(() => {
-        setSeed(getHalfHourSeed());
+        setRotationTick(get5MinSeed());
         currentIndexRef.current = 0;
       }, 300000); // 5 minutes
-      
+
       return () => clearInterval(interval);
     }, msUntilNext);
 
     return () => clearTimeout(timeout);
   }, []);
 
-  // Deterministically shuffled ads based on current seed
+  // Rotate ads in queue fashion: every 5min the last ad goes to the front
+  // rotationTick changes every 5min, so ads shift position each tick
   const ads = useMemo(() => {
     if (rawAds.length === 0) return [];
-    return shuffleSeeded(rawAds, seed);
-  }, [rawAds, seed]);
+    // Use rotationTick to determine how many positions to shift
+    return rotateArray(rawAds, rotationTick);
+  }, [rawAds, rotationTick]);
 
   // Get next ad in round-robin fashion
   const getNextAd = useCallback((): Ad | null => {
@@ -101,6 +101,5 @@ export function usePartnersRotation() {
     getNextAd,
     getAdAtPosition,
     resetRotation,
-    seed, // Expose seed for FeaturedCars to use same seed for car shuffling
   };
 }
