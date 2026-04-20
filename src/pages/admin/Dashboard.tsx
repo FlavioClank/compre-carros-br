@@ -2,11 +2,26 @@ import { useQuery } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Package, CheckCircle, TrendingUp } from "lucide-react";
+import { Building2, Package, CheckCircle, TrendingUp, MessageCircle } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useVehicleWhatsappEnabled } from "@/hooks/useVehicleWhatsappEnabled";
+import { toast } from "sonner";
 
 export default function AdminDashboard() {
+  const { enabled: waEnabled, loading: waLoading, updateSetting: updateWa } = useVehicleWhatsappEnabled();
+
+  const handleToggleWhatsapp = async (checked: boolean) => {
+    const ok = await updateWa(checked);
+    if (ok) {
+      toast.success(checked ? "Botão de WhatsApp ativado em todos os veículos" : "Botão de WhatsApp desativado em todos os veículos");
+    } else {
+      toast.error("Erro ao atualizar configuração");
+    }
+  };
+
   // Fetch stats
   const { data: stats } = useQuery({
     queryKey: ["admin-stats"],
@@ -53,6 +68,34 @@ export default function AdminDashboard() {
           <h1 className="font-display text-3xl font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground mt-1">Visão geral do sistema</p>
         </div>
+
+        {/* Configurações Globais */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-accent" />
+              Configurações Globais
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between gap-4 p-4 rounded-lg border bg-muted/30">
+              <div className="flex-1">
+                <Label htmlFor="wa-toggle" className="text-base font-medium cursor-pointer">
+                  Botão de WhatsApp nos veículos
+                </Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Quando desativado, o botão "Falar pelo WhatsApp" será ocultado em todas as páginas e cards de veículos do site público.
+                </p>
+              </div>
+              <Switch
+                id="wa-toggle"
+                checked={waEnabled}
+                disabled={waLoading}
+                onCheckedChange={handleToggleWhatsapp}
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>
