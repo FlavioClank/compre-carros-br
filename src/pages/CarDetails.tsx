@@ -74,6 +74,7 @@ export default function CarDetails() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const { enabled: whatsappEnabled } = useVehicleWhatsappEnabled();
 
   useEffect(() => {
     const fetchCar = async () => {
@@ -219,7 +220,6 @@ export default function CarDetails() {
   );
   const photos = car.photos?.length > 0 ? car.photos : ["/placeholder.svg"];
   const isMotorcycle = car.category === "motorcycle";
-  const { enabled: whatsappEnabled } = useVehicleWhatsappEnabled();
 
   const whatsappUrl = generateWhatsAppUrl(
     WHATSAPP_NUMBER,
