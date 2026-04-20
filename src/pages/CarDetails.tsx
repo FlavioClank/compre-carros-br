@@ -39,6 +39,7 @@ import {
   ZoomIn,
 } from "lucide-react";
 import { trackVehicleView, trackVehicleClick } from "@/lib/analytics";
+import { useVehicleWhatsappEnabled } from "@/hooks/useVehicleWhatsappEnabled";
 
 interface CarDetail {
   id: string;
@@ -218,6 +219,7 @@ export default function CarDetails() {
   );
   const photos = car.photos?.length > 0 ? car.photos : ["/placeholder.svg"];
   const isMotorcycle = car.category === "motorcycle";
+  const { enabled: whatsappEnabled } = useVehicleWhatsappEnabled();
 
   const whatsappUrl = generateWhatsAppUrl(
     WHATSAPP_NUMBER,
