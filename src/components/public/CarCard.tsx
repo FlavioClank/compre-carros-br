@@ -54,6 +54,7 @@ export const CarCard = memo(function CarCard({ car }: CarCardProps) {
   const brandName = car.brands?.name || "";
   const mainPhoto = getCarCoverImage(car.photos);
   const invertBrandLogo = ["toyota", "nissan", "audi", "volkswagen"].includes(brandName.toLowerCase());
+  const { enabled: whatsappEnabled } = useVehicleWhatsappEnabled();
   const carUrl = generateCarUrl({ id: car.id, slug: car.slug, model: car.model, version: car.version, brands: car.brands });
   const isMotorcycle = car.category === 'motorcycle';
   
@@ -170,7 +171,7 @@ export const CarCard = memo(function CarCard({ car }: CarCardProps) {
             <p className="text-sm font-bold text-accent">{formatPrice(car.price)}</p>
           </div>
           
-          {car.status === "available" && (
+          {car.status === "available" && whatsappEnabled && (
             <a
               href={whatsappUrl}
               target="_blank"
