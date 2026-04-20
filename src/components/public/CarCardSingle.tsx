@@ -18,6 +18,7 @@ import { VehicleCardShell } from "@/components/public/VehicleCardShell";
 import { trackVehicleClick } from "@/lib/analytics";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { getCarCoverImage } from "@/lib/image-utils";
+import { useVehicleWhatsappEnabled } from "@/hooks/useVehicleWhatsappEnabled";
 
 interface CarCardSingleProps {
   car: {
