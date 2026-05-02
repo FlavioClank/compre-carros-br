@@ -315,6 +315,31 @@ export default function Cars() {
     );
   }, [shuffledVehicles, ads, adStartIndex]);
 
+  // Restore scroll position when the user comes back from an ad detail page.
+  // We snapshot the absolute Y of the clicked ad slot in PartnerCard's onClick;
+  // here we consume that snapshot once the list is rendered and land the user
+  // back on the exact same spot — even though ads rotate every 5 minutes and
+  // the slot may now contain a different ad.
+  const restoredKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (isLoading) return;
+    if (listItems.length === 0) return;
+    const url = getCurrentListUrl();
+    if (restoredKeyRef.current === url) return;
+
+    const y = consumeListScroll(url);
+    if (y == null) return;
+
+    restoredKeyRef.current = url;
+    // Two rAFs ensure layout (including images placeholders) is committed
+    // before we jump, so the offset is accurate.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: y, behavior: "auto" });
+      });
+    });
+  }, [isLoading, listItems.length]);
+
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
     setTimeout(() => {
