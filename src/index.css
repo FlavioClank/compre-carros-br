@@ -139,6 +139,19 @@
     font-family: 'Outfit', system-ui, sans-serif;
     @apply font-semibold tracking-tight;
   }
+
+  /* iOS Safari fix: prevent automatic zoom-in when focusing form fields,
+     which can leave the page stuck zoomed and cause the layout to look
+     "ampliado/bugado" while scrolling (especially on the Cars/Search page
+     where there are sticky filter bars + backdrop-blur). 
+     Forcing >=16px on touch devices disables the auto-zoom behavior. */
+  @supports (-webkit-touch-callout: none) {
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
 }
 
 @layer components {
