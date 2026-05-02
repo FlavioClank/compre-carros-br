@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { supabase } from "@/lib/supabase";
@@ -21,7 +21,16 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { format, formatDistanceToNow, subDays, startOfDay, startOfMonth } from "date-fns";
+import {
+  format,
+  formatDistanceToNow,
+  subDays,
+  subMonths,
+  startOfDay,
+  startOfMonth,
+  endOfMonth,
+  differenceInDays,
+} from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Eye,
@@ -33,6 +42,7 @@ import {
   Megaphone,
   RefreshCw,
   Users,
+  Calendar,
 } from "lucide-react";
 import {
   BarChart,
@@ -44,12 +54,62 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// ─── Helpers ──────────────────────────────────────────────
+// ─── Period selector ───────────────────────────────────────
 
-const now = new Date();
-const todayStart = startOfDay(now).toISOString();
-const weekStart = subDays(startOfDay(now), 7).toISOString();
-const monthStart = startOfMonth(now).toISOString();
+type PeriodKey =
+  | "today"
+  | "7d"
+  | "30d"
+  | "this_month"
+  | "last_month"
+  | "3m"
+  | "6m"
+  | "12m"
+  | "all";
+
+const PERIOD_OPTIONS: { value: PeriodKey; label: string }[] = [
+  { value: "today", label: "Hoje" },
+  { value: "7d", label: "Últimos 7 dias" },
+  { value: "30d", label: "Últimos 30 dias" },
+  { value: "this_month", label: "Mês atual" },
+  { value: "last_month", label: "Mês passado" },
+  { value: "3m", label: "Últimos 3 meses" },
+  { value: "6m", label: "Últimos 6 meses" },
+  { value: "12m", label: "Últimos 12 meses" },
+  { value: "all", label: "Tudo (desde o início)" },
+];
+
+function resolvePeriod(p: PeriodKey): { from: string; to: string | null; label: string } {
+  const now = new Date();
+  switch (p) {
+    case "today":
+      return { from: startOfDay(now).toISOString(), to: null, label: "Hoje" };
+    case "7d":
+      return { from: subDays(startOfDay(now), 7).toISOString(), to: null, label: "Últimos 7 dias" };
+    case "30d":
+      return { from: subDays(startOfDay(now), 30).toISOString(), to: null, label: "Últimos 30 dias" };
+    case "this_month":
+      return { from: startOfMonth(now).toISOString(), to: null, label: "Mês atual" };
+    case "last_month": {
+      const lm = subMonths(now, 1);
+      return {
+        from: startOfMonth(lm).toISOString(),
+        to: endOfMonth(lm).toISOString(),
+        label: `Mês passado (${format(lm, "MMM/yyyy", { locale: ptBR })})`,
+      };
+    }
+    case "3m":
+      return { from: subMonths(startOfDay(now), 3).toISOString(), to: null, label: "Últimos 3 meses" };
+    case "6m":
+      return { from: subMonths(startOfDay(now), 6).toISOString(), to: null, label: "Últimos 6 meses" };
+    case "12m":
+      return { from: subMonths(startOfDay(now), 12).toISOString(), to: null, label: "Últimos 12 meses" };
+    case "all":
+      return { from: "1970-01-01T00:00:00.000Z", to: null, label: "Tudo (desde o início)" };
+  }
+}
+
+// ─── Action aliases (compat with old/new logs) ─────────────
 
 const ACTION_ALIASES = {
   site: {
@@ -76,72 +136,57 @@ function getActionAliases(entityType: string, action: string) {
   return [...new Set(aliases[action as keyof typeof aliases] ?? [action])];
 }
 
-function useSummaryCount(entityType: string, action: string, since: string) {
+// ─── Helpers ───────────────────────────────────────────────
+
+function useSummaryCount(
+  entityType: string,
+  action: string,
+  from: string,
+  to: string | null,
+) {
   return useQuery({
-    queryKey: ["stats-count", entityType, action, since],
+    queryKey: ["stats-count", entityType, action, from, to],
     queryFn: async () => {
       const actions = getActionAliases(entityType, action);
-      const { count, error } = await supabase
+      let q = supabase
         .from("action_logs")
         .select("*", { count: "exact", head: true })
         .eq("entity_type", entityType)
         .in("action", actions)
-        .gte("created_at", since);
+        .gte("created_at", from);
+      if (to) q = q.lte("created_at", to);
+      const { count, error } = await q;
       if (error) throw error;
       return count || 0;
     },
     staleTime: 15_000,
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
   });
 }
 
 // ─── Overview Cards ────────────────────────────────────────
 
-function OverviewCards() {
-  const { data: siteToday } = useSummaryCount("site", "visit", todayStart);
-  const { data: siteWeek } = useSummaryCount("site", "visit", weekStart);
-  const { data: siteMonth } = useSummaryCount("site", "visit", monthStart);
-
-  const { data: vehicleViewsMonth } = useSummaryCount("vehicle", "visit", monthStart);
-  const { data: vehicleClicksMonth } = useSummaryCount("vehicle", "click", monthStart);
-  const { data: adClicksMonth } = useSummaryCount("ad", "click", monthStart);
+function OverviewCards({ from, to, label }: { from: string; to: string | null; label: string }) {
+  const { data: siteVisits } = useSummaryCount("site", "visit", from, to);
+  const { data: vehicleViews } = useSummaryCount("vehicle", "visit", from, to);
+  const { data: vehicleClicks } = useSummaryCount("vehicle", "click", from, to);
+  const { data: adClicks } = useSummaryCount("ad", "click", from, to);
+  const { data: adViews } = useSummaryCount("ad", "visit", from, to);
 
   const cards = [
+    { label: `Visitas Site (${label})`, value: siteVisits ?? "–", icon: Globe, color: "text-primary" },
+    { label: `Views Veículos`, value: vehicleViews ?? "–", icon: Eye, color: "text-muted-foreground" },
+    { label: `Leads Veículos`, value: vehicleClicks ?? "–", icon: MousePointer, color: "text-accent" },
+    { label: `Views Anúncios`, value: adViews ?? "–", icon: BarChart3, color: "text-muted-foreground" },
+    { label: `Cliques Anúncios`, value: adClicks ?? "–", icon: Megaphone, color: "text-accent" },
     {
-      label: "Visitas Hoje",
-      value: siteToday ?? "–",
-      icon: Globe,
+      label: `Conversão Veículos`,
+      value:
+        vehicleViews && vehicleViews > 0
+          ? `${(((vehicleClicks || 0) / vehicleViews) * 100).toFixed(1)}%`
+          : "–",
+      icon: TrendingUp,
       color: "text-primary",
-    },
-    {
-      label: "Visitas 7 dias",
-      value: siteWeek ?? "–",
-      icon: Users,
-      color: "text-primary",
-    },
-    {
-      label: "Visitas no Mês",
-      value: siteMonth ?? "–",
-      icon: BarChart3,
-      color: "text-primary",
-    },
-    {
-      label: "Views Veículos (Mês)",
-      value: vehicleViewsMonth ?? "–",
-      icon: Eye,
-      color: "text-muted-foreground",
-    },
-    {
-      label: "Leads Veículos (Mês)",
-      value: vehicleClicksMonth ?? "–",
-      icon: MousePointer,
-      color: "text-accent",
-    },
-    {
-      label: "Cliques Anúncios (Mês)",
-      value: adClicksMonth ?? "–",
-      icon: Megaphone,
-      color: "text-accent",
     },
   ];
 
@@ -162,32 +207,48 @@ function OverviewCards() {
 
 // ─── Site Tab ──────────────────────────────────────────────
 
-function SiteTab() {
+function SiteTab({ from, to, label }: { from: string; to: string | null; label: string }) {
   const { data: dailyData, isLoading } = useQuery({
-    queryKey: ["stats-site-daily-30"],
+    queryKey: ["stats-site-series", from, to],
     queryFn: async () => {
-      const from = subDays(startOfDay(now), 30).toISOString();
       const siteVisitActions = getActionAliases("site", "visit");
-      const { data, error } = await supabase
+      let q = supabase
         .from("action_logs")
         .select("created_at")
         .eq("entity_type", "site")
         .in("action", siteVisitActions)
         .gte("created_at", from);
+      if (to) q = q.lte("created_at", to);
+      const { data, error } = await q;
       if (error) throw error;
+
+      // Decide bucket granularity: <= 90 days = daily; otherwise monthly
+      const fromDate = new Date(from);
+      const toDate = to ? new Date(to) : new Date();
+      const days = Math.max(1, differenceInDays(toDate, fromDate));
+      const useMonthly = days > 90;
 
       const buckets = new Map<string, number>();
       (data || []).forEach((log) => {
-        const key = format(new Date(log.created_at), "dd/MM");
+        const d = new Date(log.created_at);
+        const key = useMonthly ? format(d, "MM/yyyy") : format(d, "dd/MM");
         buckets.set(key, (buckets.get(key) || 0) + 1);
       });
 
       return Array.from(buckets.entries())
-        .sort((a, b) => a[0].localeCompare(b[0]))
+        .sort((a, b) => {
+          // Sort chronologically
+          const parse = (k: string) => {
+            const parts = k.split("/").map(Number);
+            return useMonthly
+              ? new Date(parts[1], parts[0] - 1, 1).getTime()
+              : new Date(new Date().getFullYear(), parts[1] - 1, parts[0]).getTime();
+          };
+          return parse(a[0]) - parse(b[0]);
+        })
         .map(([dia, visitas]) => ({ dia, visitas }));
     },
-    staleTime: 15_000,
-    refetchInterval: 30_000,
+    staleTime: 30_000,
   });
 
   return (
@@ -195,7 +256,7 @@ function SiteTab() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Globe className="h-5 w-5 text-primary" />
-          Visitas ao Site — Últimos 30 dias
+          Visitas ao Site — {label}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -221,7 +282,9 @@ function SiteTab() {
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <p className="text-center py-10 text-muted-foreground">Nenhuma visita registrada</p>
+          <p className="text-center py-10 text-muted-foreground">
+            Nenhuma visita registrada nesse período
+          </p>
         )}
       </CardContent>
     </Card>
@@ -230,9 +293,9 @@ function SiteTab() {
 
 // ─── Ads Tab ──────────────────────────────────────────────
 
-function AdsTab() {
+function AdsTab({ from, to, label }: { from: string; to: string | null; label: string }) {
   const { data: adStats, isLoading } = useQuery({
-    queryKey: ["stats-ads-summary-v2"],
+    queryKey: ["stats-ads-summary", from, to],
     queryFn: async () => {
       const { data: ads, error: adsError } = await supabase
         .from("ads")
@@ -245,42 +308,37 @@ function AdsTab() {
       const adClickActions = getActionAliases("ad", "click");
       const adViewActions = getActionAliases("ad", "visit");
 
-      // Fetch all clicks and views for these ads in parallel
+      const buildLogQuery = (actions: string[]) => {
+        let q = supabase
+          .from("action_logs")
+          .select("entity_id, created_at")
+          .in("action", actions)
+          .eq("entity_type", "ad")
+          .in("entity_id", adIds)
+          .gte("created_at", from);
+        if (to) q = q.lte("created_at", to);
+        return q;
+      };
+
       const [clicksRes, viewsRes] = await Promise.all([
-        supabase
-          .from("action_logs")
-          .select("entity_id, created_at")
-          .in("action", adClickActions)
-          .eq("entity_type", "ad")
-          .in("entity_id", adIds),
-        supabase
-          .from("action_logs")
-          .select("entity_id, created_at")
-          .in("action", adViewActions)
-          .eq("entity_type", "ad")
-          .in("entity_id", adIds),
+        buildLogQuery(adClickActions),
+        buildLogQuery(adViewActions),
       ]);
 
       if (clicksRes.error) throw clicksRes.error;
       if (viewsRes.error) throw viewsRes.error;
 
-      // Aggregate
-      const clickMap = new Map<string, { total: number; today: number; week: number; month: number }>();
+      const clickMap = new Map<string, number>();
       const viewMap = new Map<string, number>();
 
       adIds.forEach((id) => {
-        clickMap.set(id, { total: 0, today: 0, week: 0, month: 0 });
+        clickMap.set(id, 0);
         viewMap.set(id, 0);
       });
 
       (clicksRes.data || []).forEach((log) => {
         if (!log.entity_id) return;
-        const entry = clickMap.get(log.entity_id);
-        if (!entry) return;
-        entry.total++;
-        if (log.created_at >= todayStart) entry.today++;
-        if (log.created_at >= weekStart) entry.week++;
-        if (log.created_at >= monthStart) entry.month++;
+        clickMap.set(log.entity_id, (clickMap.get(log.entity_id) || 0) + 1);
       });
 
       (viewsRes.data || []).forEach((log) => {
@@ -288,16 +346,18 @@ function AdsTab() {
         viewMap.set(log.entity_id, (viewMap.get(log.entity_id) || 0) + 1);
       });
 
-      return ads.map((ad) => ({
-        ...ad,
-        ...clickMap.get(ad.id)!,
-        views: viewMap.get(ad.id) || 0,
-      }));
+      return ads
+        .map((ad) => ({
+          ...ad,
+          clicks: clickMap.get(ad.id) || 0,
+          views: viewMap.get(ad.id) || 0,
+        }))
+        .sort((a, b) => b.clicks - a.clicks);
     },
     staleTime: 60_000,
   });
 
-  // Recent clicks
+  // Recent clicks (always last 20, regardless of period)
   const { data: recentClicks } = useQuery({
     queryKey: ["stats-recent-ad-clicks"],
     queryFn: async () => {
@@ -311,7 +371,6 @@ function AdsTab() {
         .limit(20);
       if (error) throw error;
 
-      // Get ad titles
       const adIds = [...new Set((clicks || []).map((c) => c.entity_id).filter(Boolean))];
       const { data: ads } = await supabase
         .from("ads")
@@ -326,17 +385,16 @@ function AdsTab() {
       }));
     },
     staleTime: 30_000,
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
   });
 
   return (
     <div className="space-y-6">
-      {/* Ad Performance Table */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Megaphone className="h-5 w-5 text-primary" />
-            Desempenho dos Anúncios
+            Desempenho dos Anúncios — {label}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -349,46 +407,50 @@ function AdsTab() {
                   <TableRow>
                     <TableHead>Anúncio</TableHead>
                     <TableHead className="text-center">Status</TableHead>
-                    <TableHead className="text-right">Hoje</TableHead>
-                    <TableHead className="text-right">7 dias</TableHead>
-                    <TableHead className="text-right">Mês</TableHead>
-                    <TableHead className="text-right">Total Cliques</TableHead>
                     <TableHead className="text-right">Views</TableHead>
+                    <TableHead className="text-right">Cliques</TableHead>
+                    <TableHead className="text-right">CTR</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {adStats.map((ad) => (
-                    <TableRow key={ad.id}>
-                      <TableCell className="font-medium max-w-[200px] truncate">
-                        {ad.title}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant={ad.is_active ? "default" : "secondary"}>
-                          {ad.is_active ? "Ativo" : "Inativo"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">{ad.today}</TableCell>
-                      <TableCell className="text-right font-semibold">{ad.week}</TableCell>
-                      <TableCell className="text-right font-semibold">{ad.month}</TableCell>
-                      <TableCell className="text-right font-bold text-primary">{ad.total}</TableCell>
-                      <TableCell className="text-right text-muted-foreground">
-                        <span className="flex items-center justify-end gap-1">
-                          <Eye className="h-3 w-3" />
-                          {ad.views}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {adStats.map((ad) => {
+                    const ctr = ad.views > 0 ? ((ad.clicks / ad.views) * 100).toFixed(1) : "0";
+                    return (
+                      <TableRow key={ad.id}>
+                        <TableCell className="font-medium max-w-[200px] truncate">
+                          {ad.title}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={ad.is_active ? "default" : "secondary"}>
+                            {ad.is_active ? "Ativo" : "Inativo"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          <span className="flex items-center justify-end gap-1">
+                            <Eye className="h-3 w-3" />
+                            {ad.views}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-primary">
+                          {ad.clicks}
+                        </TableCell>
+                        <TableCell className="text-right text-accent font-semibold">
+                          {ctr}%
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
           ) : (
-            <p className="text-center py-8 text-muted-foreground">Nenhum anúncio encontrado</p>
+            <p className="text-center py-8 text-muted-foreground">
+              Nenhum anúncio com dados nesse período
+            </p>
           )}
         </CardContent>
       </Card>
 
-      {/* Recent Clicks */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -442,7 +504,7 @@ function AdsTab() {
 
 // ─── Garages Tab ──────────────────────────────────────────
 
-function GaragesTab() {
+function GaragesTab({ from, to, label }: { from: string; to: string | null; label: string }) {
   const [selectedGarageId, setSelectedGarageId] = useState<string>("all");
 
   const { data: garages } = useQuery({
@@ -458,9 +520,8 @@ function GaragesTab() {
   });
 
   const { data: vehicleStats, isLoading, refetch, isFetching } = useQuery({
-    queryKey: ["stats-garage-vehicles", selectedGarageId],
+    queryKey: ["stats-garage-vehicles", selectedGarageId, from, to],
     queryFn: async () => {
-      // Get cars
       let carsQuery = supabase
         .from("cars")
         .select("id, code, model, status, sold_at, garage_id, brands:brand_id(name), garages:garage_id(name)");
@@ -477,22 +538,21 @@ function GaragesTab() {
       const vehicleViewActions = getActionAliases("vehicle", "visit");
       const vehicleClickActions = getActionAliases("vehicle", "click");
 
-      // Get views and clicks in parallel (this month)
+      const buildLogQuery = (actions: string[]) => {
+        let q = supabase
+          .from("action_logs")
+          .select("entity_id")
+          .in("action", actions)
+          .eq("entity_type", "vehicle")
+          .in("entity_id", carIds)
+          .gte("created_at", from);
+        if (to) q = q.lte("created_at", to);
+        return q;
+      };
+
       const [viewsRes, clicksRes] = await Promise.all([
-        supabase
-          .from("action_logs")
-          .select("entity_id")
-          .in("action", vehicleViewActions)
-          .eq("entity_type", "vehicle")
-          .in("entity_id", carIds)
-          .gte("created_at", monthStart),
-        supabase
-          .from("action_logs")
-          .select("entity_id")
-          .in("action", vehicleClickActions)
-          .eq("entity_type", "vehicle")
-          .in("entity_id", carIds)
-          .gte("created_at", monthStart),
+        buildLogQuery(vehicleViewActions),
+        buildLogQuery(vehicleClickActions),
       ]);
 
       const viewsMap = new Map<string, number>();
@@ -517,7 +577,6 @@ function GaragesTab() {
         leads: clicksMap.get(car.id) || 0,
       }));
 
-      // Sort by leads desc, then views desc
       vehicles.sort((a: any, b: any) => b.leads !== a.leads ? b.leads - a.leads : b.views - a.views);
 
       const totalViews = vehicles.reduce((s: number, v: any) => s + v.views, 0);
@@ -535,7 +594,6 @@ function GaragesTab() {
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
         <div className="w-full sm:w-64 space-y-1">
           <p className="text-sm font-medium text-muted-foreground">Garagem</p>
@@ -565,19 +623,18 @@ function GaragesTab() {
         </Button>
       </div>
 
-      {/* Summary */}
       <div className="grid grid-cols-3 gap-3">
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <Eye className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Views (Mês)</span>
+            <span className="text-xs text-muted-foreground">Views ({label})</span>
           </div>
           <p className="text-2xl font-bold">{vehicleStats?.totalViews ?? 0}</p>
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <MousePointer className="h-4 w-4 text-primary" />
-            <span className="text-xs text-muted-foreground">Leads (Mês)</span>
+            <span className="text-xs text-muted-foreground">Leads ({label})</span>
           </div>
           <p className="text-2xl font-bold text-primary">{vehicleStats?.totalLeads ?? 0}</p>
         </Card>
@@ -590,12 +647,11 @@ function GaragesTab() {
         </Card>
       </div>
 
-      {/* Vehicle Ranking */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Car className="h-5 w-5 text-primary" />
-            Ranking de Veículos — Mês Atual
+            Ranking de Veículos — {label}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -647,7 +703,7 @@ function GaragesTab() {
             </div>
           ) : (
             <p className="text-center py-8 text-muted-foreground">
-              Nenhum veículo encontrado
+              Nenhum veículo com dados nesse período
             </p>
           )}
         </CardContent>
@@ -659,20 +715,42 @@ function GaragesTab() {
 // ─── Main Component ──────────────────────────────────────
 
 export default function AdminStats() {
+  const [period, setPeriod] = useState<PeriodKey>("30d");
+  const { from, to, label } = useMemo(() => resolvePeriod(period), [period]);
+
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">Estatísticas</h1>
-          <p className="text-muted-foreground mt-1">
-            Visão geral do desempenho do site, anúncios e veículos.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-foreground">Estatísticas</h1>
+            <p className="text-muted-foreground mt-1">
+              Visão geral do desempenho do site, anúncios e veículos.
+            </p>
+          </div>
+
+          <div className="w-full sm:w-72 space-y-1">
+            <label className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+              <Calendar className="h-4 w-4" />
+              Período
+            </label>
+            <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PERIOD_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* Overview Cards */}
-        <OverviewCards />
+        <OverviewCards from={from} to={to} label={label} />
 
-        {/* Tabs */}
         <Tabs defaultValue="site" className="w-full">
           <TabsList className="mb-4">
             <TabsTrigger value="site" className="gap-1.5">
@@ -689,13 +767,13 @@ export default function AdminStats() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="site">
-            <SiteTab />
+            <SiteTab from={from} to={to} label={label} />
           </TabsContent>
           <TabsContent value="ads">
-            <AdsTab />
+            <AdsTab from={from} to={to} label={label} />
           </TabsContent>
           <TabsContent value="garages">
-            <GaragesTab />
+            <GaragesTab from={from} to={to} label={label} />
           </TabsContent>
         </Tabs>
       </div>
