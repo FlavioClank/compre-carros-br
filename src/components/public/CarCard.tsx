@@ -1,5 +1,6 @@
-import { memo } from "react";
+import { memo, useRef } from "react";
 import { Link } from "react-router-dom";
+import { saveListScrollFromElement } from "@/lib/scroll-restoration";
 import { Car, Fuel, Gauge, Calendar, Bike } from "lucide-react";
 import {
   WHATSAPP_NUMBER,
