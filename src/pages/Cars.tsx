@@ -273,7 +273,15 @@ export default function Cars() {
     geoStateAbbr,
   ]);
 
+  // Skip the very first run so we don't wipe `?pagina=N` when the user
+  // navigates back to the listing — that would also break scroll restoration
+  // because the saved key includes the full URL (with pagina/filters).
+  const isFirstFiltersRun = useRef(true);
   useEffect(() => {
+    if (isFirstFiltersRun.current) {
+      isFirstFiltersRun.current = false;
+      return;
+    }
     setPage(0);
   }, [filters]);
 
