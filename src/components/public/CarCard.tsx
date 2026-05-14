@@ -80,7 +80,7 @@ export const CarCard = memo(function CarCard({ car }: CarCardProps) {
     <div ref={wrapperRef}>
     <VehicleCardShell>
       {/* Image */}
-      <Link to={carUrl} className="relative block aspect-[16/10] overflow-hidden">
+      <Link to={carUrl} onClick={handleNavClick} className="relative block aspect-[16/10] overflow-hidden">
         <OptimizedImage
           src={mainPhoto}
           alt={`${brandName} ${car.model}`}
