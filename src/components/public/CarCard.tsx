@@ -73,7 +73,11 @@ export const CarCard = memo(function CarCard({ car }: CarCardProps) {
     })
   );
 
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const handleNavClick = () => saveListScrollFromElement(wrapperRef.current);
+
   return (
+    <div ref={wrapperRef}>
     <VehicleCardShell>
       {/* Image */}
       <Link to={carUrl} className="relative block aspect-[16/10] overflow-hidden">
