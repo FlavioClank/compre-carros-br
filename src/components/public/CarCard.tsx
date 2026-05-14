@@ -201,5 +201,6 @@ export const CarCard = memo(function CarCard({ car }: CarCardProps) {
         </div>
       </div>
     </VehicleCardShell>
+    </div>
   );
 });
