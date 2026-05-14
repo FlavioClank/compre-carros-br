@@ -11,7 +11,7 @@ import { PartnerCard } from "@/components/public/PartnerCard";
 import { usePartnersRotation } from "@/hooks/usePartnersRotation";
 import { PAGE_SIZE, useVehiclesPaginatedQuery } from "@/hooks/useVehiclesPaginatedQuery";
 import { interleaveVehiclesWithPartners } from "@/lib/interleave-partners";
-import { consumeListScroll, getCurrentListUrl } from "@/lib/scroll-restoration";
+import { consumeListScroll, getCurrentListUrl, saveListScrollFromElement } from "@/lib/scroll-restoration";
 import { PaginationControls } from "@/components/public/PaginationControls";
 import { VehicleFilters, VehicleData } from "@/hooks/useVehiclesInfiniteQuery";
 import { Input } from "@/components/ui/input";
@@ -1036,7 +1036,18 @@ export default function Cars() {
                 </div>
               ) : listItems.length > 0 ? (
                 <>
-                  <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+                  <div
+                    className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3"
+                    onClickCapture={(e) => {
+                      // Save absolute Y of the clicked card so we can restore
+                      // exact scroll position when the user navigates back —
+                      // works for car cards AND ad cards.
+                      const target = (e.target as HTMLElement)?.closest('a');
+                      if (!target) return;
+                      const card = (target as HTMLElement).closest('[data-list-card], a') as HTMLElement | null;
+                      saveListScrollFromElement(card ?? (target as HTMLElement));
+                    }}
+                  >
                     {listItems.map((item) => (
                       <CardItem
                         key={item.type === 'car' ? `car-${item.data.id}` : `promo-${item.data.id}`}
