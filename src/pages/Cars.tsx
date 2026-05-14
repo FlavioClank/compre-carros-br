@@ -1036,7 +1036,18 @@ export default function Cars() {
                 </div>
               ) : listItems.length > 0 ? (
                 <>
-                  <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+                  <div
+                    className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3"
+                    onClickCapture={(e) => {
+                      // Save absolute Y of the clicked card so we can restore
+                      // exact scroll position when the user navigates back —
+                      // works for car cards AND ad cards.
+                      const target = (e.target as HTMLElement)?.closest('a');
+                      if (!target) return;
+                      const card = (target as HTMLElement).closest('[data-list-card], a') as HTMLElement | null;
+                      saveListScrollFromElement(card ?? (target as HTMLElement));
+                    }}
+                  >
                     {listItems.map((item) => (
                       <CardItem
                         key={item.type === 'car' ? `car-${item.data.id}` : `promo-${item.data.id}`}
