@@ -125,7 +125,7 @@ export const CarCard = memo(function CarCard({ car }: CarCardProps) {
       {/* Content */}
       <div className="p-3">
         {/* Title */}
-        <Link to={carUrl}>
+        <Link to={carUrl} onClick={handleNavClick}>
           <h3 className="font-display text-sm font-bold text-card-foreground mb-0.5 group-hover:text-accent transition-colors line-clamp-1">
             {brandName} {car.model}
           </h3>
