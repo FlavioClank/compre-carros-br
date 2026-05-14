@@ -328,19 +328,24 @@ export default function Cars() {
   // here we consume that snapshot once the list is rendered and land the user
   // back on the exact same spot — even though ads rotate every 5 minutes and
   // the slot may now contain a different ad.
+  // Capture the URL exactly as it was when the page mounted (POP from detail).
+  // We must NOT use getCurrentListUrl() inside the restore effect because by
+  // the time it runs the filter/page sync effects may have already rewritten
+  // the URL (e.g. dropping `?pagina=3`), and the saved key wouldn't match.
+  const initialUrlRef = useRef<string>(
+    typeof window !== "undefined" ? window.location.pathname + window.location.search : "",
+  );
   const restoredKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (isLoading) return;
     if (listItems.length === 0) return;
-    const url = getCurrentListUrl();
+    const url = initialUrlRef.current;
     if (restoredKeyRef.current === url) return;
 
     const y = consumeListScroll(url);
     if (y == null) return;
 
     restoredKeyRef.current = url;
-    // Two rAFs ensure layout (including images placeholders) is committed
-    // before we jump, so the offset is accurate.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         window.scrollTo({ top: y, behavior: "auto" });
