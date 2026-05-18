@@ -126,13 +126,21 @@
     @apply border-border;
   }
 
+  /* iOS: NÃO usar `scroll-behavior: smooth` global no html.
+     No iOS Safari isso conflita com window.scrollTo({behavior:'auto'}) da
+     restauração de scroll, com Sheets/Dialogs (Radix trava body) e com a
+     barra dinâmica do Safari — causa travadas e pulos durante a rolagem.
+     Quem precisar de smooth chama explicitamente {behavior:'smooth'}. */
   html {
-    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    /* Evita conflitos de bounce/overscroll no iOS quando há overlays */
+    overscroll-behavior-y: auto;
+    -webkit-tap-highlight-color: transparent;
   }
 
   h1, h2, h3, h4, h5, h6 {
