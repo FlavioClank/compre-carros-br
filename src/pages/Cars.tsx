@@ -968,7 +968,7 @@ export default function Cars() {
           </div>
 
           {/* Mobile-only sticky filter button - sticks below header */}
-          <div className="lg:hidden sticky top-[64px] z-40 -mx-4 px-4 py-3 bg-background/95 backdrop-blur-md border-b border-border/50 shadow-sm mb-4">
+          <div className="lg:hidden sticky top-[64px] z-40 -mx-4 px-4 py-3 bg-background border-b border-border/50 shadow-sm mb-4">
             <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" className="w-full h-12 gap-2 justify-center text-base">
