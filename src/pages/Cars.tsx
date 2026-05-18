@@ -890,7 +890,7 @@ export default function Cars() {
         <meta property="og:url" content={canonicalUrl(geoCity && estado ? `/carros/${estado}/${cidade}` : "/carros")} />
         <meta property="og:title" content={geoCity ? `Carros Usados em ${geoCity} - ${geoStateAbbr}` : "Veículos Disponíveis | CompreCarrosBr"} />
       </Helmet>
-      <section className="py-8 md:py-12 bg-muted/30 min-h-screen">
+      <section className="py-8 md:py-12 bg-muted/30">
         <div className="container">
           {/* Header */}
           <div className="mb-6">
