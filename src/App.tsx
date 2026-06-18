@@ -32,6 +32,7 @@ import AdminStats from "./pages/admin/Stats";
 import AdminPlanilha from "./pages/admin/Planilha";
 import AdminGastos from "./pages/admin/Gastos";
 import AdminConsortium from "./pages/admin/Consortium";
+import AdminWhatsappLogs from "./pages/admin/WhatsappLogs";
 
 // Garage Pages
 import GarageDashboard from "./pages/garage/Dashboard";
@@ -172,6 +173,15 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/whatsapp-logs"
+                element={
+                  <ProtectedRoute allowedRoles={["super_admin"]}>
+                    <AdminWhatsappLogs />
+                  </ProtectedRoute>
+                }
+              />
+
 
               {/* GARAGE ROUTES - Garage only */}
               <Route
