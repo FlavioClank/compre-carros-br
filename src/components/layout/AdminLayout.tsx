@@ -22,6 +22,7 @@ import {
   Wallet,
   Globe,
   Handshake,
+  MessageCircle,
 } from "lucide-react";
 
 interface AdminLayoutProps {
