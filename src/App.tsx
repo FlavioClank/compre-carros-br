@@ -173,6 +173,15 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/whatsapp-logs"
+                element={
+                  <ProtectedRoute allowedRoles={["super_admin"]}>
+                    <AdminWhatsappLogs />
+                  </ProtectedRoute>
+                }
+              />
+
 
               {/* GARAGE ROUTES - Garage only */}
               <Route
