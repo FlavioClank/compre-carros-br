@@ -19,9 +19,11 @@ Deno.serve(async (req) => {
   try {
     // 1. Validar token do webhook
     const expectedToken = Deno.env.get("WHATSAPP_WEBHOOK_TOKEN");
+    const url = new URL(req.url);
     const providedToken =
       req.headers.get("x-webhook-token") ??
-      req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+      req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
+      url.searchParams.get("token")?.trim();
 
     if (!expectedToken || providedToken !== expectedToken) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
