@@ -21,6 +21,7 @@ import {
   CreditCard,
   Wallet,
   Globe,
+  Handshake,
   MessageCircle,
 } from "lucide-react";
 
