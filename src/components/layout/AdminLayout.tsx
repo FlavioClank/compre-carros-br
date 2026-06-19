@@ -21,7 +21,6 @@ import {
   CreditCard,
   Wallet,
   Globe,
-  Handshake,
   MessageCircle,
 } from "lucide-react";
 
@@ -41,7 +40,7 @@ const menuItems = [
   { icon: BarChart3, label: "Estatísticas", href: "/admin/stats" },
   { icon: History, label: "Histórico", href: "/admin/history" },
   { icon: Handshake, label: "Consórcio", href: "/admin/consortium" },
-  { icon: MessageCircle, label: "WhatsApp Logs", href: "/admin/whatsapp-logs" },
+  
   { icon: FileText, label: "Logs", href: "/admin/logs" },
 ];
 
