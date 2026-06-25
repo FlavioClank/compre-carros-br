@@ -99,16 +99,9 @@ export default function AdminAds() {
     is_active: true,
   });
 
-  // Helper function to normalize slug
+  // Normaliza o slug com abreviação inteligente e limite de 15 chars.
   function normalizeSlug(input: string): string {
-    return input
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // Remove accents
-      .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
-      .replace(/\s+/g, "-") // Replace spaces with hyphens
-      .replace(/-+/g, "-") // Remove multiple consecutive hyphens
-      .replace(/^-|-$/g, ""); // Trim hyphens from start and end
+    return smartSlug(input);
   }
 
   useEffect(() => {
