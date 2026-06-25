@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { smartSlug, MAX_SLUG_LENGTH } from "@/lib/utils";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,16 +99,9 @@ export default function AdminAds() {
     is_active: true,
   });
 
-  // Helper function to normalize slug
+  // Normaliza o slug com abreviação inteligente e limite de 15 chars.
   function normalizeSlug(input: string): string {
-    return input
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // Remove accents
-      .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
-      .replace(/\s+/g, "-") // Replace spaces with hyphens
-      .replace(/-+/g, "-") // Remove multiple consecutive hyphens
-      .replace(/^-|-$/g, ""); // Trim hyphens from start and end
+    return smartSlug(input);
   }
 
   useEffect(() => {
@@ -419,15 +413,16 @@ export default function AdminAds() {
                   <Input
                     id="slug"
                     value={formData.slug}
+                    maxLength={MAX_SLUG_LENGTH}
                     onChange={(e) => {
                       const normalized = normalizeSlug(e.target.value);
                       setFormData({ ...formData, slug: normalized });
                     }}
-                    placeholder="Ex: armazemautolatas"
+                    placeholder="Ex: b-radial"
                     required
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Usado na URL: {window.location.origin}/anuncio/<strong>{formData.slug || "slug"}</strong>
+                    Usado na URL: {window.location.origin}/anuncio/<strong>{formData.slug || "slug"}</strong> · máx. {MAX_SLUG_LENGTH} caracteres ({formData.slug.length}/{MAX_SLUG_LENGTH}). Nomes longos são abreviados automaticamente (ex.: "borracharia-radial" → "b-radial").
                   </p>
                 </div>
 
