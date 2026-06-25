@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { smartSlug, MAX_SLUG_LENGTH } from "@/lib/utils";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
