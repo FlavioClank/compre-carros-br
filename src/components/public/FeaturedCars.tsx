@@ -1,5 +1,5 @@
 import { useMemo, memo, useState, useCallback, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { CarCardSingle } from "@/components/public/CarCardSingle";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { shuffleSeeded, get30MinSeed } from "@/lib/shuffle";
+import { consumeListScroll, saveListScrollFromElement } from "@/lib/scroll-restoration";
 
 interface Car {
   id: string;
@@ -108,12 +109,29 @@ async function fetchHomeCars(page: number) {
 }
 
 export function FeaturedCars() {
-  const [page, setPage] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [page, setPage] = useState(() => {
+    const p = parseInt(searchParams.get("pagina") || "0");
+    return isNaN(p) || p < 0 ? 0 : p;
+  });
   const sectionRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const { ads, hasAds } = usePartnersRotation();
 
   // 30-minute seed for car shuffling (cars stay stable for 30min)
   const [carSeed, setCarSeed] = useState<number>(get30MinSeed);
+
+  // Sync page to URL (?pagina=N) so back-navigation restores correct page
+  // and scroll restoration key matches the URL the user left from.
+  useEffect(() => {
+    const current = searchParams.get("pagina");
+    const next = page > 0 ? String(page) : null;
+    if (current === next) return;
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set("pagina", next);
+    else params.delete("pagina");
+    setSearchParams(params, { replace: true });
+  }, [page, searchParams, setSearchParams]);
 
   // Update car seed every 30 minutes
   useEffect(() => {
@@ -182,6 +200,43 @@ export function FeaturedCars() {
     }, 50);
   }, []);
 
+  // Capture the URL exactly as it was at mount so the restore key matches
+  // even if the page-sync effect rewrites the URL afterwards.
+  const initialUrlRef = useRef<string>(
+    typeof window !== "undefined" ? window.location.pathname + window.location.search : "",
+  );
+  const restoredKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (isLoading) return;
+    if (listItems.length === 0) return;
+    const url = initialUrlRef.current;
+    if (restoredKeyRef.current === url) return;
+
+    const y = consumeListScroll(url);
+    if (y == null) return;
+
+    restoredKeyRef.current = url;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: y, behavior: "auto" });
+      });
+    });
+  }, [isLoading, listItems.length]);
+
+  // Save scroll for whichever card the user clicks (car or ad).
+  // We attach a single capture-phase listener at the list container so we
+  // don't have to wrap every card individually.
+  const handleListClickCapture = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    // Only intercept real link clicks within the list (cards/ads use <Link>)
+    const anchor = target.closest("a[href]") as HTMLAnchorElement | null;
+    if (!anchor) return;
+    const wrapper = anchor.closest("[data-list-slot]") as HTMLDivElement | null;
+    if (!wrapper) return;
+    saveListScrollFromElement(wrapper);
+  }, []);
+
   return (
     <section ref={sectionRef} className="py-4 md:py-12 bg-background">
       <div className="container">
@@ -218,13 +273,18 @@ export function FeaturedCars() {
           </div>
         ) : listItems.length > 0 ? (
           <>
-            <div className="space-y-3 md:space-y-4">
-              {listItems.map((item) => (
-                <CardItem
-                  key={item.type === "car" ? `car-${item.data.id}` : `promo-${item.data.id}`}
-                  item={item}
-                />
-              ))}
+            <div
+              className="space-y-3 md:space-y-4"
+              onClickCapture={handleListClickCapture}
+            >
+              {listItems.map((item) => {
+                const key = item.type === "car" ? `car-${item.data.id}` : `promo-${item.data.id}`;
+                return (
+                  <div key={key} data-list-slot>
+                    <CardItem item={item} />
+                  </div>
+                );
+              })}
             </div>
 
             <PaginationControls
