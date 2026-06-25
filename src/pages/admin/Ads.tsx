@@ -413,15 +413,16 @@ export default function AdminAds() {
                   <Input
                     id="slug"
                     value={formData.slug}
+                    maxLength={MAX_SLUG_LENGTH}
                     onChange={(e) => {
                       const normalized = normalizeSlug(e.target.value);
                       setFormData({ ...formData, slug: normalized });
                     }}
-                    placeholder="Ex: armazemautolatas"
+                    placeholder="Ex: b-radial"
                     required
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Usado na URL: {window.location.origin}/anuncio/<strong>{formData.slug || "slug"}</strong>
+                    Usado na URL: {window.location.origin}/anuncio/<strong>{formData.slug || "slug"}</strong> · máx. {MAX_SLUG_LENGTH} caracteres ({formData.slug.length}/{MAX_SLUG_LENGTH}). Nomes longos são abreviados automaticamente (ex.: "borracharia-radial" → "b-radial").
                   </p>
                 </div>
 
