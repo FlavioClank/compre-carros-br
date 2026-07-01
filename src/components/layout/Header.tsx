@@ -113,6 +113,9 @@ export function Header() {
             variant="ghost"
             size="icon"
             className="md:hidden"
+            aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu principal"}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-menu"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -121,7 +124,7 @@ export function Header() {
       </div>
 
       {isMenuOpen && (
-        <div className="md:hidden border-t border-border/30 animate-fade-in bg-background/95 backdrop-blur-xl">
+        <div id="mobile-menu" className="md:hidden border-t border-border/30 animate-fade-in bg-background/95 backdrop-blur-xl">
           <nav className="container py-4 flex flex-col gap-2">
             {navLinks.map((link) => (
               <Link
