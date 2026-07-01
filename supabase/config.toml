@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.update-garage-email]
 verify_jwt = false
+
+[functions.contact-link]
+verify_jwt = false
+
+[functions.submit-consortium-lead]
+verify_jwt = false
