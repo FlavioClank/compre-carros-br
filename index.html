@@ -30,6 +30,31 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@CompreCarrosBr" />
     <meta name="twitter:image" content="https://comprecarrosbr.com.br/og-image.png" />
+    <!-- Sitewide JSON-LD (static, zero JS cost) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "name": "CompreCarrosBr",
+            "url": "https://comprecarrosbr.com.br/",
+            "logo": "https://comprecarrosbr.com.br/favicon.jpeg"
+          },
+          {
+            "@type": "WebSite",
+            "name": "CompreCarrosBr",
+            "url": "https://comprecarrosbr.com.br/",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://comprecarrosbr.com.br/carros?busca={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          }
+        ]
+      }
+    </script>
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=AW-10937691699"></script>
     <script>
