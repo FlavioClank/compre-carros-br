@@ -684,6 +684,7 @@ export type Database = {
           category: string | null
           click_target: string | null
           click_type: string | null
+          company_name: string | null
           created_at: string | null
           id: string | null
           image_url_home: string | null
@@ -694,36 +695,6 @@ export type Database = {
           title: string | null
           updated_at: string | null
           whatsapp_number: string | null
-        }
-        Insert: {
-          category?: string | null
-          click_target?: string | null
-          click_type?: string | null
-          created_at?: string | null
-          id?: string | null
-          image_url_home?: string | null
-          image_url_search?: string | null
-          is_active?: boolean | null
-          link?: string | null
-          slug?: string | null
-          title?: string | null
-          updated_at?: string | null
-          whatsapp_number?: string | null
-        }
-        Update: {
-          category?: string | null
-          click_target?: string | null
-          click_type?: string | null
-          created_at?: string | null
-          id?: string | null
-          image_url_home?: string | null
-          image_url_search?: string | null
-          is_active?: boolean | null
-          link?: string | null
-          slug?: string | null
-          title?: string | null
-          updated_at?: string | null
-          whatsapp_number?: string | null
         }
         Relationships: []
       }
