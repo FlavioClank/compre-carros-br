@@ -59,12 +59,12 @@ import {
   formatPrice,
   formatMileage,
   generateWhatsAppUrl,
-  WHATSAPP_NUMBER,
   FUEL_LABELS,
   TRANSMISSION_LABELS,
   COOLING_TYPE_LABELS,
   MOTORCYCLE_CATEGORY_LABELS,
 } from "@/lib/constants";
+import { useVehicleWhatsappNumber } from "@/hooks/useVehicleWhatsappNumber";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -123,6 +123,7 @@ const initialFormData: CarFormData = {
 export default function AdminCars() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { number: waNumber } = useVehicleWhatsappNumber();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -548,7 +549,7 @@ export default function AdminCars() {
     const message = `🚗 *${car.brands?.name} ${car.model}*\n\n📅 Ano: ${car.year}\n⚙️ Versão: ${car.version || "-"}\n💰 Preço: ${formatPrice(
       car.price,
     )}\n📍 Código: ${car.code}\n\n🔗 Veja mais detalhes: /carro/${car.id}`;
-    return generateWhatsAppUrl(WHATSAPP_NUMBER, message);
+    return generateWhatsAppUrl(waNumber, message);
   };
 
   const getFacebookShareUrl = (car: any) => {
