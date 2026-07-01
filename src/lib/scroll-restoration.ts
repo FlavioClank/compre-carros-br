@@ -79,3 +79,34 @@ export function consumeListScroll(url: string, maxAgeMs = 30 * 60 * 1000): numbe
   writeAll(map);
   return snap.y;
 }
+
+/**
+ * Scroll to `y` and keep re-asserting it for ~1.2s.
+ *
+ * Why: on POP navigation back to a listing, images and lazy content still
+ * load AFTER our first `scrollTo` call — each image that decodes pushes the
+ * layout down (or up) and moves us away from the target. Retrying for a
+ * short window locks the user at the exact pixel we wanted, and we stop
+ * as soon as the user themselves scrolls (any wheel/touch input).
+ */
+export function restoreScrollTo(y: number, durationMs = 1200) {
+  if (typeof window === "undefined") return;
+  const target = Math.max(0, y);
+  let cancelled = false;
+  const cancel = () => {
+    cancelled = true;
+  };
+  window.addEventListener("wheel", cancel, { passive: true, once: true });
+  window.addEventListener("touchstart", cancel, { passive: true, once: true });
+  window.addEventListener("keydown", cancel, { once: true });
+
+  const start = performance.now();
+  const tick = () => {
+    if (cancelled) return;
+    window.scrollTo({ top: target, behavior: "auto" });
+    if (performance.now() - start < durationMs) {
+      requestAnimationFrame(tick);
+    }
+  };
+  requestAnimationFrame(() => requestAnimationFrame(tick));
+}
