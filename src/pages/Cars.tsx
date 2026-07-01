@@ -346,11 +346,7 @@ export default function Cars() {
     if (y == null) return;
 
     restoredKeyRef.current = url;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: y, behavior: "auto" });
-      });
-    });
+    restoreScrollTo(y);
   }, [isLoading, listItems.length]);
 
   const handlePageChange = useCallback((newPage: number) => {
