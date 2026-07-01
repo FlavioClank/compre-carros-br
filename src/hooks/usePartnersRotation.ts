@@ -1,18 +1,8 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { supabase } from "@/lib/supabase";
 import { rotateArray, get5MinSeed, getMsUntilNextWindow } from "@/lib/shuffle";
+import { fetchPublicPartners, type PublicPartner } from "@/lib/public-content";
 
-interface Ad {
-  id: string;
-  slug: string | null;
-  title: string;
-  category: string;
-  image_url_home: string | null;
-  image_url_search: string | null;
-  link: string | null;
-  click_type?: string | null;
-  click_target?: string | null;
-}
+type Ad = PublicPartner;
 
 export function usePartnersRotation() {
   const [rawAds, setRawAds] = useState<Ad[]>([]);
@@ -24,16 +14,8 @@ export function usePartnersRotation() {
   useEffect(() => {
     async function fetchAds() {
       try {
-        const { data, error } = await (supabase as any)
-          .from("ads_public")
-          .select("id, slug, title, category, image_url_home, image_url_search, link, click_type, click_target")
-          .order("created_at", { ascending: true });
-
-        if (error) {
-          setRawAds([]);
-        } else {
-          setRawAds(data || []);
-        }
+        const data = await fetchPublicPartners();
+        setRawAds(data);
       } catch {
         setRawAds([]);
       }
