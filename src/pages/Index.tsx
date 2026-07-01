@@ -16,29 +16,6 @@ const Index = forwardRef<HTMLDivElement>(function Index(_props, ref) {
     trackSiteVisit({ path: window.location.pathname || "/" });
   }, []);
 
-  const homeJsonLd = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        name: "CompreCarrosBr",
-        url: canonicalUrl("/"),
-        logo: canonicalUrl("/favicon.jpeg"),
-        sameAs: [],
-      },
-      {
-        "@type": "WebSite",
-        name: "CompreCarrosBr",
-        url: canonicalUrl("/"),
-        potentialAction: {
-          "@type": "SearchAction",
-          target: `${canonicalUrl("/carros")}?busca={search_term_string}`,
-          "query-input": "required name=search_term_string",
-        },
-      },
-    ],
-  };
-
   return (
     <div ref={ref}>
       <PublicLayout>
@@ -47,7 +24,8 @@ const Index = forwardRef<HTMLDivElement>(function Index(_props, ref) {
           <meta name="description" content="Encontre veículos seminovos verificados de garagens confiáveis. Atendimento personalizado via WhatsApp." />
           <link rel="canonical" href={canonicalUrl("/")} />
           <meta property="og:url" content={canonicalUrl("/")} />
-          <script type="application/ld+json">{JSON.stringify(homeJsonLd)}</script>
+          {/* Organization + WebSite JSON-LD ficam estáticos no index.html
+              para não custar bytes no bundle JS. */}
         </Helmet>
         <h1 className="sr-only">
           Encontre veículos seminovos verificados na CompreCarrosBr
