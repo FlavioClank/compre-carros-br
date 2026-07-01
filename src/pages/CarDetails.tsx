@@ -321,6 +321,27 @@ export default function CarDetails() {
 
   const mainPhoto = photos[0] || "/placeholder.svg";
 
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: `${brandName} ${car.model} ${car.version || ""} ${car.year}`.trim(),
+    description: metaDescription,
+    image: photos.map((p) => absoluteImageUrl(p)),
+    sku: car.code,
+    brand: brandName ? { "@type": "Brand", name: brandName } : undefined,
+    category: car.category === "motorcycle" ? "Motorcycle" : "Car",
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "BRL",
+      price: car.price,
+      availability:
+        car.status === "available"
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      url: canonicalUrl,
+    },
+  };
+
   return (
     <PublicLayout>
       <Helmet>
@@ -336,6 +357,7 @@ export default function CarDetails() {
         <meta name="twitter:description" content={metaDescription} />
         <meta name="twitter:image" content={absoluteImageUrl(mainPhoto)} />
         <link rel="canonical" href={canonicalUrl} />
+        <script type="application/ld+json">{JSON.stringify(productJsonLd)}</script>
       </Helmet>
 
       <div className="w-full max-w-[100vw] overflow-x-hidden min-h-screen bg-background">
