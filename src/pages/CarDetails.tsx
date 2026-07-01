@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ImageLightbox } from "@/components/ImageLightbox";
 import {
-  WHATSAPP_NUMBER,
   buildCarWhatsAppMessage,
   COOLING_TYPE_LABELS,
   FUEL_LABELS,
@@ -40,6 +39,7 @@ import {
 } from "lucide-react";
 import { trackVehicleView, trackVehicleClick } from "@/lib/analytics";
 import { useVehicleWhatsappEnabled } from "@/hooks/useVehicleWhatsappEnabled";
+import { useVehicleWhatsappNumber } from "@/hooks/useVehicleWhatsappNumber";
 
 interface CarDetail {
   id: string;
@@ -75,6 +75,7 @@ export default function CarDetails() {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const { enabled: whatsappEnabled } = useVehicleWhatsappEnabled();
+  const { number: waNumber } = useVehicleWhatsappNumber();
 
   useEffect(() => {
     const fetchCar = async () => {
@@ -222,7 +223,7 @@ export default function CarDetails() {
   const isMotorcycle = car.category === "motorcycle";
 
   const whatsappUrl = generateWhatsAppUrl(
-    WHATSAPP_NUMBER,
+    waNumber,
     buildCarWhatsAppMessage({
       slug: car.slug,
       code: car.code,

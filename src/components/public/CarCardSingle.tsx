@@ -2,7 +2,6 @@ import { memo } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, Gauge, Car, Fuel, Sparkles } from "lucide-react";
 import {
-  WHATSAPP_NUMBER,
   buildCarWhatsAppMessage,
   formatMileage,
   formatPrice,
@@ -19,6 +18,7 @@ import { trackVehicleClick } from "@/lib/analytics";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { getCarCoverImage } from "@/lib/image-utils";
 import { useVehicleWhatsappEnabled } from "@/hooks/useVehicleWhatsappEnabled";
+import { useVehicleWhatsappNumber } from "@/hooks/useVehicleWhatsappNumber";
 
 interface CarCardSingleProps {
   car: {
@@ -49,10 +49,11 @@ export const CarCardSingle = memo(function CarCardSingle({ car }: CarCardSingleP
   const mainPhoto = getCarCoverImage(car.photos);
   const invertBrandLogo = ["toyota", "nissan", "audi", "volkswagen"].includes(brandName.toLowerCase());
   const { enabled: whatsappEnabled } = useVehicleWhatsappEnabled();
+  const { number: waNumber } = useVehicleWhatsappNumber();
   const carUrl = generateCarUrl({ id: car.id, slug: car.slug, model: car.model, version: car.version, brands: car.brands });
   
   const whatsappUrl = generateWhatsAppUrl(
-    WHATSAPP_NUMBER,
+    waNumber,
     buildCarWhatsAppMessage({
       slug: car.slug,
       code: car.code,

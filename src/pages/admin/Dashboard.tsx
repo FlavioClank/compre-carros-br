@@ -1,17 +1,28 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Package, CheckCircle, TrendingUp, MessageCircle } from "lucide-react";
+import { Building2, Package, CheckCircle, TrendingUp, MessageCircle, Save } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useVehicleWhatsappEnabled } from "@/hooks/useVehicleWhatsappEnabled";
+import { useVehicleWhatsappNumber, formatBrPhone } from "@/hooks/useVehicleWhatsappNumber";
 import { toast } from "sonner";
 
 export default function AdminDashboard() {
   const { enabled: waEnabled, loading: waLoading, updateSetting: updateWa } = useVehicleWhatsappEnabled();
+  const { number: waNumber, loading: numLoading, updateNumber } = useVehicleWhatsappNumber();
+  const [numberInput, setNumberInput] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!numLoading) setNumberInput(waNumber);
+  }, [waNumber, numLoading]);
 
   const handleToggleWhatsapp = async (checked: boolean) => {
     const ok = await updateWa(checked);
@@ -19,6 +30,22 @@ export default function AdminDashboard() {
       toast.success(checked ? "Botão de WhatsApp ativado em todos os veículos" : "Botão de WhatsApp desativado em todos os veículos");
     } else {
       toast.error("Erro ao atualizar configuração");
+    }
+  };
+
+  const handleSaveNumber = async () => {
+    const digits = numberInput.replace(/\D/g, "");
+    if (digits.length < 12 || !digits.startsWith("55")) {
+      toast.error("Informe o número com DDI 55 + DDD + número (ex: 5565992230000)");
+      return;
+    }
+    setSaving(true);
+    const ok = await updateNumber(digits);
+    setSaving(false);
+    if (ok) {
+      toast.success(`Número atualizado: ${formatBrPhone(digits)}`);
+    } else {
+      toast.error("Erro ao salvar número");
     }
   };
 
@@ -77,7 +104,7 @@ export default function AdminDashboard() {
               Configurações Globais
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="flex items-center justify-between gap-4 p-4 rounded-lg border bg-muted/30">
               <div className="flex-1">
                 <Label htmlFor="wa-toggle" className="text-base font-medium cursor-pointer">
@@ -93,6 +120,41 @@ export default function AdminDashboard() {
                 disabled={waLoading}
                 onCheckedChange={handleToggleWhatsapp}
               />
+            </div>
+
+            <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+              <div>
+                <Label htmlFor="wa-number" className="text-base font-medium">
+                  Número do WhatsApp dos veículos
+                </Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Este número recebe todos os cliques do botão "Falar pelo WhatsApp" nos cards e páginas de veículos. Formato: DDI + DDD + número (ex: <span className="font-mono">5565992230000</span>).
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <Input
+                  id="wa-number"
+                  value={numberInput}
+                  onChange={(e) => setNumberInput(e.target.value)}
+                  placeholder="5565992230000"
+                  disabled={numLoading || saving}
+                  className="font-mono flex-1"
+                  inputMode="numeric"
+                />
+                <Button
+                  type="button"
+                  onClick={handleSaveNumber}
+                  disabled={numLoading || saving || numberInput.replace(/\D/g, "") === waNumber}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
+              {!numLoading && waNumber && (
+                <p className="text-xs text-muted-foreground">
+                  Número ativo agora: <span className="font-mono">{formatBrPhone(waNumber)}</span>
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
