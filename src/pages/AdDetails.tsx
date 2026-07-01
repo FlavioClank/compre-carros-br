@@ -71,8 +71,9 @@ Data/hora: ${timestamp}`;
       }
 
       // Try to find by slug first, then by id (for backwards compatibility)
-      let query = supabase
-        .from("ads")
+      // Reads from the safe public view (ads_public) instead of the raw table.
+      let query = (supabase as any)
+        .from("ads_public")
         .select(`
           id,
           title,
@@ -85,12 +86,8 @@ Data/hora: ${timestamp}`;
           click_target,
           whatsapp_number,
           is_active,
-          created_at,
-          ad_billing (
-            company_name
-          )
-        `)
-        .eq("is_active", true);
+          created_at
+        `);
 
       if (isUuidParam) {
         query = query.eq("id", slug);

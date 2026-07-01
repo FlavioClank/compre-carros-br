@@ -86,6 +86,13 @@ export type Database = {
             referencedRelation: "ads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ad_billing_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: true
+            referencedRelation: "ads_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       ad_billing_payments: {
@@ -672,7 +679,54 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      ads_public: {
+        Row: {
+          category: string | null
+          click_target: string | null
+          click_type: string | null
+          created_at: string | null
+          id: string | null
+          image_url_home: string | null
+          image_url_search: string | null
+          is_active: boolean | null
+          link: string | null
+          slug: string | null
+          title: string | null
+          updated_at: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          category?: string | null
+          click_target?: string | null
+          click_type?: string | null
+          created_at?: string | null
+          id?: string | null
+          image_url_home?: string | null
+          image_url_search?: string | null
+          is_active?: boolean | null
+          link?: string | null
+          slug?: string | null
+          title?: string | null
+          updated_at?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          category?: string | null
+          click_target?: string | null
+          click_type?: string | null
+          created_at?: string | null
+          id?: string | null
+          image_url_home?: string | null
+          image_url_search?: string | null
+          is_active?: boolean | null
+          link?: string | null
+          slug?: string | null
+          title?: string | null
+          updated_at?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       generate_car_slug: {
