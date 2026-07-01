@@ -104,7 +104,7 @@ export default function AdminDashboard() {
               Configurações Globais
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="flex items-center justify-between gap-4 p-4 rounded-lg border bg-muted/30">
               <div className="flex-1">
                 <Label htmlFor="wa-toggle" className="text-base font-medium cursor-pointer">
@@ -120,6 +120,41 @@ export default function AdminDashboard() {
                 disabled={waLoading}
                 onCheckedChange={handleToggleWhatsapp}
               />
+            </div>
+
+            <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+              <div>
+                <Label htmlFor="wa-number" className="text-base font-medium">
+                  Número do WhatsApp dos veículos
+                </Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Este número recebe todos os cliques do botão "Falar pelo WhatsApp" nos cards e páginas de veículos. Formato: DDI + DDD + número (ex: <span className="font-mono">5565992230000</span>).
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <Input
+                  id="wa-number"
+                  value={numberInput}
+                  onChange={(e) => setNumberInput(e.target.value)}
+                  placeholder="5565992230000"
+                  disabled={numLoading || saving}
+                  className="font-mono flex-1"
+                  inputMode="numeric"
+                />
+                <Button
+                  type="button"
+                  onClick={handleSaveNumber}
+                  disabled={numLoading || saving || numberInput.replace(/\D/g, "") === waNumber}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
+              {!numLoading && waNumber && (
+                <p className="text-xs text-muted-foreground">
+                  Número ativo agora: <span className="font-mono">{formatBrPhone(waNumber)}</span>
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
