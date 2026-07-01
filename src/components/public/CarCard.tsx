@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { saveListScrollFromElement } from "@/lib/scroll-restoration";
 import { Car, Fuel, Gauge, Calendar, Bike } from "lucide-react";
 import {
-  WHATSAPP_NUMBER,
   buildCarWhatsAppMessage,
   formatMileage,
   formatPrice,
@@ -23,6 +22,7 @@ import { trackVehicleClick } from "@/lib/analytics";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { getCarCoverImage } from "@/lib/image-utils";
 import { useVehicleWhatsappEnabled } from "@/hooks/useVehicleWhatsappEnabled";
+import { useVehicleWhatsappNumber } from "@/hooks/useVehicleWhatsappNumber";
 
 interface CarCardProps {
   car: {
@@ -56,11 +56,12 @@ export const CarCard = memo(function CarCard({ car }: CarCardProps) {
   const mainPhoto = getCarCoverImage(car.photos);
   const invertBrandLogo = ["toyota", "nissan", "audi", "volkswagen"].includes(brandName.toLowerCase());
   const { enabled: whatsappEnabled } = useVehicleWhatsappEnabled();
+  const { number: waNumber } = useVehicleWhatsappNumber();
   const carUrl = generateCarUrl({ id: car.id, slug: car.slug, model: car.model, version: car.version, brands: car.brands });
   const isMotorcycle = car.category === 'motorcycle';
   
   const whatsappUrl = generateWhatsAppUrl(
-    WHATSAPP_NUMBER,
+    waNumber,
     buildCarWhatsAppMessage({
       slug: car.slug,
       code: car.code,
