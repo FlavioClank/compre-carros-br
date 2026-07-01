@@ -135,7 +135,7 @@ export default async function handler(req, res) {
 
     if (ads && ads.length > 0) {
       for (const ad of ads) {
-        const adUrl = ad.slug || ad.id;
+        const adUrl = xmlEscape(ad.slug || ad.id);
         const lastmod = ad.updated_at ? ad.updated_at.split("T")[0] : today;
         sitemap += `  <url>
     <loc>${SITE_URL}/anuncio/${adUrl}</loc>
