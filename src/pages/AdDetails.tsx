@@ -11,6 +11,7 @@ import { trackClick, trackView } from "@/lib/analytics";
 import { format } from "date-fns";
 import { getPartnerPublicUrl } from "@/lib/partner-utils";
 import { absoluteImageUrl } from "@/lib/seo";
+import { resolveContactWhatsAppUrl } from "@/lib/contact-link";
 
 interface AdDetail {
   id: string;
@@ -22,12 +23,8 @@ interface AdDetail {
   link: string | null;
   click_type: string | null;
   click_target: string | null;
-  whatsapp_number: string | null;
   is_active: boolean;
   created_at: string;
-  ad_billing?: {
-    company_name: string;
-  } | null;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
