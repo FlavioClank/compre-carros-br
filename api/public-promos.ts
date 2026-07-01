@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .order("created_at", { ascending: true }),
       client
         .from("ads")
-        .select("id, slug, title, category, image_url_home, image_url_search, link, click_type, click_target, created_at")
+        .select("id, slug, title, category, image_url_home, image_url_search, link, click_type, click_target, is_active, created_at")
         .eq("is_active", true)
         .order("created_at", { ascending: true }),
     ]);

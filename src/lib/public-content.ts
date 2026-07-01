@@ -21,6 +21,7 @@ export interface PublicPartner {
   link: string | null;
   click_type?: string | null;
   click_target?: string | null;
+  is_active?: boolean;
 }
 
 export interface PublicCity {
@@ -70,7 +71,7 @@ export async function fetchPublicPartners(): Promise<PublicPartner[]> {
 
   const { data, error } = await (supabase as any)
     .from("ads_public")
-    .select("id, slug, title, category, image_url_home, image_url_search, link, click_type, click_target")
+    .select("id, slug, title, category, image_url_home, image_url_search, link, click_type, click_target, is_active")
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -79,6 +80,28 @@ export async function fetchPublicPartners(): Promise<PublicPartner[]> {
   }
 
   return data || [];
+}
+
+export async function fetchPublicPartnerBySlugOrId(slugOrId: string): Promise<PublicPartner | null> {
+  if (isProductionEnvironment()) {
+    const partners = await fetchPublicPartners();
+    return partners.find((partner) => partner.id === slugOrId || partner.slug === slugOrId) || null;
+  }
+
+  let query = (supabase as any)
+    .from("ads_public")
+    .select("id, slug, title, category, image_url_home, image_url_search, link, click_type, click_target, is_active, created_at");
+
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  query = uuidRegex.test(slugOrId) ? query.eq("id", slugOrId) : query.eq("slug", slugOrId);
+
+  const { data, error } = await query.maybeSingle();
+  if (error) {
+    console.error("public partner detail query failed", error);
+    return null;
+  }
+
+  return data || null;
 }
 
 export async function fetchPublicCities(): Promise<PublicCity[]> {
