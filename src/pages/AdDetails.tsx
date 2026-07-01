@@ -257,18 +257,16 @@ Data/hora: ${timestamp}`;
               <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 {/* WhatsApp button - shown for whatsapp click_type or as default */}
                 {(ad.click_type === "whatsapp" || !ad.click_type || ad.click_type === "") && (
-                  <a
-                    href={getWhatsAppUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => handleCTAClick("whatsapp_click")}
-                    className="flex-1"
-                  >
-                    <Button size="lg" className="w-full gap-2 bg-green-600 hover:bg-green-700">
+                  <div className="flex-1">
+                    <Button
+                      size="lg"
+                      onClick={handleWhatsAppClick}
+                      className="w-full gap-2 bg-green-600 hover:bg-green-700"
+                    >
                       <MessageCircle className="h-5 w-5" />
                       Falar no WhatsApp
                     </Button>
-                  </a>
+                  </div>
                 )}
 
                 {/* Site/Link button */}
