@@ -29,10 +29,9 @@ export const HomeShowcase = memo(function HomeShowcase() {
 
   useEffect(() => {
     const fetchBanners = async () => {
-      const { data, error } = await supabase
-        .from("banners")
+      const { data, error } = await (supabase as any)
+        .from("banners_public")
         .select("id, image_url, image_desktop, image_mobile, position, click_type, click_target")
-        .eq("is_active", true)
         .order("position", { ascending: true })
         .order("created_at", { ascending: true });
 
