@@ -113,6 +113,9 @@ export function Header() {
             variant="ghost"
             size="icon"
             className="md:hidden"
+            aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu principal"}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-menu"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
