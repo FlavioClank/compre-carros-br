@@ -13,6 +13,20 @@ function toSlug(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
+/**
+ * Escape the 5 XML entities so a stray `&`, `<`, `>`, `'` or `"` inside a
+ * slug can never produce an invalid document. Slugs are already normalized,
+ * but this is a cheap belt-and-suspenders guarantee for sitemaps.org.
+ */
+function xmlEscape(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).send("Method not allowed");
@@ -94,9 +108,10 @@ export default async function handler(req, res) {
 
     // Add city/state pages
     for (const [, loc] of garageLocations) {
-      const citySlug = toSlug(loc.city);
+      const citySlug = xmlEscape(toSlug(loc.city));
+      const stateSlug = xmlEscape(loc.state);
       sitemap += `  <url>
-    <loc>${SITE_URL}/carros/${loc.state}/${citySlug}</loc>
+    <loc>${SITE_URL}/carros/${stateSlug}/${citySlug}</loc>
     <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -106,12 +121,12 @@ export default async function handler(req, res) {
 
     if (cars && cars.length > 0) {
       for (const car of cars) {
-        const carUrl = car.slug || car.id;
+        const carUrl = xmlEscape(car.slug || car.id);
         const lastmod = car.updated_at ? car.updated_at.split("T")[0] : today;
         sitemap += `  <url>
     <loc>${SITE_URL}/carro/${carUrl}</loc>
     <lastmod>${lastmod}</lastmod>
-    <changefreq>weekly</changefreq>
+    <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
 `;
@@ -120,7 +135,7 @@ export default async function handler(req, res) {
 
     if (ads && ads.length > 0) {
       for (const ad of ads) {
-        const adUrl = ad.slug || ad.id;
+        const adUrl = xmlEscape(ad.slug || ad.id);
         const lastmod = ad.updated_at ? ad.updated_at.split("T")[0] : today;
         sitemap += `  <url>
     <loc>${SITE_URL}/anuncio/${adUrl}</loc>
