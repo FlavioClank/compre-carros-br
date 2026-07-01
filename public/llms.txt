@@ -1,0 +1,16 @@
+# CompreCarrosBr
+
+> Marketplace brasileiro de veículos seminovos verificados de garagens confiáveis. Atendimento personalizado via WhatsApp centralizado.
+
+CompreCarrosBr conecta compradores a garagens parceiras em todo o Brasil. Cada anúncio é verificado e todo contato acontece por um único número de WhatsApp para maior segurança.
+
+## Pages
+
+- [Home](/): visão geral, ofertas do dia e busca de veículos.
+- [Buscar veículos](/carros): catálogo completo com filtros por marca, modelo, ano, preço, combustível e categoria (carros e motos).
+- [Marcas](/marcas): lista de marcas disponíveis no acervo.
+- [Instalar app](/instalar): instruções para instalar a PWA no celular e desktop.
+
+## Optional
+
+- [Login](/login): acesso restrito para garagens parceiras e administração.
