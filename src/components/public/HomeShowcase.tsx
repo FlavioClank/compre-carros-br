@@ -1,9 +1,9 @@
 import { useEffect, useState, memo, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import useEmblaCarousel from "embla-carousel-react";
-import { generateWhatsAppUrl } from "@/lib/constants";
 import { trackClick } from "@/lib/analytics";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { resolveContactWhatsAppUrl } from "@/lib/contact-link";
 
 interface Banner {
   id: string;
@@ -13,7 +13,6 @@ interface Banner {
   position: number;
   click_type: string | null;
   click_target: string | null;
-  whatsapp_number: string | null;
 }
 
 export const HomeShowcase = memo(function HomeShowcase() {
@@ -32,7 +31,7 @@ export const HomeShowcase = memo(function HomeShowcase() {
     const fetchBanners = async () => {
       const { data, error } = await supabase
         .from("banners")
-        .select("id, image_url, image_desktop, image_mobile, position, click_type, click_target, whatsapp_number")
+        .select("id, image_url, image_desktop, image_mobile, position, click_type, click_target")
         .eq("is_active", true)
         .order("position", { ascending: true })
         .order("created_at", { ascending: true });
@@ -70,17 +69,22 @@ export const HomeShowcase = memo(function HomeShowcase() {
   const getBannerHref = useCallback((banner: Banner): string | undefined => {
     const type = banner.click_type || "none";
 
-    if (type === "whatsapp" && banner.whatsapp_number) {
-      const message =
-        "Olá! Vim do CompreCarrosBr 😊 Vi seu banner no site e gostaria de mais informações.";
-      return generateWhatsAppUrl(banner.whatsapp_number.replace(/\D/g, ""), message);
-    }
+    // WhatsApp is resolved server-side via edge function on click.
+    if (type === "whatsapp") return undefined;
 
     if ((type === "link" || type === "instagram") && banner.click_target) {
       return banner.click_target;
     }
 
     return undefined;
+  }, []);
+
+  const handleWhatsAppBanner = useCallback(async (banner: Banner) => {
+    trackClick("banner", banner.id);
+    const message =
+      "Olá! Vim do CompreCarrosBr 😊 Vi seu banner no site e gostaria de mais informações.";
+    const url = await resolveContactWhatsAppUrl("banner", banner.id, message);
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
   }, []);
 
   // Proporção responsiva com imagens separadas:
