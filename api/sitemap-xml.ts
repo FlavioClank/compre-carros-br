@@ -120,12 +120,12 @@ export default async function handler(req, res) {
 
     if (cars && cars.length > 0) {
       for (const car of cars) {
-        const carUrl = car.slug || car.id;
+        const carUrl = xmlEscape(car.slug || car.id);
         const lastmod = car.updated_at ? car.updated_at.split("T")[0] : today;
         sitemap += `  <url>
     <loc>${SITE_URL}/carro/${carUrl}</loc>
     <lastmod>${lastmod}</lastmod>
-    <changefreq>weekly</changefreq>
+    <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
 `;
