@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { shuffleSeeded, get30MinSeed } from "@/lib/shuffle";
-import { consumeListScroll, saveListScrollFromElement } from "@/lib/scroll-restoration";
+import { consumeListScroll, restoreScrollTo, saveListScrollFromElement } from "@/lib/scroll-restoration";
 
 interface Car {
   id: string;
@@ -216,11 +216,7 @@ export function FeaturedCars() {
     if (y == null) return;
 
     restoredKeyRef.current = url;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: y, behavior: "auto" });
-      });
-    });
+    restoreScrollTo(y);
   }, [isLoading, listItems.length]);
 
   // Save scroll for whichever card the user clicks (car or ad).

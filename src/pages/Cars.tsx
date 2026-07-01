@@ -11,7 +11,7 @@ import { PartnerCard } from "@/components/public/PartnerCard";
 import { usePartnersRotation } from "@/hooks/usePartnersRotation";
 import { PAGE_SIZE, useVehiclesPaginatedQuery } from "@/hooks/useVehiclesPaginatedQuery";
 import { interleaveVehiclesWithPartners } from "@/lib/interleave-partners";
-import { consumeListScroll, getCurrentListUrl, saveListScrollFromElement } from "@/lib/scroll-restoration";
+import { consumeListScroll, getCurrentListUrl, restoreScrollTo, saveListScrollFromElement } from "@/lib/scroll-restoration";
 import { PaginationControls } from "@/components/public/PaginationControls";
 import { VehicleFilters, VehicleData } from "@/hooks/useVehiclesInfiniteQuery";
 import { Input } from "@/components/ui/input";
@@ -346,11 +346,7 @@ export default function Cars() {
     if (y == null) return;
 
     restoredKeyRef.current = url;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: y, behavior: "auto" });
-      });
-    });
+    restoreScrollTo(y);
   }, [isLoading, listItems.length]);
 
   const handlePageChange = useCallback((newPage: number) => {
