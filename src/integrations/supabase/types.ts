@@ -724,6 +724,42 @@ export type Database = {
         }
         Relationships: []
       }
+      banners_public: {
+        Row: {
+          click_target: string | null
+          click_type: string | null
+          created_at: string | null
+          id: string | null
+          image_desktop: string | null
+          image_mobile: string | null
+          image_url: string | null
+          is_active: boolean | null
+          position: number | null
+        }
+        Insert: {
+          click_target?: string | null
+          click_type?: string | null
+          created_at?: string | null
+          id?: string | null
+          image_desktop?: string | null
+          image_mobile?: string | null
+          image_url?: string | null
+          is_active?: boolean | null
+          position?: number | null
+        }
+        Update: {
+          click_target?: string | null
+          click_type?: string | null
+          created_at?: string | null
+          id?: string | null
+          image_desktop?: string | null
+          image_mobile?: string | null
+          image_url?: string | null
+          is_active?: boolean | null
+          position?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       generate_car_slug: {
