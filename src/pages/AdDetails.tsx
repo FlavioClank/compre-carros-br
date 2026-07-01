@@ -81,7 +81,6 @@ Data/hora: ${timestamp}`;
           link,
           click_type,
           click_target,
-          whatsapp_number,
           is_active,
           created_at
         `);
@@ -163,17 +162,23 @@ Data/hora: ${timestamp}`;
     );
   }
 
-  const companyName = ad.ad_billing?.company_name || ad.title;
+  const companyName = ad.title;
   const categoryLabel = CATEGORY_LABELS[ad.category] || ad.category;
   const imageUrl = ad.image_url_home || ad.image_url_search || "/placeholder.svg";
   const canonicalUrl = getPartnerPublicUrl(ad);
-  
+
   const pageTitle = `${companyName} - ${categoryLabel} | CompreCarrosBr`;
   const metaDescription = `${companyName} - Anúncio de ${categoryLabel} no CompreCarrosBr. Entre em contato e saiba mais sobre os serviços oferecidos.`;
 
-  const getWhatsAppUrl = () => {
-    const phone = ad.whatsapp_number?.replace(/\D/g, "") || WHATSAPP_NUMBER;
-    return generateWhatsAppUrl(phone, buildAdWhatsAppMessage(companyName, canonicalUrl));
+  const handleWhatsAppClick = async (
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    e.preventDefault();
+    handleCTAClick("whatsapp_click");
+    const message = buildAdWhatsAppMessage(companyName, canonicalUrl);
+    const url = await resolveContactWhatsAppUrl("ad", ad.id, message);
+    const fallback = generateWhatsAppUrl(WHATSAPP_NUMBER, message);
+    window.open(url || fallback, "_blank", "noopener,noreferrer");
   };
 
   // Track click only once per action type
