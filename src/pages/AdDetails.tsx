@@ -11,6 +11,7 @@ import { trackClick, trackView } from "@/lib/analytics";
 import { format } from "date-fns";
 import { getPartnerPublicUrl } from "@/lib/partner-utils";
 import { absoluteImageUrl } from "@/lib/seo";
+import { resolveContactWhatsAppUrl } from "@/lib/contact-link";
 
 interface AdDetail {
   id: string;
@@ -22,12 +23,8 @@ interface AdDetail {
   link: string | null;
   click_type: string | null;
   click_target: string | null;
-  whatsapp_number: string | null;
   is_active: boolean;
   created_at: string;
-  ad_billing?: {
-    company_name: string;
-  } | null;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -84,7 +81,6 @@ Data/hora: ${timestamp}`;
           link,
           click_type,
           click_target,
-          whatsapp_number,
           is_active,
           created_at
         `);
@@ -166,17 +162,23 @@ Data/hora: ${timestamp}`;
     );
   }
 
-  const companyName = ad.ad_billing?.company_name || ad.title;
+  const companyName = ad.title;
   const categoryLabel = CATEGORY_LABELS[ad.category] || ad.category;
   const imageUrl = ad.image_url_home || ad.image_url_search || "/placeholder.svg";
   const canonicalUrl = getPartnerPublicUrl(ad);
-  
+
   const pageTitle = `${companyName} - ${categoryLabel} | CompreCarrosBr`;
   const metaDescription = `${companyName} - Anúncio de ${categoryLabel} no CompreCarrosBr. Entre em contato e saiba mais sobre os serviços oferecidos.`;
 
-  const getWhatsAppUrl = () => {
-    const phone = ad.whatsapp_number?.replace(/\D/g, "") || WHATSAPP_NUMBER;
-    return generateWhatsAppUrl(phone, buildAdWhatsAppMessage(companyName, canonicalUrl));
+  const handleWhatsAppClick = async (
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    e.preventDefault();
+    handleCTAClick("whatsapp_click");
+    const message = buildAdWhatsAppMessage(companyName, canonicalUrl);
+    const url = await resolveContactWhatsAppUrl("ad", ad.id, message);
+    const fallback = generateWhatsAppUrl(WHATSAPP_NUMBER, message);
+    window.open(url || fallback, "_blank", "noopener,noreferrer");
   };
 
   // Track click only once per action type
@@ -255,18 +257,16 @@ Data/hora: ${timestamp}`;
               <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 {/* WhatsApp button - shown for whatsapp click_type or as default */}
                 {(ad.click_type === "whatsapp" || !ad.click_type || ad.click_type === "") && (
-                  <a
-                    href={getWhatsAppUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => handleCTAClick("whatsapp_click")}
-                    className="flex-1"
-                  >
-                    <Button size="lg" className="w-full gap-2 bg-green-600 hover:bg-green-700">
+                  <div className="flex-1">
+                    <Button
+                      size="lg"
+                      onClick={handleWhatsAppClick}
+                      className="w-full gap-2 bg-green-600 hover:bg-green-700"
+                    >
                       <MessageCircle className="h-5 w-5" />
                       Falar no WhatsApp
                     </Button>
-                  </a>
+                  </div>
                 )}
 
                 {/* Site/Link button */}

@@ -12,7 +12,6 @@ interface Ad {
   link: string | null;
   click_type?: string | null;
   click_target?: string | null;
-  whatsapp_number?: string | null;
 }
 
 export function usePartnersRotation() {
@@ -27,7 +26,7 @@ export function usePartnersRotation() {
       try {
         const { data, error } = await (supabase as any)
           .from("ads_public")
-          .select("id, slug, title, category, image_url_home, image_url_search, link, click_type, click_target, whatsapp_number")
+          .select("id, slug, title, category, image_url_home, image_url_search, link, click_type, click_target")
           .order("created_at", { ascending: true });
 
         if (error) {
