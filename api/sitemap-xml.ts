@@ -108,9 +108,10 @@ export default async function handler(req, res) {
 
     // Add city/state pages
     for (const [, loc] of garageLocations) {
-      const citySlug = toSlug(loc.city);
+      const citySlug = xmlEscape(toSlug(loc.city));
+      const stateSlug = xmlEscape(loc.state);
       sitemap += `  <url>
-    <loc>${SITE_URL}/carros/${loc.state}/${citySlug}</loc>
+    <loc>${SITE_URL}/carros/${stateSlug}/${citySlug}</loc>
     <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
