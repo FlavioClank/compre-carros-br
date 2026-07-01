@@ -216,11 +216,7 @@ export function FeaturedCars() {
     if (y == null) return;
 
     restoredKeyRef.current = url;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: y, behavior: "auto" });
-      });
-    });
+    restoreScrollTo(y);
   }, [isLoading, listItems.length]);
 
   // Save scroll for whichever card the user clicks (car or ad).
