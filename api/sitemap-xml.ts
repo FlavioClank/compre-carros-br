@@ -13,6 +13,20 @@ function toSlug(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
+/**
+ * Escape the 5 XML entities so a stray `&`, `<`, `>`, `'` or `"` inside a
+ * slug can never produce an invalid document. Slugs are already normalized,
+ * but this is a cheap belt-and-suspenders guarantee for sitemaps.org.
+ */
+function xmlEscape(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).send("Method not allowed");
