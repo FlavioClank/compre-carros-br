@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, getSupabaseUrl } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -101,29 +101,64 @@ export function ConsortiumButton({ vehicleInfo, vehicleId }: ConsortiumButtonPro
 
     setIsSubmitting(true);
 
-    // Save lead
-    const { error } = await supabase.from("consortium_leads").insert({
-      name: name.trim(),
-      birth_date: birthDate,
-      email: email.trim(),
-      cpf: cpf.replace(/\D/g, ""),
-      phone: phone.replace(/\D/g, ""),
-      vehicle_info: vehicleInfo,
-      vehicle_id: vehicleId || null,
-    });
+    // Submit through the edge function (server-side validation + service-role insert).
+    let waUrl: string | null = null;
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      const res = await fetch(
+        `${getSupabaseUrl()}/functions/v1/submit-consortium-lead`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
+          body: JSON.stringify({
+            name: name.trim(),
+            birth_date: birthDate,
+            email: email.trim(),
+            cpf: cpf.replace(/\D/g, ""),
+            phone: phone.replace(/\D/g, ""),
+            vehicle_info: vehicleInfo,
+            vehicle_id: vehicleId || null,
+          }),
+        },
+      );
 
-    setIsSubmitting(false);
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        setIsSubmitting(false);
+        toast({
+          title: "Erro ao enviar",
+          description:
+            errBody?.error === "rate_limited"
+              ? "Muitas tentativas. Aguarde um instante e tente novamente."
+              : "Não foi possível enviar seus dados. Tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    if (error) {
-      toast({ title: "Erro ao enviar", description: error.message, variant: "destructive" });
+      const body = (await res.json()) as { url?: string | null };
+      waUrl = body.url ?? null;
+    } catch {
+      setIsSubmitting(false);
+      toast({
+        title: "Erro ao enviar",
+        description: "Falha de conexão. Tente novamente.",
+        variant: "destructive",
+      });
       return;
     }
 
-    // Build WhatsApp message
-    const message = `Olá! Vim através do site CompreCarrosBr e tenho interesse em fazer um *consórcio*.\n\n📋 *Meus dados:*\nNome: ${name.trim()}\nEmail: ${email.trim()}\nCelular: ${phone}\n\n🚗 *Veículo de interesse:*\n${vehicleInfo}\n\nPoderia me passar mais informações?`;
+    setIsSubmitting(false);
 
-    const url = generateWhatsAppUrl(settings.whatsapp_number, message);
-    window.open(url, "_blank");
+    // Open WhatsApp using the URL built by the server, or fallback client-side.
+    const fallbackMessage = `Olá! Vim através do site CompreCarrosBr e tenho interesse em fazer um *consórcio*.\n\n📋 *Meus dados:*\nNome: ${name.trim()}\nEmail: ${email.trim()}\nCelular: ${phone}\n\n🚗 *Veículo de interesse:*\n${vehicleInfo}\n\nPoderia me passar mais informações?`;
+    const finalUrl =
+      waUrl || generateWhatsAppUrl(settings.whatsapp_number, fallbackMessage);
+    window.open(finalUrl, "_blank");
     setIsOpen(false);
 
     // Reset form
