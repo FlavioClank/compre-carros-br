@@ -75,6 +75,7 @@ export default function CarDetails() {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const { enabled: whatsappEnabled } = useVehicleWhatsappEnabled();
+  const { number: waNumber } = useVehicleWhatsappNumber();
 
   useEffect(() => {
     const fetchCar = async () => {
@@ -222,7 +223,7 @@ export default function CarDetails() {
   const isMotorcycle = car.category === "motorcycle";
 
   const whatsappUrl = generateWhatsAppUrl(
-    WHATSAPP_NUMBER,
+    waNumber,
     buildCarWhatsAppMessage({
       slug: car.slug,
       code: car.code,
