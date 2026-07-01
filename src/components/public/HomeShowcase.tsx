@@ -1,19 +1,11 @@
 import { useEffect, useState, memo, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
 import useEmblaCarousel from "embla-carousel-react";
 import { trackClick } from "@/lib/analytics";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { resolveContactWhatsAppUrl } from "@/lib/contact-link";
+import { fetchPublicShowcases, type PublicShowcase } from "@/lib/public-content";
 
-interface Banner {
-  id: string;
-  image_url: string;
-  image_desktop: string | null;
-  image_mobile: string | null;
-  position: number;
-  click_type: string | null;
-  click_target: string | null;
-}
+type Banner = PublicShowcase;
 
 export const HomeShowcase = memo(function HomeShowcase() {
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -29,13 +21,8 @@ export const HomeShowcase = memo(function HomeShowcase() {
 
   useEffect(() => {
     const fetchBanners = async () => {
-      const { data, error } = await (supabase as any)
-        .from("banners_public")
-        .select("id, image_url, image_desktop, image_mobile, position, click_type, click_target")
-        .order("position", { ascending: true })
-        .order("created_at", { ascending: true });
-
-      if (!error && data) setBanners(data);
+      const data = await fetchPublicShowcases();
+      setBanners(data);
       setIsLoading(false);
     };
 

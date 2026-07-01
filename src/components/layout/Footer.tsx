@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Car, Phone, Mail, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SITE_NAME, WHATSAPP_FORMATTED, WHATSAPP_NUMBER, generateWhatsAppUrl } from "@/lib/constants";
-import { supabase } from "@/lib/supabase";
 import { toSlug } from "@/lib/geo-utils";
+import { fetchPublicCities } from "@/lib/public-content";
 
 interface CityLink {
   city: string;
@@ -16,7 +16,7 @@ export function Footer() {
 
   useEffect(() => {
     const fetchCities = async () => {
-      const { data } = await supabase.rpc("get_active_cities");
+      const data = await fetchPublicCities();
 
       if (data) {
         const seen = new Set<string>();

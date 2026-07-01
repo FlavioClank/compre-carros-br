@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { supabase } from "@/lib/supabase";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +11,7 @@ import { format } from "date-fns";
 import { getPartnerPublicUrl } from "@/lib/partner-utils";
 import { absoluteImageUrl } from "@/lib/seo";
 import { resolveContactWhatsAppUrl } from "@/lib/contact-link";
+import { fetchPublicPartnerBySlugOrId } from "@/lib/public-content";
 
 interface AdDetail {
   id: string;
@@ -67,38 +67,7 @@ Data/hora: ${timestamp}`;
         return;
       }
 
-      // Try to find by slug first, then by id (for backwards compatibility)
-      // Reads from the safe public view (ads_public) instead of the raw table.
-      let query = (supabase as any)
-        .from("ads_public")
-        .select(`
-          id,
-          title,
-          category,
-          slug,
-          image_url_home,
-          image_url_search,
-          link,
-          click_type,
-          click_target,
-          is_active,
-          created_at
-        `);
-
-      if (isUuidParam) {
-        query = query.eq("id", slug);
-      } else {
-        query = query.eq("slug", slug);
-      }
-
-      const { data, error } = await query.maybeSingle();
-
-      if (error) {
-        console.error("Error fetching ad:", error);
-        setAd(null);
-        setIsLoading(false);
-        return;
-      }
+      const data = await fetchPublicPartnerBySlugOrId(slug);
 
       if (data) {
         setAd(data as AdDetail);
