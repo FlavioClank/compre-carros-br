@@ -132,6 +132,20 @@ export const HomeShowcase = memo(function HomeShowcase() {
         </div>
       );
 
+      const isWhatsApp = (banner.click_type || "none") === "whatsapp";
+
+      if (isWhatsApp) {
+        return (
+          <button
+            type="button"
+            onClick={() => handleWhatsAppBanner(banner)}
+            className="block w-full text-left"
+          >
+            {image}
+          </button>
+        );
+      }
+
       if (!href) return image;
 
       return (
@@ -145,7 +159,7 @@ export const HomeShowcase = memo(function HomeShowcase() {
         </a>
       );
     },
-    [getBannerHref]
+    [getBannerHref, handleWhatsAppBanner]
   );
 
   // Important: do not early-return before hooks above (prevents hook-order crashes)
