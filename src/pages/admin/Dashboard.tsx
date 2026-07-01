@@ -1,17 +1,28 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Package, CheckCircle, TrendingUp, MessageCircle } from "lucide-react";
+import { Building2, Package, CheckCircle, TrendingUp, MessageCircle, Save } from "lucide-react";
 import { formatPrice } from "@/lib/constants";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useVehicleWhatsappEnabled } from "@/hooks/useVehicleWhatsappEnabled";
+import { useVehicleWhatsappNumber, formatBrPhone } from "@/hooks/useVehicleWhatsappNumber";
 import { toast } from "sonner";
 
 export default function AdminDashboard() {
   const { enabled: waEnabled, loading: waLoading, updateSetting: updateWa } = useVehicleWhatsappEnabled();
+  const { number: waNumber, loading: numLoading, updateNumber } = useVehicleWhatsappNumber();
+  const [numberInput, setNumberInput] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!numLoading) setNumberInput(waNumber);
+  }, [waNumber, numLoading]);
 
   const handleToggleWhatsapp = async (checked: boolean) => {
     const ok = await updateWa(checked);
@@ -19,6 +30,22 @@ export default function AdminDashboard() {
       toast.success(checked ? "Botão de WhatsApp ativado em todos os veículos" : "Botão de WhatsApp desativado em todos os veículos");
     } else {
       toast.error("Erro ao atualizar configuração");
+    }
+  };
+
+  const handleSaveNumber = async () => {
+    const digits = numberInput.replace(/\D/g, "");
+    if (digits.length < 12 || !digits.startsWith("55")) {
+      toast.error("Informe o número com DDI 55 + DDD + número (ex: 5565992230000)");
+      return;
+    }
+    setSaving(true);
+    const ok = await updateNumber(digits);
+    setSaving(false);
+    if (ok) {
+      toast.success(`Número atualizado: ${formatBrPhone(digits)}`);
+    } else {
+      toast.error("Erro ao salvar número");
     }
   };
 
